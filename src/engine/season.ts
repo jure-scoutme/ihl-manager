@@ -18,11 +18,21 @@ export const addDays = (d: string, n: number) => {
   x.setUTCDate(x.getUTCDate() + n);
   return x.toISOString().slice(0, 10);
 };
-const DAYS = ['ned', 'pon', 'tor', 'sre', 'čet', 'pet', 'sob'];
-const MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'];
+const DATE_NAMES: Record<string, { d: string[]; m: string[] }> = {
+  sl: { d: ['ned', 'pon', 'tor', 'sre', 'čet', 'pet', 'sob'], m: ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'] },
+  hr: { d: ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub'], m: ['sij', 'velj', 'ožu', 'tra', 'svi', 'lip', 'srp', 'kol', 'ruj', 'lis', 'stu', 'pro'] },
+  sr: { d: ['ned', 'pon', 'uto', 'sre', 'čet', 'pet', 'sub'], m: ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'] },
+  en: { d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], m: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] },
+};
+let dateLang = 'sl';
+export const setDateLang = (l: string) => {
+  dateLang = DATE_NAMES[l] ? l : 'sl';
+};
 export const fmtDate = (d: string) => {
   const x = new Date(d + 'T12:00:00Z');
-  return `${DAYS[x.getUTCDay()]}, ${x.getUTCDate()}. ${MONTHS[x.getUTCMonth()]} ${x.getUTCFullYear()}`;
+  const n = DATE_NAMES[dateLang];
+  if (dateLang === 'en') return `${n.d[x.getUTCDay()]}, ${x.getUTCDate()} ${n.m[x.getUTCMonth()]} ${x.getUTCFullYear()}`;
+  return `${n.d[x.getUTCDay()]}, ${x.getUTCDate()}. ${n.m[x.getUTCMonth()]} ${x.getUTCFullYear()}`;
 };
 export const seasonLabel = (y: number) => `${y}/${String(y + 1).slice(2)}`;
 

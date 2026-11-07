@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BackLink, Crest, POS_LABEL, Portrait, Shell, eur, heroBg, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
 import { fmtDate, standings } from '@/engine/season';
 import { transferValue } from '@/engine/transfers';
@@ -12,6 +13,7 @@ type Tab = 'F' | 'D' | 'G';
 
 function Ekipa() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const id = useSearchParams().get('id') ?? '';
   const [tab, setTab] = useState<Tab>('F');
   if (!game) return null;
@@ -52,15 +54,15 @@ function Ekipa() {
       </section>
 
       <section className="card" style={{ fontSize: 13 }}>
-        <div className="row"><span className="muted">Tekme</span><span>{row.gp} · {row.w + row.otw} zmag · {row.gf}:{row.ga}</span></div>
+        <div className="row"><span className="muted">{t('Tekme')}</span><span>{row.gp} · {row.w + row.otw} zmag · {row.gf}:{row.ga}</span></div>
         {top && <div className="row"><span className="muted">Najboljši strelec</span><span>{top.first} {top.last} · {top.stats.g + top.stats.a} tč</span></div>}
-        {next && <div className="row"><span className="muted">Naslednja tekma</span><span>{fmtDate(next.date).replace(/ \d{4}$/, '')} · {next.home === club.id ? 'doma' : '@'} {clubOf(next.home === club.id ? next.away : next.home).short}</span></div>}
-        <div className="row"><span className="muted">Cilj uprave</span><span>{club.boardGoal}</span></div>
+        {next && <div className="row"><span className="muted">{t('Naslednja tekma')}</span><span>{fmtDate(next.date).replace(/ \d{4}$/, '')} · {next.home === club.id ? 'doma' : '@'} {clubOf(next.home === club.id ? next.away : next.home).short}</span></div>}
+        <div className="row"><span className="muted">{t('Cilj uprave')}</span><span>{club.boardGoal}</span></div>
       </section>
 
       <div className="seg">
         {([['F', 'Napadalci'], ['D', 'Branilci'], ['G', 'Golmani']] as const).map(([k, l]) => (
-          <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+          <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
         ))}
       </div>
 

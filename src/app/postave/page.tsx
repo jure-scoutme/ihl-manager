@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { BackLink, POS_LABEL, Shell, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { autoLines } from '@/engine/players';
 import { clubPlayers } from '@/engine/season';
 import type { Lines, Player, Tactics } from '@/engine/types';
@@ -22,6 +23,7 @@ const groupPaths = (l: Lines, g: Group): Path[] => {
 
 export default function Postave() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const update = useGame((s) => s.update);
   const [edit, setEdit] = useState<{ path: Path; group: Group; goalie: boolean } | null>(null);
   const [tab, setTab] = useState<Group>('main');
@@ -74,7 +76,7 @@ export default function Postave() {
 
         <div className="seg">
           {([['main', 'Napadi'], ['pp', 'Igralec več'], ['pk', 'Igralec manj']] as const).map(([k, l]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
           ))}
         </div>
 
@@ -123,22 +125,22 @@ export default function Postave() {
           ))}
 
         <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div className="lbl">Forček</div>
+          <div className="lbl">{t('Forček')}</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {([['agresiven', 'Agresiven'], ['uravnotezen', 'Uravnotežen'], ['pasiven', 'Pasiven']] as const).map(([k, l]) => (
-              <button key={k} className={`chip ${tac.forecheck === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ forecheck: k })}>{l}</button>
+              <button key={k} className={`chip ${tac.forecheck === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ forecheck: k })}>{t(l)}</button>
             ))}
           </div>
           <div className="lbl">Tempo</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {([['hiter', 'Hiter'], ['normalen', 'Normalen'], ['pocasen', 'Počasen']] as const).map(([k, l]) => (
-              <button key={k} className={`chip ${tac.tempo === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ tempo: k })}>{l}</button>
+              <button key={k} className={`chip ${tac.tempo === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ tempo: k })}>{t(l)}</button>
             ))}
           </div>
           <div className="lbl">Minutaža napadov</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {([['Prvi napad', [0.4, 0.3, 0.2, 0.1]], ['Normalno', [0.34, 0.28, 0.22, 0.16]], ['Enakomerno', [0.27, 0.26, 0.25, 0.22]]] as const).map(([l, v]) => (
-              <button key={l} className={`chip ${tac.lineUsage[0] === v[0] ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ lineUsage: [...v] as Tactics['lineUsage'] })}>{l}</button>
+              <button key={l} className={`chip ${tac.lineUsage[0] === v[0] ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ lineUsage: [...v] as Tactics['lineUsage'] })}>{t(l)}</button>
             ))}
           </div>
           <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>Agresiven forček prinese več posesti in strelov, a tudi več kazni. Hiter tempo pomeni več priložnosti na obeh straneh in hitrejšo utrujenost.</p>
@@ -148,7 +150,7 @@ export default function Postave() {
       {edit && (
         <div className="sheet" onClick={() => setEdit(null)}>
           <div className="sheet-in" onClick={(e) => e.stopPropagation()}>
-            <div className="row" style={{ marginBottom: 8 }}><span className="lbl">Izberi igralca</span><button className="chip" onClick={() => setEdit(null)}>Zapri</button></div>
+            <div className="row" style={{ marginBottom: 8 }}><span className="lbl">Izberi igralca</span><button className="chip" onClick={() => setEdit(null)}>{t('Zapri')}</button></div>
             {candidates.map((p) => (
               <button key={p.id} className="pick" onClick={() => choose(p.id)} disabled={p.injuryDays > 0} style={{ opacity: p.injuryDays > 0 ? 0.45 : 1 }}>
                 <span className="muted">{POS_LABEL[p.pos]}</span>

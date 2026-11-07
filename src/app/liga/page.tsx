@@ -3,12 +3,14 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { fmtDate, seasonLabel, standings } from '@/engine/season';
 
 type Tab = 'lestvica' | 'razpored' | 'statistika' | 'koncnica';
 
 export default function Liga() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const [tab, setTab] = useState<Tab>('lestvica');
   const [mine, setMine] = useState(true);
   if (!game) return <Shell>{null}</Shell>;
@@ -28,14 +30,14 @@ export default function Liga() {
       <div className="page">
         <div className="seg">
           {([['lestvica', 'Lestvica'], ['razpored', 'Razpored'], ['statistika', 'Statistika'], ['koncnica', 'Končnica']] as const).map(([k, l]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
           ))}
         </div>
 
         {tab === 'lestvica' && (
           <div className="card" style={{ padding: '0 6px' }}>
             <table className="t">
-              <thead><tr><th>#</th><th>Klub</th><th className="num">T</th><th className="num">Z</th><th className="num">ZP</th><th className="num">PP</th><th className="num">P</th><th className="num">Goli</th><th className="num">Tč</th></tr></thead>
+              <thead><tr><th>#</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">Z</th><th className="num">ZP</th><th className="num">PP</th><th className="num">P</th><th className="num">{t('Goli')}</th><th className="num">Tč</th></tr></thead>
               <tbody>
                 {st.map((s, i) => (
                   <tr key={s.clubId} style={{ color: s.clubId === game.userClubId ? 'var(--accent)' : undefined, borderBottom: i === 1 || i === 5 ? '2px solid var(--line2)' : undefined }}>
@@ -55,8 +57,8 @@ export default function Liga() {
         {tab === 'razpored' && (
           <>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button className={`chip ${mine ? 'on' : ''}`} onClick={() => setMine(true)}>Moje tekme</button>
-              <button className={`chip ${!mine ? 'on' : ''}`} onClick={() => setMine(false)}>Vse tekme</button>
+              <button className={`chip ${mine ? 'on' : ''}`} onClick={() => setMine(true)}>{t('Moje tekme')}</button>
+              <button className={`chip ${!mine ? 'on' : ''}`} onClick={() => setMine(false)}>{t('Vse tekme')}</button>
             </div>
             <div className="card" style={{ padding: '0 6px' }}>
               <table className="t">
@@ -78,9 +80,9 @@ export default function Liga() {
         {tab === 'statistika' && (
           <>
             <div className="card" style={{ padding: '0 6px' }}>
-              <div className="lbl" style={{ padding: '10px 6px 0' }}>Strelci</div>
+              <div className="lbl" style={{ padding: '10px 6px 0' }}>{t('Strelci')}</div>
               <table className="t">
-                <thead><tr><th>Igralec</th><th>Klub</th><th className="num">T</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></tr></thead>
+                <thead><tr><th>Igralec</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></tr></thead>
                 <tbody>
                   {scorers.map((p) => (
                     <tr key={p.id}>
@@ -94,9 +96,9 @@ export default function Liga() {
               </table>
             </div>
             <div className="card" style={{ padding: '0 6px' }}>
-              <div className="lbl" style={{ padding: '10px 6px 0' }}>Golmani</div>
+              <div className="lbl" style={{ padding: '10px 6px 0' }}>{t('Golmani')}</div>
               <table className="t">
-                <thead><tr><th>Golman</th><th>Klub</th><th className="num">T</th><th className="num">%</th><th className="num">GAA</th></tr></thead>
+                <thead><tr><th>{t('Golman')}</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">%</th><th className="num">GAA</th></tr></thead>
                 <tbody>
                   {goalies.map((p) => (
                     <tr key={p.id}>

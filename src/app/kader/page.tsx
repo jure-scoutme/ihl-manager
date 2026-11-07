@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { POS_LABEL, Portrait, Shell, formColor, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
 import { clubPlayers } from '@/engine/season';
 
@@ -10,6 +11,7 @@ type Tab = 'F' | 'D' | 'G';
 
 export default function Kader() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const [tab, setTab] = useState<Tab>('F');
   if (!game) return <Shell>{null}</Shell>;
   const roster = clubPlayers(game, game.userClubId);
@@ -23,15 +25,15 @@ export default function Kader() {
     <Shell>
       <header style={{ padding: '18px 16px 0' }} className="row">
         <div>
-          <h1 className="h title">Kader</h1>
-          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{roster.length} igralcev · povp. ocena {avg} · plače {wages.toLocaleString('sl-SI')} €/mes</div>
+          <h1 className="h title">{t('Kader')}</h1>
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{roster.length} {t('igralcev')} · {t('povp. ocena')} {avg} · {t('plače')} {wages.toLocaleString('sl-SI')} €/mes</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}><Link href="/mladinci" className="btn sec" style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>Mladinci</Link><Link href="/postave" className="btn" style={{ display: 'flex', alignItems: 'center', padding: '0 14px' }}>Postave</Link></div>
+        <div style={{ display: 'flex', gap: 8 }}><Link href="/mladinci" className="btn sec" style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>{t('Mladinci')}</Link><Link href="/postave" className="btn" style={{ display: 'flex', alignItems: 'center', padding: '0 14px' }}>{t('Postave')}</Link></div>
       </header>
       <div className="page">
         <div className="seg">
           {([['F', 'Napadalci'], ['D', 'Branilci'], ['G', 'Golmani']] as const).map(([k, l]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
           ))}
         </div>
         <div className="card" style={{ padding: '4px 14px' }}>
@@ -58,11 +60,11 @@ export default function Kader() {
           })}
         </div>
         <div className="muted" style={{ fontSize: 11, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-          <span><span className="dot" style={{ background: 'var(--good)' }} /> dobra forma</span>
-          <span><span className="dot" style={{ background: 'var(--gold)' }} /> povprečna</span>
-          <span><span className="dot" style={{ background: 'var(--orange)' }} /> slaba</span>
-          <span><span style={{ color: 'var(--good)' }}>▲</span> velik potencial</span>
-          <span>T = točke</span>
+          <span><span className="dot" style={{ background: 'var(--good)' }} /> {t('dobra forma')}</span>
+          <span><span className="dot" style={{ background: 'var(--gold)' }} /> {t('povprečna')}</span>
+          <span><span className="dot" style={{ background: 'var(--orange)' }} /> {t('slaba')}</span>
+          <span><span style={{ color: 'var(--good)' }}>▲</span> {t('velik potencial')}</span>
+          <span>{t('T = točke')}</span>
         </div>
       </div>
     </Shell>

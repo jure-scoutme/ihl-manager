@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { BackLink, Shell, eur } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { EXPENSE_LABELS, INCOME_LABELS, clubWages, expectedAttendance, isDerby, refPrice } from '@/engine/finance';
 import { fmtDate, standings } from '@/engine/season';
 import type { Fixture } from '@/engine/types';
@@ -10,6 +11,7 @@ const MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', '
 
 export default function Finance() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const update = useGame((s) => s.update);
   const [tab, setTab] = useState<'pregled' | 'vstopnice'>('pregled');
   if (!game) return <Shell>{null}</Shell>;
@@ -54,23 +56,23 @@ export default function Finance() {
     <Shell>
       <div className="page">
         <BackLink href="/domov" label="Domov" />
-        <h1 className="h title">Finance</h1>
+        <h1 className="h title">{t('Finance')}</h1>
 
         <section style={{ display: 'flex', gap: 8 }}>
           <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
-            <div className="lbl" style={{ fontSize: 10 }}>Stanje na računu</div>
+            <div className="lbl" style={{ fontSize: 10 }}>{t('Stanje na računu')}</div>
             <div className="h" style={{ fontSize: 24, color: fin.balance < 0 ? 'var(--bad)' : undefined }}>{eur(fin.balance)}</div>
           </div>
           <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
-            <div className="lbl" style={{ fontSize: 10 }}>Plače / proračun</div>
+            <div className="lbl" style={{ fontSize: 10 }}>{t('Plače / proračun')}</div>
             <div className="h" style={{ fontSize: 24 }}>{eur(wages)}</div>
             <div className="muted" style={{ fontSize: 11 }}>od {eur(fin.wageBudget)} na mesec</div>
           </div>
         </section>
 
         <div className="seg">
-          <button className={tab === 'pregled' ? 'on' : ''} onClick={() => setTab('pregled')}>Pregled</button>
-          <button className={tab === 'vstopnice' ? 'on' : ''} onClick={() => setTab('vstopnice')}>Vstopnice</button>
+          <button className={tab === 'pregled' ? 'on' : ''} onClick={() => setTab('pregled')}>{t('Pregled')}</button>
+          <button className={tab === 'vstopnice' ? 'on' : ''} onClick={() => setTab('vstopnice')}>{t('Vstopnice')}</button>
         </div>
 
         {tab === 'pregled' && (
@@ -82,15 +84,15 @@ export default function Finance() {
             </section>
 
             <section className="card">
-              <div className="lbl" style={{ marginBottom: 4 }}>Sezona skupaj</div>
-              <div className="muted" style={{ fontSize: 11, marginTop: 6 }}>PRIHODKI</div>
+              <div className="lbl" style={{ marginBottom: 4 }}>{t('Sezona skupaj')}</div>
+              <div className="muted" style={{ fontSize: 11, marginTop: 6 }}>{t('PRIHODKI')}</div>
               {Object.entries(season).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([k, v]) => <Row key={k} k={k} v={v} labels={INCOME_LABELS} />)}
-              <div className="muted" style={{ fontSize: 11, marginTop: 10 }}>ODHODKI</div>
+              <div className="muted" style={{ fontSize: 11, marginTop: 10 }}>{t('ODHODKI')}</div>
               {Object.entries(season).filter(([, v]) => v < 0).sort((a, b) => a[1] - b[1]).map(([k, v]) => <Row key={k} k={k} v={v} labels={EXPENSE_LABELS} />)}
             </section>
 
             <section className="card" style={{ fontSize: 13 }}>
-              <div className="lbl" style={{ marginBottom: 6 }}>Glavni sponzor</div>
+              <div className="lbl" style={{ marginBottom: 6 }}>{t('Glavni sponzor')}</div>
               <div className="h" style={{ fontSize: 20 }}>{fin.sponsor.name}</div>
               <div className="row" style={{ marginTop: 6 }}><span className="muted">Mesečno (sep–apr)</span><span>{eur(fin.sponsor.monthly)}</span></div>
               <div className="row"><span className="muted">Bonus za končnico</span><span>{eur(fin.sponsor.playoffBonus)}</span></div>
@@ -99,7 +101,7 @@ export default function Finance() {
 
             {months.length > 1 && (
               <section className="card" style={{ padding: '0 6px' }}>
-                <div className="lbl" style={{ padding: '10px 6px 0' }}>Po mesecih</div>
+                <div className="lbl" style={{ padding: '10px 6px 0' }}>{t('Po mesecih')}</div>
                 <table className="t">
                   <thead><tr><th>Mesec</th><th className="num">Prihodki</th><th className="num">Odhodki</th><th className="num">Skupaj</th></tr></thead>
                   <tbody>

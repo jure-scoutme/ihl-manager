@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { BackLink, Crest, POS_LABEL, Portrait, Shell, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { infraOf } from '@/engine/club';
 import { fmtDate } from '@/engine/season';
 import { promote, youthStandings, youthTeam, type YouthLeague } from '@/engine/youth';
@@ -11,6 +12,7 @@ type Tab = YouthLeague | 'lestvica';
 
 export default function Mladinci() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const update = useGame((s) => s.update);
   const [tab, setTab] = useState<Tab>('U20');
   const [lg, setLg] = useState<YouthLeague>('U20');
@@ -34,24 +36,24 @@ export default function Mladinci() {
         <BackLink href="/kader" label="Kader" />
         <div className="row">
           <div>
-            <h1 className="h title">Mladinska šola</h1>
+            <h1 className="h title">{t('Mladinska šola')}</h1>
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Akademija stopnja {yl}/5 · članski kader {seniors}/30</div>
           </div>
         </div>
-        {msg && <div className="card row" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}><span>{msg.text}</span><button className="chip" onClick={() => setMsg(null)}>OK</button></div>}
+        {msg && <div className="card row" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}><span>{msg.text}</span><button className="chip" onClick={() => setMsg(null)}>{t('OK')}</button></div>}
 
         <div className="seg">
           {([['U20', 'U20'], ['U18', 'U18'], ['lestvica', 'Lige']] as const).map(([k, l]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
           ))}
         </div>
 
         {tab !== 'lestvica' && (
           <>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <span className="muted" style={{ fontSize: 12 }}>Razvrsti:</span>
+              <span className="muted" style={{ fontSize: 12 }}>{t('Razvrsti:')}</span>
               {([['potencial', 'Potencial'], ['ocena', 'Ocena'], ['tocke', 'Točke']] as const).map(([k, l]) => (
-                <button key={k} className={`chip ${sort === k ? 'on' : ''}`} style={{ height: 30 }} onClick={() => setSort(k)}>{l}</button>
+                <button key={k} className={`chip ${sort === k ? 'on' : ''}`} style={{ height: 30 }} onClick={() => setSort(k)}>{t(l)}</button>
               ))}
             </div>
             <div className="card" style={{ padding: '4px 14px' }}>
@@ -73,7 +75,7 @@ export default function Mladinci() {
                       </span>
                       <span className="badge" style={{ background: `color-mix(in srgb, ${ovrColor(p.ovr)} 16%, transparent)`, color: ovrColor(p.ovr) }}>{p.ovr}</span>
                     </Link>
-                    <button className="btn sec" style={{ width: '100%', height: 38, fontSize: 13, marginTop: 8 }} onClick={() => update((g) => setMsg(promote(g, p.id)))}>Pokliči v člansko ekipo</button>
+                    <button className="btn sec" style={{ width: '100%', height: 38, fontSize: 13, marginTop: 8 }} onClick={() => update((g) => setMsg(promote(g, p.id)))}>{t('Pokliči v člansko ekipo')}</button>
                   </div>
                 );
               })}
@@ -89,7 +91,7 @@ export default function Mladinci() {
             </div>
             <div className="card" style={{ padding: '4px 10px' }}>
               <table className="t">
-                <thead><tr><th>#</th><th>Klub</th><th className="num">T</th><th className="num">Z</th><th className="num">Goli</th><th className="num">Tč</th></tr></thead>
+                <thead><tr><th>#</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">Z</th><th className="num">{t('Goli')}</th><th className="num">Tč</th></tr></thead>
                 <tbody>
                   {st.map((s, i) => (
                     <tr key={s.clubId} style={{ background: s.clubId === club.id ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined }}>

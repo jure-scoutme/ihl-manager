@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import type { Player } from '@/engine/types';
 
 export function useHydrated() {
@@ -65,6 +66,7 @@ const TABS = [
 export function Shell({ children, nav = true }: { children: React.ReactNode; nav?: boolean }) {
   const hydrated = useHydrated();
   const game = useGame((s) => s.game);
+  const tr = useT();
   const router = useRouter();
   const path = usePathname();
   useEffect(() => {
@@ -85,7 +87,7 @@ export function Shell({ children, nav = true }: { children: React.ReactNode; nav
             {TABS.map((t) => (
               <Link key={t.href} href={t.href} className={`tab ${path.startsWith(t.href) ? 'on' : ''}`}>
                 <Icon name={t.icon} />
-                {t.label}
+                {tr(t.label)}
               </Link>
             ))}
           </div>

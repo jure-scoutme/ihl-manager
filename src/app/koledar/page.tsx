@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { BackLink, Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { fmtDate } from '@/engine/season';
 
 const MONTHS = ['Januar', 'Februar', 'Marec', 'April', 'Maj', 'Junij', 'Julij', 'Avgust', 'September', 'Oktober', 'November', 'December'];
@@ -10,6 +11,7 @@ const WD = ['pon', 'tor', 'sre', 'čet', 'pet', 'sob', 'ned'];
 
 export default function Koledar() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const simulateUntil = useGame((s) => s.simulateUntil);
   const [month, setMonth] = useState(() => (game ? game.date.slice(0, 7) : '2026-09'));
   const [sel, setSel] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export default function Koledar() {
       <div className="page">
         <BackLink href="/domov" label="Domov" />
         <div className="row">
-          <h1 className="h title">Koledar</h1>
+          <h1 className="h title">{t('Koledar')}</h1>
           <span className="muted" style={{ fontSize: 12 }}>Danes: {fmtDate(game.date)}</span>
         </div>
         <div className="row">

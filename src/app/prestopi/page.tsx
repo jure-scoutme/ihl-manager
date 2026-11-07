@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { INTEREST_STYLE, POS_LABEL, Shell, eur, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
 import { clubWages, freeAgents, interestIn } from '@/engine/finance';
 
@@ -10,6 +11,7 @@ type Filter = 'vsi' | 'F' | 'D' | 'G';
 
 export default function Prestopi() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const reset = useGame((s) => s.reset);
   const [confirm, setConfirm] = useState(false);
   const [filter, setFilter] = useState<Filter>('vsi');
@@ -25,31 +27,31 @@ export default function Prestopi() {
   return (
     <Shell>
       <header style={{ padding: '18px 16px 0' }}>
-        <h1 className="h title">Prosti igralci</h1>
-        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Igralci brez kluba, ki jih lahko podpišeš takoj, brez odškodnine.</div>
+        <h1 className="h title">{t('Prosti igralci')}</h1>
+        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t('Igralci brez kluba, ki jih lahko podpišeš takoj, brez odškodnine.')}</div>
       </header>
       <div className="page">
         {fin && (
           <section style={{ display: 'flex', gap: 8 }}>
             <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
-              <div className="lbl" style={{ fontSize: 10 }}>Prostor za plače</div>
+              <div className="lbl" style={{ fontSize: 10 }}>{t('Prostor za plače')}</div>
               <div className="h" style={{ fontSize: 22, color: fin.wageBudget - wages < 0 ? 'var(--bad)' : undefined }}>{eur(fin.wageBudget - wages)}<span className="muted" style={{ fontSize: 13 }}> /mes</span></div>
             </div>
             <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
-              <div className="lbl" style={{ fontSize: 10 }}>Kader</div>
+              <div className="lbl" style={{ fontSize: 10 }}>{t('Kader')}</div>
               <div className="h" style={{ fontSize: 22 }}>{roster} / 30</div>
             </div>
           </section>
         )}
         <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
           {([['vsi', 'Vsi'], ['F', 'Napadalci'], ['D', 'Branilci'], ['G', 'Golmani']] as const).map(([k, l]) => (
-            <button key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>
+            <button key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{t(l)}</button>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span className="muted" style={{ fontSize: 12 }}>Razvrsti:</span>
+          <span className="muted" style={{ fontSize: 12 }}>{t('Razvrsti:')}</span>
           {([['ocena', 'Ocena'], ['placa', 'Plača'], ['starost', 'Mlajši']] as const).map(([k, l]) => (
-            <button key={k} className={`chip ${sort === k ? 'on' : ''}`} style={{ height: 30 }} onClick={() => setSort(k)}>{l}</button>
+            <button key={k} className={`chip ${sort === k ? 'on' : ''}`} style={{ height: 30 }} onClick={() => setSort(k)}>{t(l)}</button>
           ))}
         </div>
         {list.map((p) => {
@@ -72,15 +74,15 @@ export default function Prestopi() {
         {list.length === 0 && <p className="muted">Ni prostih igralcev za ta filter.</p>}
 
         <section className="card" style={{ marginTop: 12 }}>
-          <div className="lbl" style={{ marginBottom: 8 }}>Nastavitve</div>
+          <div className="lbl" style={{ marginBottom: 8 }}>{t('Nastavitve')}</div>
           {!confirm ? (
-            <button className="btn ghost block" onClick={() => setConfirm(true)}>Začni novo igro</button>
+            <button className="btn ghost block" onClick={() => setConfirm(true)}>{t('Začni novo igro')}</button>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>Trenutna kariera bo izbrisana. Res želiš začeti znova?</p>
+              <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{t('Trenutna kariera bo izbrisana. Res želiš začeti znova?')}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirm(false)}>Prekliči</button>
-                <button className="btn" style={{ flex: 1 }} onClick={() => reset()}>Izbriši in začni znova</button>
+                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirm(false)}>{t('Prekliči')}</button>
+                <button className="btn" style={{ flex: 1 }} onClick={() => reset()}>{t('Izbriši in začni znova')}</button>
               </div>
             </div>
           )}

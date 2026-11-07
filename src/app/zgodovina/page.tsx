@@ -3,12 +3,14 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { BackLink, Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { careerTotals } from '@/engine/club';
 
 type Tab = 'sezone' | 'klubi' | 'legende';
 
 export default function Zgodovina() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const [tab, setTab] = useState<Tab>('sezone');
   if (!game) return <Shell>{null}</Shell>;
   const clubOf = (id: string) => game.clubs.find((c) => c.id === id);
@@ -26,10 +28,10 @@ export default function Zgodovina() {
     <Shell>
       <div className="page">
         <BackLink href="/klub" label="Klub" />
-        <h1 className="h title">Zgodovina</h1>
+        <h1 className="h title">{t('Zgodovina')}</h1>
         <div className="seg">
           {([['sezone', 'Sezone'], ['klubi', 'Večna lestvica'], ['legende', 'Legende']] as const).map(([k, l]) => (
-            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
+            <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
           ))}
         </div>
 
@@ -61,7 +63,7 @@ export default function Zgodovina() {
           <>
             <div className="card" style={{ padding: '0 6px' }}>
               <table className="t">
-                <thead><tr><th>Klub</th><th className="num">Naslovi</th><th className="num">Sez.</th><th className="num">Zmage</th><th className="num">Goli</th><th className="num">Tč</th></tr></thead>
+                <thead><tr><th>{t('Klub')}</th><th className="num">Naslovi</th><th className="num">Sez.</th><th className="num">Zmage</th><th className="num">{t('Goli')}</th><th className="num">Tč</th></tr></thead>
                 <tbody>
                   {clubs.map(([id, r]) => (
                     <tr key={id} style={{ color: id === game.userClubId ? 'var(--accent)' : undefined }}>
@@ -90,7 +92,7 @@ export default function Zgodovina() {
           <div className="card" style={{ padding: '0 6px' }}>
             <div className="lbl" style={{ padding: '10px 6px 0' }}>Največ točk v karieri (v igri)</div>
             <table className="t">
-              <thead><tr><th>#</th><th>Igralec</th><th>Klub</th><th className="num">T</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></tr></thead>
+              <thead><tr><th>#</th><th>Igralec</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></tr></thead>
               <tbody>
                 {leaders.map((l, i) => (
                   <tr key={`${l.name}-${i}`}>

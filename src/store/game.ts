@@ -2,12 +2,22 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval';
-import { advanceDay, createGame, quickSim, SAVE_VERSION, userFixtureToday } from '@/engine/season';
+import { advanceDay, createGame, quickSim, SAVE_VERSION, setDateLang, userFixtureToday } from '@/engine/season';
 import { ensureFinance } from '@/engine/finance';
 import { ensureV2 } from '@/engine/club';
 import { ensureYouth } from '@/engine/youth';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
+
+export type Lang = 'sl' | 'hr' | 'sr' | 'en';
+export interface DayStep {
+  date: string; // obdelani dan
+  newDate: string;
+  results: { home: string; away: string; hg: number; ag: number; ot: boolean; so: boolean; mine: boolean; stage: string }[];
+  news: string[];
+  stop: boolean;
+  stoppedFor?: 'tekma' | 'novica' | 'konec' | 'odlocitev';
+}
 
 interface Store {
   game: GameState | null;
@@ -16,6 +26,9 @@ interface Store {
   update: (fn: (g: GameState) => void) => void;
   continueGame: () => { stoppedFor: 'tekma' | 'novica' | 'konec' | 'dan' | 'odlocitev' };
   resolve: (id: string, option: number) => string;
+  stepDay: () => DayStep;
+  lang: Lang;
+  setLang: (l: Lang) => void;
   simulateUntil: (date: string, autoUser: boolean) => { reached: boolean; stoppedFor?: 'tekma' | 'konec' | 'odlocitev' };
   reset: () => void;
 }
@@ -155,13 +168,43 @@ export const useGame = create<Store>()(
         set({ game: { ...g }, rev: get().rev + 1 });
         return txt;
       },
+      stepDay: () => {
+        const g = get().game;
+        const empty: DayStep = { date: '', newDate: '', results: [], news: [], stop: true };
+        if (!g) return empty;
+        const quiet = ['tekma', 'prestopi', 'mediji', 'klub'];
+        if (hasBlocking(g)) return { ...empty, date: g.date, newDate: g.date, stoppedFor: 'odlocitev' };
+        if (userFixtureToday(g)) return { ...empty, date: g.date, newDate: g.date, stoppedFor: 'tekma' };
+        if (g.phase === 'konec') return { ...empty, date: g.date, newDate: g.date, stoppedFor: 'konec' };
+        const day = g.date;
+        const before = new Set(g.news.map((n) => n.id));
+        const unreadBefore = g.news.filter((n) => !n.read && !quiet.includes(n.kind)).length;
+        advanceDay(g);
+        const results = g.fixtures
+          .filter((f) => f.date === day && f.result)
+          .map((f) => ({ home: f.home, away: f.away, hg: f.result!.hg, ag: f.result!.ag, ot: f.result!.ot, so: f.result!.so, mine: f.home === g.userClubId || f.away === g.userClubId, stage: f.stage }));
+        const news = g.news.filter((n) => !before.has(n.id)).map((n) => n.title);
+        const unreadAfter = g.news.filter((n) => !n.read && !quiet.includes(n.kind)).length;
+        let stoppedFor: DayStep['stoppedFor'];
+        if (userFixtureToday(g)) stoppedFor = 'tekma';
+        else if ((g.phase as string) === 'konec') stoppedFor = 'konec';
+        else if (hasBlocking(g)) stoppedFor = 'odlocitev';
+        else if (unreadAfter > unreadBefore) stoppedFor = 'novica';
+        set({ game: { ...g }, rev: get().rev + 1 });
+        return { date: day, newDate: g.date, results, news, stop: !!stoppedFor, stoppedFor };
+      },
+      lang: 'sl',
+      setLang: (l) => {
+        setDateLang(l);
+        set({ lang: l, rev: get().rev + 1 });
+      },
       reset: () => set({ game: null, rev: get().rev + 1 }),
     }),
     {
       name: 'ihl-manager-save',
       storage: safeStorage,
       version: SAVE_VERSION,
-      partialize: (s) => ({ game: s.game }) as Partial<Store>,
+      partialize: (s) => ({ game: s.game, lang: s.lang }) as Partial<Store>,
       migrate: (persisted) => {
         const p = persisted as { game: GameState | null };
         if (p?.game) {
@@ -172,6 +215,7 @@ export const useGame = create<Store>()(
         return p as unknown as Store;
       },
       onRehydrateStorage: () => (state) => {
+        if (state?.lang) setDateLang(state.lang);
         if (state?.game) {
           ensureFinance(state.game);
           ensureV2(state.game);

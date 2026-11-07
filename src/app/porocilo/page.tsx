@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BackLink, Crest, POS_LABEL, Shell, heroBg } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { useT } from '@/i18n';
 import { fmtDate } from '@/engine/season';
 import type { Fixture, GameState } from '@/engine/types';
 
@@ -17,6 +18,7 @@ const STRENGTH: Record<string, string> = { PP: 'PP', SH: 'SH', EN: 'PM' };
 
 function Report() {
   const game = useGame((s) => s.game)!;
+  const t = useT();
   const id = useSearchParams().get('id') ?? '';
   if (!game) return null;
   const f = game.fixtures.find((x) => x.id === id);
@@ -25,6 +27,7 @@ function Report() {
 }
 
 function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
+  const t = useT();
   const r = f.result!;
   const clubOf = (cid: string) => game.clubs.find((c) => c.id === cid)!;
   const P = (pid: string) => game.players[pid];
@@ -98,7 +101,7 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
       <section className="card" style={{ padding: '8px 14px' }}>
         <div className="row" style={{ padding: '4px 0 6px' }}>
           <span className="lbl" style={{ width: 60 }}>{home.short}</span>
-          <span className="lbl">Statistika</span>
+          <span className="lbl">{t('Statistika')}</span>
           <span className="lbl" style={{ width: 60, textAlign: 'right' }}>{away.short}</span>
         </div>
         {stat('Streli na gol', r.hShots, r.aShots)}
@@ -152,7 +155,7 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
             <div className="lbl" style={{ padding: '10px 6px 0' }}>{club.name}</div>
             {g && (
               <table className="t">
-                <thead><tr><th>Golman</th><th className="num">Streli</th><th className="num">Obr.</th><th className="num">Prej.</th><th className="num">%</th></tr></thead>
+                <thead><tr><th>{t('Golman')}</th><th className="num">Streli</th><th className="num">Obr.</th><th className="num">Prej.</th><th className="num">%</th></tr></thead>
                 <tbody>
                   <tr>
                     <td><Link href={`/igralec?id=${g.id}`} style={{ fontWeight: 600 }}>{nm(g.id)}</Link></td>
