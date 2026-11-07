@@ -16,6 +16,8 @@ export const EXPENSE_LABELS: Record<string, string> = {
   stab: 'Štab',
   mladinci: 'Mladinska šola',
   odpravnine: 'Odpravnine',
+  investicije: 'Investicije',
+  infrastruktura: 'Vzdrževanje objektov',
 };
 
 const SPONSORS = ['Gorenjska banka', 'Sava Turizem', 'Petrol', 'Telemach', 'Mercator', 'Generali', 'Lidl', 'Hervis', 'Elektro Gorenjska', 'Triglav zavarovalnica', 'Agrokor', 'Podravka', 'Konzum', 'NIS', 'Telekom Srbija', 'mts'];
@@ -86,6 +88,9 @@ export function expectedAttendance(state: GameState, f: Fixture, price = ticketP
   if (f.stage !== 'redni') fill += 0.15 + (f.stage === 'finale' ? 0.2 : 0);
   const ref = refPrice(home) + (isDerby(f.home, f.away) ? 2 : 0) + (f.stage !== 'redni' ? 3 : 0);
   fill *= clamp(Math.pow(ref / Math.max(1, price), 1.1), 0.15, 1.5);
+  const mk = state.infra?.[f.home]?.marketing ?? 2;
+  fill *= 1 + (mk - 2) * 0.03;
+  if (f.home === state.userClubId && state.fans !== undefined) fill *= 0.9 + state.fans / 500;
   return Math.round(home.arena.capacity * clamp(fill, 0.05, 1));
 }
 
@@ -110,11 +115,13 @@ export function monthlyFinances(state: GameState) {
     // sponzor plačuje med septembrom in aprilom
     const m = Number(state.date.slice(5, 7));
     if (m >= 9 || m <= 4) book(state, c.id, 'sponzorji', fin.sponsor.monthly);
+    const lv = state.infra?.[c.id];
+    if (lv) book(state, c.id, 'infrastruktura', -(lv.training + lv.youth + lv.medical + lv.scouting + lv.marketing) * 150);
   }
 }
 
 // --- trg prostih igralcev ---
-export function addFreeAgents(state: GameState, n: number) {
+export function addFreeAgents(state: GameState, n: number, bonus = 0) {
   const rng = new Rng(state.seed + 7 + n);
   const countries = ['SLO', 'HR', 'SRB'] as const;
   const positions = ['C', 'LW', 'RW', 'D', 'D', 'C', 'LW', 'RW', 'G'] as const;
@@ -124,7 +131,7 @@ export function addFreeAgents(state: GameState, n: number) {
     // veterani, mladi, igralci od zunaj (AI)
     const age = roll < 0.3 ? rng.int(30, 35) : roll < 0.55 ? rng.int(18, 21) : rng.int(22, 29);
     const importPlayer = rng.chance(0.3);
-    const base = rng.int(46, 63) + (importPlayer ? 2 : 0);
+    const base = rng.int(46, 63) + (importPlayer ? 2 : 0) + bonus;
     const p = makePlayer(rng, { pos, base, clubId: null, country: rng.pick(countries), seasonYear: state.seasonYear, age, importPlayer, isAI: true });
     p.wage = wageDemand(p, rng);
     p.contractUntil = state.seasonYear;

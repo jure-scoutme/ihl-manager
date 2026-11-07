@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Bar, Crest, Icon, Shell, eur } from '@/components/ui';
+import { Decisions } from '@/components/Decisions';
+import { hasBlocking } from '@/engine/events';
 import { useGame } from '@/store/game';
 import { clubPlayers, fmtDate, nextUserFixture, quickSim, seasonLabel, standings, startNewSeason, userFixtureToday, type DevChange } from '@/engine/season';
 
@@ -55,10 +57,11 @@ export default function Domov() {
           <div className="muted" style={{ fontSize: 12 }}>{fmtDate(game.date)} · IHL {seasonLabel(game.seasonYear)}</div>
         </div>
         <Link href="/koledar" className="btn sec" style={{ width: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Koledar"><Icon name="calendar" /></Link>
-        <button className="btn" onClick={onContinue} disabled={!!today || game.phase === 'konec'}>Nadaljuj</button>
+        <button className="btn" onClick={onContinue} disabled={!!today || game.phase === 'konec' || hasBlocking(game)}>Nadaljuj</button>
       </header>
 
       <div className="page">
+        <Decisions />
         {game.phase === 'konec' && (
           <section className="card" style={{ borderColor: 'var(--accent)' }}>
             <div className="lbl">Konec sezone {seasonLabel(game.seasonYear)}</div>
@@ -109,6 +112,8 @@ export default function Domov() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 13 }}>
             <div><div className="row" style={{ marginBottom: 4 }}><span>Morala</span><span>{morale} %</span></div><Bar value={morale} /></div>
             <div><div className="row" style={{ marginBottom: 4 }}><span>Svežina</span><span>{energy} %</span></div><Bar value={energy} color={energy < 70 ? 'var(--gold)' : undefined} /></div>
+            <div><div className="row" style={{ marginBottom: 4 }}><span>Podpora navijačev</span><span>{Math.round(game.fans ?? 50)} %</span></div><Bar value={game.fans ?? 50} color="var(--good)" /></div>
+            <div><div className="row" style={{ marginBottom: 4 }}><span>Zaupanje uprave</span><span>{Math.round(game.board ?? 55)} %</span></div><Bar value={game.board ?? 55} color={(game.board ?? 55) < 30 ? 'var(--bad)' : 'var(--gold)'} /></div>
           </div>
           <div className="row" style={{ marginTop: 12 }}>
             <span className="muted" style={{ fontSize: 12 }}>Forma (zadnjih 5){injured ? ` · poškodovani: ${injured}` : ''}</span>

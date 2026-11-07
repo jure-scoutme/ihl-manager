@@ -3,6 +3,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BackLink, Crest, INTEREST_STYLE, POS_FULL, Portrait, Shell, attrColor, eur, ovrColor } from '@/components/ui';
 import { clubWages, interestIn, offerContract, releasePlayer } from '@/engine/finance';
+import { PERSONALITY_INFO } from '@/engine/club';
 import { useGame } from '@/store/game';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
 import { seasonLabel } from '@/engine/season';
@@ -118,6 +119,10 @@ function Profil() {
         <div className="row"><span className="muted">Morala</span><span>{p.morale} %</span></div>
         <div className="row"><span className="muted">Svežina</span><span>{Math.round(p.energy)} %</span></div>
         <div className="row"><span className="muted">Forma</span><span>{p.form > 0 ? '+' : ''}{p.form}</span></div>
+        {p.personality && <div className="row"><span className="muted">Osebnost</span><span>{PERSONALITY_INFO[p.personality].label}</span></div>}
+        {p.personality && <div className="muted" style={{ fontSize: 12, textAlign: 'right' }}>{PERSONALITY_INFO[p.personality].desc}</div>}
+        {p.mentorId && game.players[p.mentorId] && <div className="row"><span className="muted">Mentor</span><span>{game.players[p.mentorId].first} {game.players[p.mentorId].last}</span></div>}
+        {p.listed && <div className="row"><span className="muted">Status</span><span style={{ color: 'var(--gold)' }}>na seznamu za prodajo</span></div>}
       </section>
 
       {p.history.length > 0 && (

@@ -40,6 +40,7 @@ const ICONS: Record<string, React.ReactNode> = {
     </>
   ),
   euro: <path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" />,
+  building: <path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6M3 20h18" />,
 };
 
 export function Icon({ name, size = 22 }: { name: keyof typeof ICONS | string; size?: number }) {
@@ -56,6 +57,7 @@ const TABS = [
   { href: '/tekma', label: 'Tekma', icon: 'play' },
   { href: '/liga', label: 'Liga', icon: 'trophy' },
   { href: '/prestopi', label: 'Prestopi', icon: 'swap' },
+  { href: '/klub', label: 'Klub', icon: 'building' },
 ];
 
 export function Shell({ children, nav = true }: { children: React.ReactNode; nav?: boolean }) {

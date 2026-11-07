@@ -1,3 +1,5 @@
+import { resolveDecision } from '../src/engine/events';
+let decisionsSeen = 0;
 import { createGame, advanceDay, quickSim, standings, userFixtureToday, startNewSeason } from '../src/engine/season';
 
 const state = createGame({ first: 'Test', last: 'Manager', nat: 'SLO', age: 40, background: 'igralec', style: 'uravnotezen', reputation: 50 }, 'tri', 12345);
@@ -7,6 +9,7 @@ function playSeason() {
   while (state.phase !== 'konec' && guard++ < 400) {
     const uf = userFixtureToday(state);
     if (uf) quickSim(state, uf);
+    while ((state.decisions ?? []).some((d) => d.blocking)) { const d = state.decisions!.find((x) => x.blocking)!; resolveDecision(state, d.id, 0); decisionsSeen++; }
     advanceDay(state);
   }
 }
@@ -46,3 +49,5 @@ const att = state.fixtures.filter(f=>f.result).map(f=>[f.home, f.result!.attenda
 const byClub: Record<string, number[]> = {}; att.forEach(([h,a])=>(byClub[h]=byClub[h]??[]).push(a));
 console.log('Povp. obisk:', Object.entries(byClub).map(([k,v])=>`${k} ${Math.round(v.reduce((a,b)=>a+b,0)/v.length)}`).join(', '));
 console.log('Prostih igralcev:', Object.values(state.players).filter(p=>p.clubId===null).length);
+console.log('Odločitev v slačilnici:', decisionsSeen, 'zgodovina sezon:', state.seasonRecords?.length, 'legende:', state.legends?.length, 'navijači', state.fans, 'uprava', state.board);
+console.log('Novice mediji:', state.news.filter(n=>n.kind==='mediji').length, state.news.filter(n=>n.kind==='mediji').slice(0,4).map(n=>n.title));

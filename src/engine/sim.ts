@@ -423,7 +423,7 @@ export class MatchSim {
     const fc = team.tactics.forecheck === 'agresiven' ? 1.2 : team.tactics.forecheck === 'pasiven' ? 0.85 : 1;
     const p = 0.0042 * Math.pow(agg / 10, 1.3) * fc;
     if (!this.rng.chance(p)) return;
-    const pid = this.rng.weighted(ids, ids.map((id) => this.players[id].attrs.aggression + 3));
+    const pid = this.rng.weighted(ids, ids.map((id) => this.players[id].attrs.aggression + 3 + (this.players[id].personality === 'temperamenten' ? 6 : 0)));
     const dur = this.rng.chance(0.04) ? 300 : 120;
     team.penalties.push({ playerId: pid, until: this.t + dur });
     team.pim += dur / 60;

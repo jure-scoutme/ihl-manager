@@ -1,5 +1,7 @@
 export type Pos = 'C' | 'LW' | 'RW' | 'D' | 'G';
 
+export type Personality = 'profesionalec' | 'ambiciozen' | 'zvest' | 'temperamenten' | 'vodja' | 'individualist' | 'delaven' | 'nezanesljiv' | 'uravnotezen';
+
 export interface Attrs {
   // tehnični
   skating: number;
@@ -60,6 +62,10 @@ export interface Player {
   contractUntil: number; // leto
   isAI: boolean;
   photo?: string; // pot do portreta, npr. /igralci/luka-ferjan.jpg
+  personality?: Personality;
+  benchStreak?: number; // zaporedne tekme brez igranja ali v 4. napadu
+  mentorId?: string;
+  listed?: boolean; // na seznamu za prodajo
   stats: SkaterStats; // tekoča sezona
   history: { season: string; clubId: string; stats: SkaterStats }[];
 }
@@ -154,7 +160,7 @@ export interface NewsItem {
   date: string;
   title: string;
   body: string;
-  kind: 'liga' | 'garderoba' | 'uprava' | 'tekma' | 'prestopi';
+  kind: 'liga' | 'garderoba' | 'uprava' | 'tekma' | 'prestopi' | 'mediji' | 'klub';
   read: boolean;
   fixtureId?: string;
 }
@@ -189,6 +195,82 @@ export interface ClubFinance {
   ledger: Record<string, Record<string, number>>; // 'YYYY-MM' -> postavka -> znesek (+ prihodek, - odhodek)
 }
 
+export interface DecisionOption {
+  label: string;
+  effect: string; // ključ učinka, ki ga razreši engine/events.ts
+}
+
+export interface Decision {
+  id: string;
+  date: string;
+  kind: 'garderoba' | 'konferenca' | 'uprava';
+  title: string;
+  body: string;
+  options: DecisionOption[];
+  playerId?: string;
+  otherId?: string;
+  fixtureId?: string;
+  blocking: boolean; // ustavi "Nadaljuj"
+  expires?: string;
+}
+
+export interface PromiseItem {
+  playerId: string;
+  type: 'vloga' | 'okrepitve';
+  until: string;
+}
+
+export interface SeasonRecord {
+  season: string;
+  champion: string;
+  regularWinner: string;
+  final?: string; // npr. "3:1"
+  runnerUp?: string;
+  topScorer?: { name: string; clubId: string; pts: number; g: number; a: number };
+  topGoals?: { name: string; clubId: string; g: number };
+  bestGoalie?: { name: string; clubId: string; svp: number; gaa: number };
+  userFinish: number;
+  userClubId: string;
+}
+
+export interface Legend {
+  name: string;
+  clubId: string;
+  pos: Pos;
+  seasons: number;
+  gp: number;
+  g: number;
+  a: number;
+  retired: string;
+}
+
+export interface InfraLevels {
+  training: number;
+  youth: number;
+  medical: number;
+  scouting: number;
+  marketing: number;
+}
+
+export interface InfraProject {
+  key: keyof InfraLevels | 'arena';
+  clubId: string;
+  finish: string;
+  cost: number;
+  seats?: number;
+}
+
+export interface ClubRecordStats {
+  titles: number;
+  seasons: number;
+  gp: number;
+  w: number;
+  pts: number;
+  gf: number;
+  ga: number;
+  biggestWin?: { score: string; vs: string; season: string; diff: number };
+}
+
 export interface GameState {
   version: number;
   seed: number;
@@ -207,4 +289,18 @@ export interface GameState {
   champion?: string;
   pastChampions: { season: string; clubId: string }[];
   finance: Record<string, ClubFinance>;
+  // v2: slačilnica, mediji, infrastruktura, zgodovina
+  decisions?: Decision[];
+  promises?: PromiseItem[];
+  fans?: number; // podpora navijačev 0-100 (tvoj klub)
+  board?: number; // zaupanje uprave 0-100
+  infra?: Record<string, InfraLevels>;
+  projects?: InfraProject[];
+  seasonRecords?: SeasonRecord[];
+  legends?: Legend[];
+  clubRecords?: Record<string, ClubRecordStats>;
+  managerStats?: { gp: number; w: number; l: number; titles: number; seasons: number };
+  streak?: number; // + zmage zapored, - porazi zapored (tvoj klub)
+  pressDone?: string[]; // id tekem, kjer je bila konferenca
+  pressMood?: { fixtureId: string; mood: 'confident' | 'humble' };
 }

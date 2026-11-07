@@ -3,9 +3,11 @@ import { autoLines, calcOvr, emptyStats, generateLeague, makePlayer, newId, vali
 import { Rng, clamp } from './rng';
 import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages } from './finance';
+import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
+import { afterUserMatch, checkPromises, expireDecisions, hasBlocking, preMatchPress, weeklyBoardAndMood, weeklyLocker } from './events';
 import type { Attrs, Club, Fixture, GameState, Lines, Manager, MatchResult, NewsItem, Player, Series, Standing, Tactics } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export const defaultTactics = (): Tactics => ({ forecheck: 'uravnotezen', tempo: 'normalen', lineUsage: [0.34, 0.28, 0.22, 0.16] });
 
@@ -101,6 +103,7 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
     finance: {},
   };
   ensureFinance(state);
+  ensureV2(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
   return state;
@@ -223,12 +226,14 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
       if (p.pos === 'G' && s.ga === 0) p.stats.so++;
     }
     // forma in morala
-    const perf = p.pos === 'G' ? (s.sa ? (s.sa - s.ga) / s.sa - 0.9 : 0) * 20 : s.g * 1.2 + s.a * 0.8 + s.pm * 0.5 - 0.4;
+    const perf = (p.pos === 'G' ? (s.sa ? (s.sa - s.ga) / s.sa - 0.9 : 0) * 20 : s.g * 1.2 + s.a * 0.8 + s.pm * 0.5 - 0.4) * (p.personality === 'nezanesljiv' ? 1.7 : 1);
     p.form = clamp(Math.round((p.form * 0.6 + perf * 0.6) * 10) / 10, -2, 2);
-    p.morale = clamp(p.morale + (won ? 3 : -3) + Math.round(perf), 10, 100);
+    const loss = p.personality === 'zvest' ? -1.5 : -3;
+    p.morale = clamp(Math.round(p.morale + (won ? 3 : loss) + perf), 10, 100);
     p.energy = clamp(p.energy - (16 - p.attrs.stamina * 0.4), 30, 100);
-    if (p.pos !== 'G' && rng.chance(0.004)) {
-      p.injuryDays = rng.int(3, 28);
+    const med = infraOf(state, p.clubId!).medical;
+    if (p.pos !== 'G' && rng.chance(0.004 * (1.3 - med * 0.1) * (p.energy < 50 ? 1.6 : 1))) {
+      p.injuryDays = Math.max(1, Math.round(rng.int(3, 28) * (1.25 - med * 0.1)));
       if (p.clubId === state.userClubId) addNews(state, 'garderoba', `Poškodba: ${p.first} ${p.last}`, `${p.first} ${p.last} se je poškodoval na tekmi in bo odsoten približno ${p.injuryDays} dni.`);
     }
   }
@@ -248,6 +253,7 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
     const opp = state.clubs.find((c) => c.id === (us ? f.away : f.home))!;
     const tag = result.so ? ' po kazenskih strelih' : result.ot ? ' po podaljšku' : '';
     addNews(state, 'tekma', `${myG > opG ? 'Zmaga' : 'Poraz'} proti ${opp.short} ${myG}:${opG}${tag}`, `Obisk: ${result.attendance} gledalcev. Streli: ${us ? result.hShots : result.aShots}:${us ? result.aShots : result.hShots}.`, f.id);
+    afterUserMatch(state, f);
   }
 }
 
@@ -266,6 +272,7 @@ export const nextUserFixture = (state: GameState) =>
 export function advanceDay(state: GameState): { blocked: boolean } {
   if (state.phase === 'konec') return { blocked: true };
   if (userFixtureToday(state)) return { blocked: true };
+  if (hasBlocking(state)) return { blocked: true };
   for (const f of todaysFixtures(state)) if (!f.played) quickSim(state, f);
 
   state.date = addDays(state.date, 1);
@@ -277,6 +284,19 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   if (new Date(state.date + 'T12:00:00Z').getUTCDay() === 1) {
     const signed = aiSignings(state);
     if (signed.length) addNews(state, 'prestopi', 'Novi podpisi v ligi', signed.join(' '));
+    const st = standings(state);
+    const pos = st.findIndex((s) => s.clubId === state.userClubId) + 1;
+    const club = state.clubs.find((c) => c.id === state.userClubId)!;
+    if (st[0].gp > 0) weeklyBoardAndMood(state, pos, club.boardGoal);
+    if (st[0].gp >= 3) weeklyLocker(state, pos);
+  }
+  expireDecisions(state);
+  checkPromises(state);
+  for (const t of processProjects(state)) addNews(state, 'klub', 'Nadgradnja končana', t);
+  const today = userFixtureToday(state);
+  if (today) {
+    const st = standings(state);
+    preMatchPress(state, today, (id) => st.findIndex((s) => s.clubId === id) + 1);
   }
   for (const p of Object.values(state.players)) {
     p.energy = Math.min(100, p.energy + 9 + p.attrs.stamina * 0.25);
@@ -375,7 +395,26 @@ export interface DevChange {
 export function startNewSeason(state: GameState): { changes: DevChange[]; retired: string[]; youth: string[] } {
   const rng = new Rng(state.seed++);
   const season = seasonLabel(state.seasonYear);
+  ensureV2(state);
+  const finalStandings = standings(state);
+  archiveSeason(state, season, finalStandings);
   if (state.champion) state.pastChampions.push({ season, clubId: state.champion });
+  // uprava oceni sezono
+  const userClub = state.clubs.find((c) => c.id === state.userClubId)!;
+  const target = userClub.boardGoal === 'naslov' ? 1 : userClub.boardGoal === 'finale' ? 2 : userClub.boardGoal === 'polfinale' ? 4 : 6;
+  const userPos = finalStandings.findIndex((s) => s.clubId === state.userClubId) + 1;
+  const goalMet = state.champion === state.userClubId || userPos <= target;
+  state.board = clamp((state.board ?? 55) + (goalMet ? 12 : -12), 0, 100);
+  addNews(state, 'uprava', goalMet ? 'Uprava je zadovoljna s sezono' : 'Uprava je razočarana', goalMet ? `Cilj (${userClub.boardGoal}) je izpolnjen. Zaupanje uprave: ${Math.round(state.board)} %.` : `Cilj (${userClub.boardGoal}) ni bil izpolnjen. Zaupanje uprave: ${Math.round(state.board)} %.`);
+  state.streak = 0;
+  // igralci na seznamu za prodajo odidejo
+  for (const p of Object.values(state.players)) {
+    if (p.listed && p.clubId) {
+      if (p.clubId === state.userClubId) addNews(state, 'prestopi', `${p.first} ${p.last} zapušča klub`, 'Igralec s seznama za prodajo je odšel kot prost igralec.');
+      p.clubId = null;
+      p.listed = false;
+    }
+  }
   const changes: DevChange[] = [];
   const retired: string[] = [];
   const youth: string[] = [];
@@ -386,7 +425,12 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     p.stats = emptyStats();
     const age = nextYear - p.birthYear;
     // upokojitev
+    if (!p.clubId && age >= 33) {
+      delete state.players[p.id];
+      continue;
+    }
     if (age >= 34 && rng.chance((age - 33) * 0.22)) {
+      if (p.clubId) recordRetirement(state, p, season);
       if (p.clubId === state.userClubId) retired.push(`${p.first} ${p.last} (${age - 1} let)`);
       delete state.players[p.id];
       continue;
@@ -396,8 +440,10 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     let reason: string;
     const gp = p.history[p.history.length - 1]?.stats.gp ?? 0;
     if (age <= 23) {
-      delta = Math.min(p.potential - p.ovr, rng.int(1, 4) + (gp > 20 ? 1 : 0));
-      reason = gp > 20 ? 'trening in veliko minutaže' : 'trening';
+      const tr = p.clubId ? infraOf(state, p.clubId).training : 2;
+      const bonus = (gp > 20 ? 1 : 0) + (rng.chance((tr - 2) * 0.3) ? 1 : 0) + ((p.personality === 'profesionalec' || p.personality === 'delaven') && rng.chance(0.5) ? 1 : 0) + (p.mentorId && state.players[p.mentorId]?.clubId === p.clubId ? 1 : 0);
+      delta = Math.min(p.potential - p.ovr, rng.int(1, 4) + bonus);
+      reason = [gp > 20 ? 'minutaža' : '', tr >= 4 ? 'trening center' : 'trening', p.mentorId ? 'mentor' : '', p.personality === 'profesionalec' ? 'profesionalnost' : ''].filter(Boolean).join(', ');
     } else if (age <= 28) {
       delta = rng.int(-1, 2);
       reason = 'v najboljših letih';
@@ -426,7 +472,7 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
   for (const c of state.clubs) {
     const roster = Object.values(state.players).filter((p) => p.clubId === c.id);
     const need = (pos: ('C' | 'LW' | 'RW' | 'D' | 'G')[], target: number) => target - roster.filter((p) => pos.includes(p.pos)).length;
-    const strength = CLUBS.find((x) => x.id === c.id)!.strength;
+    const strength = CLUBS.find((x) => x.id === c.id)!.strength + (infraOf(state, c.id).youth - 2) * 1.5;
     const used = new Set(roster.map((p) => p.number));
     const usedNames = new Set(roster.map((p) => p.last));
     const add = (pos: 'C' | 'LW' | 'RW' | 'D' | 'G', count: number) => {
@@ -447,12 +493,17 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
 
   state.seasonYear = nextYear;
   // prosti igralci se postarajo, pridejo novi; novi sponzorji in proračuni
-  addFreeAgents(state, 12);
+  const fa = Object.values(state.players).filter((p) => !p.clubId).sort((a, b) => b.ovr - a.ovr);
+  fa.slice(50).forEach((p) => delete state.players[p.id]);
+  const sc = infraOf(state, state.userClubId).scouting;
+  addFreeAgents(state, 10 + sc * 2, sc - 1);
   for (const c of state.clubs) {
     if (state.champion === c.id) c.reputation = Math.min(90, c.reputation + 2);
     const fin = state.finance[c.id];
     if (!fin) continue;
     fin.sponsor = makeSponsor(c, rng);
+    const mk = infraOf(state, c.id).marketing;
+    fin.sponsor.monthly = Math.round((fin.sponsor.monthly * (1 + (mk - 2) * 0.08)) / 100) * 100;
     fin.wageBudget = Math.max(fin.wageBudget, Math.round((clubWages(state, c.id) * 1.08) / 100) * 100);
   }
   state.phase = 'redni';
@@ -461,6 +512,7 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
   state.fixtures = makeSchedule(state.clubs.map((c) => c.id), nextYear, rng);
   state.date = addDays(state.fixtures[0].date, -3);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(nextYear)}`, `Nova sezona IHL se začne ${fmtDate(state.fixtures[0].date)}.`);
+  ensureV2(state);
   return { changes, retired, youth };
 }
 
