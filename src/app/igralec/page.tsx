@@ -1,17 +1,31 @@
 'use client';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BackLink, POS_FULL, Shell, attrColor, ovrColor } from '@/components/ui';
+import { BackLink, Crest, INTEREST_STYLE, POS_FULL, Portrait, Shell, attrColor, eur, ovrColor } from '@/components/ui';
+import { clubWages, interestIn, offerContract, releasePlayer } from '@/engine/finance';
 import { useGame } from '@/store/game';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
 import { seasonLabel } from '@/engine/season';
 
 function Profil() {
   const game = useGame((s) => s.game)!;
-  const id = useSearchParams().get('id') ?? '';
+  const update = useGame((s) => s.update);
+  const params = useSearchParams();
+  const id = params.get('id') ?? '';
+  const from = params.get('from');
+  const [wage, setWage] = useState<number | null>(null);
+  const [years, setYears] = useState(2);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirmRelease, setConfirmRelease] = useState(false);
   if (!game) return null;
   const p = game.players[id];
-  if (!p) return <div className="page"><BackLink href="/kader" label="Kader" /><p>Igralec ne obstaja več.</p></div>;
+  const back = from === 'prestopi' ? { href: '/prestopi', label: 'Prosti igralci' } : from === 'liga' ? { href: '/liga', label: 'Liga' } : { href: '/kader', label: 'Kader' };
+  if (!p) return <div className="page"><BackLink href={back.href} label={back.label} /><p>Igralec ne obstaja več.</p></div>;
+  const isMine = p.clubId === game.userClubId;
+  const isFree = p.clubId === null;
+  const offerWage = wage ?? p.wage;
+  const fin = game.finance?.[game.userClubId];
+  const room = fin ? fin.wageBudget - clubWages(game, game.userClubId) : 0;
   const club = game.clubs.find((c) => c.id === p.clubId);
   const groups = p.pos === 'G' ? [GOALIE_GROUP, { label: 'Mentalni', keys: ['decisions', 'positioning', 'leadership'] as (keyof typeof p.attrs)[] }] : ATTR_GROUPS;
   const s = p.stats;
@@ -22,13 +36,13 @@ function Profil() {
 
   return (
     <div className="page">
-      <BackLink href="/kader" label="Kader" />
+      <BackLink href={back.href} label={back.label} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div className="h" style={{ width: 64, height: 64, borderRadius: 16, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, color: 'var(--accent)' }}>{p.number}</div>
+        <Portrait player={p} />
         <div style={{ flex: 1 }}>
           <div className="h" style={{ fontSize: 28, lineHeight: 1 }}>{p.first} {p.last}</div>
           <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{POS_FULL[p.pos]} · {ageOf(p, game.seasonYear)} let · {p.nat} · strel {p.shoots}</div>
-          <div className="muted" style={{ fontSize: 12 }}>{club?.short ?? 'Prost'} · pogodba do {p.contractUntil} · {p.wage} €/mes{p.isAI ? ' · AI' : ''}</div>
+          <div className="muted" style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>{club && <Crest club={club} size={18} />}{club?.short ?? 'Prost igralec'} · #{p.number} · {isFree ? `zahteva ${p.wage} €/mes` : `pogodba do ${p.contractUntil} · ${p.wage} €/mes`}{p.isAI ? ' · AI' : ''}</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div className="h" style={{ fontSize: 38, lineHeight: 1, color: ovrColor(p.ovr) }}>{p.ovr}</div>
@@ -37,6 +51,40 @@ function Profil() {
       </div>
 
       {p.injuryDays > 0 && <div className="card" style={{ color: 'var(--bad)', fontSize: 13 }}>Poškodovan še {p.injuryDays} dni.</div>}
+
+      {isFree && fin && (
+        <section className="card" style={{ borderColor: 'var(--accent)' }}>
+          <div className="row"><span className="lbl">Ponudi pogodbo</span>{(() => { const st = INTEREST_STYLE[interestIn(game, p, game.userClubId)]; return <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 9, background: st.bg, color: st.fg }}>{st.label}</span>; })()}</div>
+          <div className="row" style={{ marginTop: 10 }}>
+            <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(Math.max(100, offerWage - 50))} aria-label="Manj">−</button>
+            <span style={{ textAlign: 'center' }}><span className="h" style={{ fontSize: 28 }}>{eur(offerWage)}</span><br /><span className="muted" style={{ fontSize: 11 }}>na mesec · zahteva {eur(p.wage)}</span></span>
+            <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(offerWage + 50)} aria-label="Več">+</button>
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+            {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>{y} {y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta'}</button>)}
+          </div>
+          <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>Prostor v proračunu za plače: <b style={{ color: room - offerWage < 0 ? 'var(--bad)' : 'var(--text)' }}>{eur(room)}</b></div>
+          <button className="btn block" style={{ marginTop: 10 }} onClick={() => update((g) => { const r = offerContract(g, p.id, offerWage, years); setMsg({ ok: r.accepted, text: r.text }); setWage(null); })}>Pošlji ponudbo</button>
+        </section>
+      )}
+
+      {isMine && (
+        <section className="card">
+          {!confirmRelease ? (
+            <button className="btn ghost block" onClick={() => setConfirmRelease(true)}>Odpusti igralca</button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ fontSize: 13, margin: 0, color: 'var(--gold)' }}>Odpravnina: {eur(p.wage * 2)}. Igralec postane prost in ga lahko podpiše drug klub.</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirmRelease(false)}>Prekliči</button>
+                <button className="btn" style={{ flex: 1 }} onClick={() => update((g) => { const r = releasePlayer(g, p.id); setMsg({ ok: r.ok, text: r.text }); setConfirmRelease(false); })}>Odpusti</button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {msg && <div className="card" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}>{msg.text}</div>}
 
       <section className="card" style={{ display: 'flex', padding: '10px 6px' }}>
         {statCells.map(([l, v]) => (

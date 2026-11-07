@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BackLink, POS_LABEL, Shell } from '@/components/ui';
+import { BackLink, Crest, POS_LABEL, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { fmtDate } from '@/engine/season';
 import type { Fixture, GameState } from '@/engine/types';
@@ -84,9 +84,9 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
       <section className="card" style={{ padding: 16 }}>
         <div className="lbl" style={{ textAlign: 'center' }}>{stageName[f.stage]} · {fmtDate(f.date)}</div>
         <div className="row" style={{ margin: '12px 0 6px' }}>
-          <div style={{ flex: 1, textAlign: 'center' }} className="h"><span style={{ fontSize: 22, color: f.home === game.userClubId ? 'var(--accent)' : undefined }}>{home.short}</span></div>
+          <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={home} size={48} /><span style={{ fontSize: 20, color: f.home === game.userClubId ? 'var(--accent)' : undefined }}>{home.short}</span></div>
           <div className="h" style={{ fontSize: 44, lineHeight: 1 }}>{r.hg}:{r.ag}</div>
-          <div style={{ flex: 1, textAlign: 'center' }} className="h"><span style={{ fontSize: 22, color: f.away === game.userClubId ? 'var(--accent)' : undefined }}>{away.short}</span></div>
+          <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={away} size={48} /><span style={{ fontSize: 20, color: f.away === game.userClubId ? 'var(--accent)' : undefined }}>{away.short}</span></div>
         </div>
         <div className="muted" style={{ fontSize: 12, textAlign: 'center' }}>
           {r.so ? 'po kazenskih strelih · ' : r.ot ? 'po podaljšku · ' : ''}

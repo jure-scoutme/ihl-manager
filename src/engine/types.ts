@@ -59,6 +59,7 @@ export interface Player {
   wage: number; // €/mes
   contractUntil: number; // leto
   isAI: boolean;
+  photo?: string; // pot do portreta, npr. /igralci/luka-ferjan.jpg
   stats: SkaterStats; // tekoča sezona
   history: { season: string; clubId: string; stats: SkaterStats }[];
 }
@@ -180,6 +181,14 @@ export interface Standing {
   pts: number;
 }
 
+export interface ClubFinance {
+  balance: number;
+  wageBudget: number; // €/mes za plače
+  prices: { regular: number; derby: number; playoff: number };
+  sponsor: { name: string; monthly: number; playoffBonus: number; titleBonus: number };
+  ledger: Record<string, Record<string, number>>; // 'YYYY-MM' -> postavka -> znesek (+ prihodek, - odhodek)
+}
+
 export interface GameState {
   version: number;
   seed: number;
@@ -197,4 +206,5 @@ export interface GameState {
   news: NewsItem[];
   champion?: string;
   pastChampions: { season: string; clubId: string }[];
+  finance: Record<string, ClubFinance>;
 }

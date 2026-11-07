@@ -33,6 +33,13 @@ const ICONS: Record<string, React.ReactNode> = {
   swap: <path d="M4 8h14l-3-3M20 16H6l3 3" />,
   trophy: <path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8" />,
   back: <path d="M15 5l-7 7 7 7" />,
+  calendar: (
+    <>
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" />
+    </>
+  ),
+  euro: <path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" />,
 };
 
 export function Icon({ name, size = 22 }: { name: keyof typeof ICONS | string; size?: number }) {
@@ -103,3 +110,57 @@ export function Bar({ value, color }: { value: number; color?: string }) {
     </div>
   );
 }
+
+// Grb kluba: /public/logos/<id>.png (npr. tri.png). Če datoteke ni, pokaže kratico.
+export function Crest({ club, size = 42 }: { club: { id: string; short: string; color: string }; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const box: React.CSSProperties = { width: size, height: size, borderRadius: size * 0.28, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' };
+  if (!failed)
+    return (
+      <span style={box}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/logos/${club.id}.png`} alt={club.short} width={size - 6} height={size - 6} style={{ objectFit: 'contain' }} onError={() => setFailed(true)} />
+      </span>
+    );
+  return (
+    <span className="h" style={{ ...box, fontSize: size * 0.36, color: club.color }}>
+      {club.id.toUpperCase()}
+    </span>
+  );
+}
+
+// Portret igralca: player.photo ali /public/igralci/<ime-priimek>.jpg. Če ga ni, pokaže številko.
+export const photoSlug = (p: { first: string; last: string }) =>
+  `${p.first}-${p.last}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '-');
+
+export function Portrait({ player, size = 64 }: { player: { first: string; last: string; number: number; photo?: string }; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const src = player.photo ?? `/igralci/${photoSlug(player)}.jpg`;
+  const box: React.CSSProperties = { width: size, height: size, borderRadius: size * 0.25, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' };
+  if (!failed)
+    return (
+      <span style={box}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={`${player.first} ${player.last}`} width={size} height={size} style={{ objectFit: 'cover', width: '100%', height: '100%' }} onError={() => setFailed(true)} />
+      </span>
+    );
+  return (
+    <span className="h" style={{ ...box, fontSize: size * 0.45, color: 'var(--accent)' }}>
+      {player.number}
+    </span>
+  );
+}
+
+export const eur = (n: number) => `${Math.round(n).toLocaleString('sl-SI')} €`;
+
+export const INTEREST_STYLE: Record<'visok' | 'srednji' | 'nizek' | 'ne pride', { bg: string; fg: string; label: string }> = {
+  visok: { bg: '#1f4d3a', fg: '#8fe3b5', label: 'Interes visok' },
+  srednji: { bg: '#3d3517', fg: '#f2d88a', label: 'Interes srednji' },
+  nizek: { bg: '#3d2a17', fg: '#f5c18f', label: 'Interes nizek' },
+  'ne pride': { bg: '#4d2a1f', fg: '#f5a98f', label: 'Ne pride' },
+};

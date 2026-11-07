@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Bar, Shell } from '@/components/ui';
+import { Bar, Crest, Icon, Shell, eur } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { clubPlayers, fmtDate, nextUserFixture, quickSim, seasonLabel, standings, startNewSeason, userFixtureToday, type DevChange } from '@/engine/season';
 
@@ -49,11 +49,12 @@ export default function Domov() {
   return (
     <Shell>
       <header style={{ padding: '18px 16px 4px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div className="h" style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: club.color }}>{club.short.slice(0, 3)}</div>
+        <Crest club={club} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="h" style={{ fontSize: 20 }}>{club.name}</div>
           <div className="muted" style={{ fontSize: 12 }}>{fmtDate(game.date)} · IHL {seasonLabel(game.seasonYear)}</div>
         </div>
+        <Link href="/koledar" className="btn sec" style={{ width: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label="Koledar"><Icon name="calendar" /></Link>
         <button className="btn" onClick={onContinue} disabled={!!today || game.phase === 'konec'}>Nadaljuj</button>
       </header>
 
@@ -119,6 +120,21 @@ export default function Domov() {
             </div>
           </div>
         </section>
+
+        {game.finance?.[club.id] && (() => {
+          const fin = game.finance[club.id];
+          const cur = fin.ledger[game.date.slice(0, 7)] ?? {};
+          const net = Object.values(cur).reduce((a, b) => a + b, 0);
+          return (
+            <Link href="/finance" className="card" style={{ display: 'block' }}>
+              <div className="row"><span className="lbl">Finance</span><span style={{ fontSize: 12, color: 'var(--accent)' }}>Vstopnice in finance →</span></div>
+              <div className="row" style={{ marginTop: 8 }}>
+                <span><span className="muted" style={{ fontSize: 11 }}>Stanje</span><br /><span className="h" style={{ fontSize: 22, color: fin.balance < 0 ? 'var(--bad)' : undefined }}>{eur(fin.balance)}</span></span>
+                <span style={{ textAlign: 'right' }}><span className="muted" style={{ fontSize: 11 }}>Ta mesec</span><br /><span className="h" style={{ fontSize: 22, color: net >= 0 ? 'var(--good)' : 'var(--bad)' }}>{net >= 0 ? '+' : ''}{eur(net)}</span></span>
+              </div>
+            </Link>
+          );
+        })()}
 
         <section className="card" style={{ padding: '6px 14px' }}>
           <div className="row" style={{ padding: '8px 0' }}><span className="lbl">Pošta</span><span style={{ fontSize: 12, color: 'var(--accent)' }}>{unread ? `${unread} novih` : ''}</span></div>

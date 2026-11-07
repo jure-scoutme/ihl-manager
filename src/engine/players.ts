@@ -142,7 +142,7 @@ export function makePlayer(
     form: 0,
     energy: 100,
     injuryDays: 0,
-    wage: Math.max(150, Math.round(((ovr - 38) * 45) / 50) * 50),
+    wage: Math.max(100, Math.round(((ovr - 38) * 30) / 50) * 50),
     contractUntil: opts.seasonYear + rng.int(1, 3),
     isAI: opts.isAI ?? true,
     stats: emptyStats(),

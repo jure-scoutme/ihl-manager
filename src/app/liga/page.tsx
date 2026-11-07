@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Shell } from '@/components/ui';
+import { Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { fmtDate, seasonLabel, standings } from '@/engine/season';
 
@@ -40,7 +40,7 @@ export default function Liga() {
                 {st.map((s, i) => (
                   <tr key={s.clubId} style={{ color: s.clubId === game.userClubId ? 'var(--accent)' : undefined, borderBottom: i === 1 || i === 5 ? '2px solid var(--line2)' : undefined }}>
                     <td className="muted">{i + 1}</td>
-                    <td style={{ fontWeight: 600 }}>{clubOf(s.clubId).short}</td>
+                    <td style={{ fontWeight: 600 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).short}</span></td>
                     <td className="num">{s.gp}</td><td className="num">{s.w}</td><td className="num">{s.otw}</td><td className="num">{s.otl}</td><td className="num">{s.l}</td>
                     <td className="num muted">{s.gf}:{s.ga}</td>
                     <td className="num" style={{ fontWeight: 700 }}>{s.pts}</td>
@@ -84,7 +84,7 @@ export default function Liga() {
                 <tbody>
                   {scorers.map((p) => (
                     <tr key={p.id}>
-                      <td><Link href={`/igralec?id=${p.id}`} style={{ fontWeight: 600 }}>{p.first[0]}. {p.last}</Link></td>
+                      <td><Link href={`/igralec?id=${p.id}&from=liga`} style={{ fontWeight: 600 }}>{p.first[0]}. {p.last}</Link></td>
                       <td className="muted">{clubOf(p.clubId!).short}</td>
                       <td className="num">{p.stats.gp}</td><td className="num">{p.stats.g}</td><td className="num">{p.stats.a}</td>
                       <td className="num" style={{ fontWeight: 700 }}>{p.stats.g + p.stats.a}</td>

@@ -40,3 +40,9 @@ console.log('\nNova sezona: spremembe', res.changes.length, 'upokojeni', res.ret
 playSeason();
 console.log('Prvak 2. sezone:', state.champion, 'igralcev:', Object.keys(state.players).length);
 console.log('JSON velikost KB:', (JSON.stringify(state).length / 1024).toFixed(0));
+console.log('\nFinance po 2 sezonah:');
+for (const c of state.clubs) { const f = state.finance[c.id]; console.log(c.id, 'stanje', f.balance, 'plače/mes', Object.values(state.players).filter(p=>p.clubId===c.id).reduce((s,p)=>s+p.wage,0), 'proračun', f.wageBudget, 'kader', Object.values(state.players).filter(p=>p.clubId===c.id).length); }
+const att = state.fixtures.filter(f=>f.result).map(f=>[f.home, f.result!.attendance] as const);
+const byClub: Record<string, number[]> = {}; att.forEach(([h,a])=>(byClub[h]=byClub[h]??[]).push(a));
+console.log('Povp. obisk:', Object.entries(byClub).map(([k,v])=>`${k} ${Math.round(v.reduce((a,b)=>a+b,0)/v.length)}`).join(', '));
+console.log('Prostih igralcev:', Object.values(state.players).filter(p=>p.clubId===null).length);

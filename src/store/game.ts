@@ -1,7 +1,8 @@
 'use client';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { advanceDay, createGame, SAVE_VERSION, userFixtureToday } from '@/engine/season';
+import { advanceDay, createGame, quickSim, SAVE_VERSION, userFixtureToday } from '@/engine/season';
+import { ensureFinance } from '@/engine/finance';
 import type { GameState, Manager } from '@/engine/types';
 
 interface Store {
@@ -10,6 +11,7 @@ interface Store {
   newGame: (m: Manager, clubId: string) => void;
   update: (fn: (g: GameState) => void) => void;
   continueGame: () => { stoppedFor: 'tekma' | 'novica' | 'konec' | 'dan' };
+  simulateUntil: (date: string, autoUser: boolean) => { reached: boolean; stoppedFor?: 'tekma' | 'konec' };
   reset: () => void;
 }
 
@@ -61,9 +63,9 @@ export const useGame = create<Store>()(
             stoppedFor = 'konec';
             break;
           }
-          const unreadBefore = g.news.filter((n) => !n.read && n.kind !== 'tekma').length;
+          const unreadBefore = g.news.filter((n) => !n.read && n.kind !== 'tekma' && n.kind !== 'prestopi').length;
           advanceDay(g);
-          const unreadAfter = g.news.filter((n) => !n.read && n.kind !== 'tekma').length;
+          const unreadAfter = g.news.filter((n) => !n.read && n.kind !== 'tekma' && n.kind !== 'prestopi').length;
           if (userFixtureToday(g)) {
             stoppedFor = 'tekma';
             break;
@@ -80,6 +82,33 @@ export const useGame = create<Store>()(
         set({ game: { ...g }, rev: get().rev + 1 });
         return { stoppedFor };
       },
+      simulateUntil: (date, autoUser) => {
+        const g = get().game;
+        if (!g) return { reached: false };
+        let result: { reached: boolean; stoppedFor?: 'tekma' | 'konec' } = { reached: false };
+        let guard = 0;
+        while (guard++ < 400) {
+          if (g.date >= date) {
+            result = { reached: true };
+            break;
+          }
+          if (g.phase === 'konec') {
+            result = { reached: false, stoppedFor: 'konec' };
+            break;
+          }
+          const uf = userFixtureToday(g);
+          if (uf) {
+            if (!autoUser) {
+              result = { reached: false, stoppedFor: 'tekma' };
+              break;
+            }
+            quickSim(g, uf);
+          }
+          advanceDay(g);
+        }
+        set({ game: { ...g }, rev: get().rev + 1 });
+        return result;
+      },
       reset: () => set({ game: null, rev: get().rev + 1 }),
     }),
     {
@@ -87,6 +116,14 @@ export const useGame = create<Store>()(
       storage: safeStorage,
       version: SAVE_VERSION,
       partialize: (s) => ({ game: s.game }) as Partial<Store>,
+      migrate: (persisted) => {
+        const p = persisted as { game: GameState | null };
+        if (p?.game) ensureFinance(p.game);
+        return p as unknown as Store;
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state?.game) ensureFinance(state.game);
+      },
     },
   ),
 );

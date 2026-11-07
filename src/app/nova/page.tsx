@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shell } from '@/components/ui';
+import { Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { CLUBS } from '@/engine/data';
 import type { Manager } from '@/engine/types';
@@ -81,7 +81,7 @@ export default function NovaIgra() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {CLUBS.map((c) => (
                 <button key={c.id} onClick={() => setClub(c.id)} className="card" style={{ display: 'grid', gridTemplateColumns: '42px 1fr auto', gap: 12, alignItems: 'center', textAlign: 'left', padding: '8px 12px', color: 'var(--text)', cursor: 'pointer', borderColor: club === c.id ? 'var(--accent)' : undefined, background: club === c.id ? '#15283d' : undefined }}>
-                  <span className="h" style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, color: c.color }}>{c.short.slice(0, 3)}</span>
+                  <Crest club={c} />
                   <span>
                     <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{c.name}</span>
                     <span className="muted" style={{ display: 'block', fontSize: 11, marginTop: 2 }}>{c.city} · {c.country} · {c.arena.name} ({c.arena.capacity})</span>
