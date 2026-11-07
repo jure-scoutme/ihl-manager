@@ -1,7 +1,7 @@
 'use client';
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BackLink, Crest, INTEREST_STYLE, POS_FULL, Portrait, Shell, attrColor, eur, ovrColor } from '@/components/ui';
+import { BackLink, Crest, INTEREST_STYLE, POS_FULL, Portrait, Shell, attrColor, eur, heroBg, ovrColor } from '@/components/ui';
 import { clubWages, interestIn, offerContract, releasePlayer } from '@/engine/finance';
 import { PERSONALITY_INFO } from '@/engine/club';
 import { useGame } from '@/store/game';
@@ -38,18 +38,28 @@ function Profil() {
   return (
     <div className="page">
       <BackLink href={back.href} label={back.label} />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <Portrait player={p} />
-        <div style={{ flex: 1 }}>
-          <div className="h" style={{ fontSize: 28, lineHeight: 1 }}>{p.first} {p.last}</div>
-          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{POS_FULL[p.pos]} · {ageOf(p, game.seasonYear)} let · {p.nat} · strel {p.shoots}</div>
-          <div className="muted" style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>{club && <Crest club={club} size={18} />}{club?.short ?? 'Prost igralec'} · #{p.number} · {isFree ? `zahteva ${p.wage} €/mes` : `pogodba do ${p.contractUntil} · ${p.wage} €/mes`}{p.isAI ? ' · AI' : ''}</div>
+      <section className="hero" style={{ background: heroBg(club?.color ?? '#4f8cff') }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Portrait player={p} size={72} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, opacity: 0.8, fontWeight: 600 }}>{p.first}</div>
+            <div className="h" style={{ fontSize: 26, lineHeight: 1.05 }}>{p.last}</div>
+            <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4 }}>{POS_FULL[p.pos]} · {ageOf(p, game.seasonYear)} let · {p.nat}</div>
+          </div>
+          <div style={{ textAlign: 'center', background: 'rgba(0,0,0,.25)', borderRadius: 16, padding: '8px 10px' }}>
+            <div className="score" style={{ fontSize: 36, lineHeight: 1, color: ovrColor(p.ovr) }}>{p.ovr}</div>
+            <div style={{ fontSize: 10, opacity: 0.8, fontWeight: 700 }}>POT {p.potential}</div>
+          </div>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div className="h" style={{ fontSize: 38, lineHeight: 1, color: ovrColor(p.ovr) }}>{p.ovr}</div>
-          <div className="muted" style={{ fontSize: 11 }}>POT {p.potential}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 12, flexWrap: 'wrap' }}>
+          {club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}><Crest club={club} size={18} /> {club.short}</span>}
+          {!club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>Prost igralec</span>}
+          <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>#{p.number}</span>
+          <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>Strel {p.shoots}</span>
+          <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{isFree ? `zahteva ${p.wage} €/mes` : `${p.wage} €/mes · do ${p.contractUntil}`}</span>
+          {p.isAI && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>AI</span>}
         </div>
-      </div>
+      </section>
 
       {p.injuryDays > 0 && <div className="card" style={{ color: 'var(--bad)', fontSize: 13 }}>Poškodovan še {p.injuryDays} dni.</div>}
 
@@ -69,28 +79,12 @@ function Profil() {
         </section>
       )}
 
-      {isMine && (
-        <section className="card">
-          {!confirmRelease ? (
-            <button className="btn ghost block" onClick={() => setConfirmRelease(true)}>Odpusti igralca</button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 13, margin: 0, color: 'var(--gold)' }}>Odpravnina: {eur(p.wage * 2)}. Igralec postane prost in ga lahko podpiše drug klub.</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirmRelease(false)}>Prekliči</button>
-                <button className="btn" style={{ flex: 1 }} onClick={() => update((g) => { const r = releasePlayer(g, p.id); setMsg({ ok: r.ok, text: r.text }); setConfirmRelease(false); })}>Odpusti</button>
-              </div>
-            </div>
-          )}
-        </section>
-      )}
-
       {msg && <div className="card" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}>{msg.text}</div>}
 
       <section className="card" style={{ display: 'flex', padding: '10px 6px' }}>
         {statCells.map(([l, v]) => (
           <div key={l} style={{ flex: 1, textAlign: 'center' }}>
-            <div className="h" style={{ fontSize: 22 }}>{v}</div>
+            <div className="score" style={{ fontSize: 26 }}>{v}</div>
             <div className="lbl" style={{ fontSize: 10 }}>{l}</div>
           </div>
         ))}
@@ -124,6 +118,22 @@ function Profil() {
         {p.mentorId && game.players[p.mentorId] && <div className="row"><span className="muted">Mentor</span><span>{game.players[p.mentorId].first} {game.players[p.mentorId].last}</span></div>}
         {p.listed && <div className="row"><span className="muted">Status</span><span style={{ color: 'var(--gold)' }}>na seznamu za prodajo</span></div>}
       </section>
+
+      {isMine && (
+        <section className="card">
+          {!confirmRelease ? (
+            <button className="btn ghost block" onClick={() => setConfirmRelease(true)}>Odpusti igralca</button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ fontSize: 13, margin: 0, color: 'var(--gold)' }}>Odpravnina: {eur(p.wage * 2)}. Igralec postane prost in ga lahko podpiše drug klub.</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirmRelease(false)}>Prekliči</button>
+                <button className="btn" style={{ flex: 1 }} onClick={() => update((g) => { const r = releasePlayer(g, p.id); setMsg({ ok: r.ok, text: r.text }); setConfirmRelease(false); })}>Odpusti</button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {p.history.length > 0 && (
         <section className="card" style={{ padding: '10px 6px' }}>

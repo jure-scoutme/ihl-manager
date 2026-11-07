@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Bar, Shell } from '@/components/ui';
+import { Bar, Crest, Shell, heroBg } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { applyResult, fmtDate, makeSim, nextUserFixture, userFixtureToday } from '@/engine/season';
 import { shortName } from '@/engine/players';
@@ -55,12 +55,15 @@ export default function Tekma() {
       <Shell>
         <div className="page">
           <h1 className="h title">Tekma</h1>
-          <section className="card" style={{ textAlign: 'center', padding: 20 }}>
-            <div className="lbl">Danes · {fmtDate(game.date)}</div>
-            <div className="h" style={{ fontSize: 30, margin: '12px 0' }}>{clubOf(fixture!.home).short} – {clubOf(fixture!.away).short}</div>
-            <div className="muted" style={{ fontSize: 13, marginBottom: 16 }}>{clubOf(fixture!.home).arena.name}, {clubOf(fixture!.home).arena.city}</div>
-            <button className="btn block" onClick={start}>Začni tekmo</button>
-            <Link href="/postave" className="btn ghost block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>Uredi postave pred tekmo</Link>
+          <section className="hero" style={{ textAlign: 'center', background: heroBg(clubOf(fixture!.home).color, clubOf(fixture!.away).color) }}>
+            <div className="pill" style={{ background: 'rgba(255,255,255,.18)' }}>DANES · {fmtDate(game.date).toUpperCase()}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 18, margin: '18px 0 10px' }}>
+              <Crest club={clubOf(fixture!.home)} size={64} /><span className="score" style={{ fontSize: 24, opacity: 0.7 }}>VS</span><Crest club={clubOf(fixture!.away)} size={64} />
+            </div>
+            <div className="h" style={{ fontSize: 22, marginBottom: 4 }}>{clubOf(fixture!.home).short} – {clubOf(fixture!.away).short}</div>
+            <div style={{ fontSize: 13, marginBottom: 16, opacity: 0.8 }}>{clubOf(fixture!.home).arena.name}, {clubOf(fixture!.home).arena.city}</div>
+            <button className="btn white block" onClick={start}>▶ Začni tekmo</button>
+            <Link href="/postave" className="btn glass block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>Uredi postave pred tekmo</Link>
           </section>
         </div>
       </Shell>
@@ -100,21 +103,30 @@ export default function Tekma() {
   return (
     <Shell>
       <div className="page">
-        <section className="card" style={{ padding: '14px 16px' }}>
-          <div className="row">
-            <div style={{ textAlign: 'center', width: 100 }}><div className="h" style={{ fontSize: 20, color: mySide === 'home' ? 'var(--accent)' : undefined }}>{sim.home.name}</div><div className="muted" style={{ fontSize: 11 }}>SOG {sim.home.shots}</div></div>
+        <section className="hero" style={{ background: heroBg(clubOf(sim.home.clubId).color, clubOf(sim.away.clubId).color) }}>
+          <div style={{ textAlign: 'center' }}><span className="pill" style={{ background: sim.over ? 'rgba(255,255,255,.18)' : 'rgba(255,90,90,.9)' }}>{sim.over ? 'KONEC' : '● V ŽIVO'}</span></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 6, marginTop: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(sim.home.clubId)} size={52} /><div className="h" style={{ fontSize: 15 }}>{sim.home.name}</div></div>
             <div style={{ textAlign: 'center' }}>
-              <div className="h" style={{ fontSize: 46, lineHeight: 1 }}>{sim.home.score} : {sim.away.score}</div>
-              <div style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 600, marginTop: 2 }}>{period}</div>
+              <div className="score" style={{ fontSize: 56, lineHeight: 1 }}>{sim.home.score}<span style={{ opacity: 0.5, margin: '0 6px' }}>:</span>{sim.away.score}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4, opacity: 0.9 }}>{period}</div>
             </div>
-            <div style={{ textAlign: 'center', width: 100 }}><div className="h" style={{ fontSize: 20, color: mySide === 'away' ? 'var(--accent)' : undefined }}>{sim.away.name}</div><div className="muted" style={{ fontSize: 11 }}>SOG {sim.away.shots}</div></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(sim.away.clubId)} size={52} /><div className="h" style={{ fontSize: 15 }}>{sim.away.name}</div></div>
           </div>
-          <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '36px 1fr 36px', gap: 8, alignItems: 'center', fontSize: 12 }}>
-            <span>{homePos} %</span>
-            <div className="bar" style={{ display: 'flex' }}><div style={{ width: `${homePos}%` }} /><div style={{ flex: 1, background: '#4a5a78' }} /></div>
-            <span style={{ textAlign: 'right' }}>{100 - homePos} %</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, marginTop: 14, fontSize: 12, rowGap: 6 }}>
+            {[
+              [sim.home.shots, 'Streli na gol', sim.away.shots],
+              [`${homePos}%`, 'Posest', `${100 - homePos}%`],
+              [`${sim.home.ppGoals}/${sim.home.ppOpps}`, 'Igralec več', `${sim.away.ppGoals}/${sim.away.ppOpps}`],
+              [sim.home.pim, 'Kazenske min', sim.away.pim],
+            ].map(([a, l, b]) => (
+              <div key={l as string} style={{ display: 'contents' }}>
+                <span style={{ fontWeight: 800, textAlign: 'left' }}>{a}</span>
+                <span style={{ opacity: 0.75, textAlign: 'center' }}>{l}</span>
+                <span style={{ fontWeight: 800, textAlign: 'right' }}>{b}</span>
+              </div>
+            ))}
           </div>
-          <div className="muted" style={{ fontSize: 10, textAlign: 'center' }}>Posest · kazni {sim.home.pim}:{sim.away.pim} min · PP {sim.home.ppGoals}/{sim.home.ppOpps} : {sim.away.ppGoals}/{sim.away.ppOpps}</div>
         </section>
 
         <section className="card" style={{ padding: '10px 14px' }}>
@@ -174,14 +186,18 @@ function LastMatch() {
       {next && (
         <section className="card">
           <div className="lbl">Naslednja tekma</div>
-          <div className="h" style={{ fontSize: 24, margin: '8px 0 4px' }}>{clubOf(next.home).short} – {clubOf(next.away).short}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 6px' }}><Crest club={clubOf(next.home)} size={32} /><span className="h" style={{ fontSize: 20 }}>{clubOf(next.home).short} – {clubOf(next.away).short}</span><Crest club={clubOf(next.away)} size={32} /></div>
           <div className="muted" style={{ fontSize: 12 }}>{fmtDate(next.date)} · {clubOf(next.home).arena.name}</div>
         </section>
       )}
       {last?.result && (
         <section className="card">
           <div className="lbl">Zadnja tekma · {fmtDate(last.date)}</div>
-          <div className="h" style={{ fontSize: 28, margin: '8px 0' }}>{clubOf(last.home).short} {last.result.hg}:{last.result.ag} {clubOf(last.away).short}{last.result.so ? ' (KS)' : last.result.ot ? ' (POD)' : ''}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', margin: '12px 0' }}>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.home)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.home).short}</b></span>
+            <span className="score" style={{ fontSize: 40 }}>{last.result.hg}:{last.result.ag}<span style={{ fontSize: 14, opacity: 0.6 }}>{last.result.so ? ' KS' : last.result.ot ? ' POD' : ''}</span></span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.away)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.away).short}</b></span>
+          </div>
           <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Streli {last.result.hShots}:{last.result.aShots} · {last.result.attendance} gledalcev</div>
           <Link href={`/porocilo?id=${last.id}`} className="btn sec block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '6px 0 8px' }}>Celotno poročilo s tekme</Link>
           {last.result.goals.map((g, i) => {

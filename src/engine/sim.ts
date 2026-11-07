@@ -145,7 +145,8 @@ export class MatchSim {
   }
 
   clock(t = this.t) {
-    const inP = this.inOT ? t - 3600 : t - (this.period - 1) * PERIOD;
+    const per = t >= 3600 ? 3 + Math.floor((t - 3600) / (this.playoff ? PERIOD : 300)) : Math.floor(t / PERIOD);
+    const inP = t >= 3600 ? (t - 3600) % (this.playoff ? PERIOD : 300) : t - per * PERIOD;
     const m = Math.floor(inP / 60);
     const sec = Math.floor(inP % 60);
     return `${m}:${sec.toString().padStart(2, '0')}`;

@@ -41,6 +41,8 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
   euro: <path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" />,
   building: <path d="M4 20V9l8-5 8 5v11M9 20v-6h6v6M3 20h18" />,
+  news: <path d="M5 5h11v14H6a1 1 0 0 1-1-1zM16 9h3v9a1 1 0 0 1-1 1h-2M8 9h5M8 12h5M8 15h3" />,
+  shirt: <path d="M8 4l-4 3 2 4 2-1v10h8V10l2 1 2-4-4-3c-.5 1.5-2 2.5-4 2.5S8.5 5.5 8 4z" />,
 };
 
 export function Icon({ name, size = 22 }: { name: keyof typeof ICONS | string; size?: number }) {
@@ -68,6 +70,10 @@ export function Shell({ children, nav = true }: { children: React.ReactNode; nav
   useEffect(() => {
     if (hydrated && !game && path !== '/nova') router.replace('/nova');
   }, [hydrated, game, path, router]);
+  const clubColor = game ? game.clubs.find((c) => c.id === game.userClubId)?.color : undefined;
+  useEffect(() => {
+    if (clubColor) document.documentElement.style.setProperty('--club', clubColor);
+  }, [clubColor]);
   if (!hydrated) return <div className="app" />;
   if (!game && path !== '/nova') return <div className="app" />;
   return (
@@ -98,8 +104,8 @@ export function BackLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-export const ovrColor = (o: number) => (o >= 65 ? 'var(--accent)' : o >= 55 ? 'var(--text)' : 'var(--muted)');
-export const attrColor = (v: number) => (v >= 15 ? 'var(--accent)' : v >= 11 ? 'var(--gold)' : 'var(--orange)');
+export const ovrColor = (o: number) => (o >= 68 ? '#3ddc97' : o >= 62 ? '#7cc4ff' : o >= 55 ? '#f5c451' : '#ff9f5a');
+export const attrColor = (v: number) => (v >= 16 ? '#3ddc97' : v >= 13 ? '#7cc4ff' : v >= 10 ? '#f5c451' : '#ff9f5a');
 export const formColor = (f: number) => (f >= 0.6 ? 'var(--good)' : f <= -0.6 ? 'var(--orange)' : 'var(--gold)');
 
 export const POS_LABEL: Record<Player['pos'], string> = { C: 'C', LW: 'LK', RW: 'DK', D: 'B', G: 'G' };
@@ -152,8 +158,9 @@ export function Portrait({ player, size = 64 }: { player: { first: string; last:
       </span>
     );
   return (
-    <span className="h" style={{ ...box, fontSize: size * 0.45, color: 'var(--accent)' }}>
-      {player.number}
+    <span className="h" style={{ ...box, fontSize: size * 0.36, color: '#fff', background: 'linear-gradient(135deg, color-mix(in srgb, var(--club) 70%, #1a2335), #1a2335)' }}>
+      {player.first[0]}
+      {player.last[0]}
     </span>
   );
 }
@@ -166,3 +173,16 @@ export const INTEREST_STYLE: Record<'visok' | 'srednji' | 'nizek' | 'ne pride', 
   nizek: { bg: '#3d2a17', fg: '#f5c18f', label: 'Interes nizek' },
   'ne pride': { bg: '#4d2a1f', fg: '#f5a98f', label: 'Ne pride' },
 };
+
+// gradient iz barv dveh klubov za "hero" kartice
+export const heroBg = (a: string, b?: string) =>
+  `linear-gradient(135deg, color-mix(in srgb, ${a} 85%, #000) 0%, color-mix(in srgb, ${a} 45%, #0b1220) 48%, color-mix(in srgb, ${b ?? a} 55%, #0b1220) 100%)`;
+
+export function SectionTitle({ title, href, link }: { title: string; href?: string; link?: string }) {
+  return (
+    <div className="section-title">
+      <h2>{title}</h2>
+      {href && <Link href={href}>{link ?? 'Vse'}</Link>}
+    </div>
+  );
+}

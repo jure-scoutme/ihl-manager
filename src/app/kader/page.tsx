@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { POS_LABEL, Shell, formColor, ovrColor } from '@/components/ui';
+import { POS_LABEL, Portrait, Shell, formColor, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { ageOf } from '@/engine/players';
 import { clubPlayers } from '@/engine/season';
@@ -26,7 +26,7 @@ export default function Kader() {
           <h1 className="h title">Kader</h1>
           <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{roster.length} igralcev · povp. ocena {avg} · plače {wages.toLocaleString('sl-SI')} €/mes</div>
         </div>
-        <Link href="/postave" className="btn sec" style={{ display: 'flex', alignItems: 'center' }}>Postave</Link>
+        <Link href="/postave" className="btn" style={{ display: 'flex', alignItems: 'center' }}>Postave</Link>
       </header>
       <div className="page">
         <div className="seg">
@@ -34,32 +34,28 @@ export default function Kader() {
             <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>
           ))}
         </div>
-        <div className="card" style={{ padding: '0 6px' }}>
-          <table className="t">
-            <thead>
-              <tr><th>#</th><th>Igralec</th><th>Poz</th><th className="num">Let</th><th className="num">{tab === 'G' ? '%' : 'T'}</th><th className="num">Ocena</th><th></th></tr>
-            </thead>
-            <tbody>
-              {list.map((p) => {
-                const sv = p.stats.sa ? ((p.stats.sa - p.stats.ga) / p.stats.sa).toFixed(3).slice(1) : '—';
-                return (
-                  <tr key={p.id}>
-                    <td className="muted">{p.number}</td>
-                    <td>
-                      <Link href={`/igralec?id=${p.id}`} style={{ fontWeight: 600 }}>{p.first[0]}. {p.last}</Link>
-                      {p.injuryDays > 0 && <span style={{ color: 'var(--bad)', fontSize: 11 }}> poškodba</span>}
-                      {p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> ▲</span>}
-                    </td>
-                    <td>{POS_LABEL[p.pos]}</td>
-                    <td className="num">{ageOf(p, game.seasonYear)}</td>
-                    <td className="num muted">{tab === 'G' ? sv : p.stats.g + p.stats.a}</td>
-                    <td className="num ovr" style={{ color: ovrColor(p.ovr) }}>{p.ovr}</td>
-                    <td style={{ width: 20 }}><span className="dot" style={{ background: p.injuryDays > 0 ? '#4a5a78' : formColor(p.form) }} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="card" style={{ padding: '4px 14px' }}>
+          {list.map((p) => {
+            const sv = p.stats.sa ? ((p.stats.sa - p.stats.ga) / p.stats.sa).toFixed(3).slice(1) : '—';
+            return (
+              <Link key={p.id} href={`/igralec?id=${p.id}`} className="list-row">
+                <Portrait player={p} size={42} />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 14 }}>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.first} {p.last}</span>
+                    {p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}>▲</span>}
+                  </span>
+                  <span className="muted" style={{ display: 'flex', gap: 6, fontSize: 12, marginTop: 2, alignItems: 'center' }}>
+                    <span className="pill" style={{ height: 18, fontSize: 10 }}>{POS_LABEL[p.pos]}</span>
+                    #{p.number} · {ageOf(p, game.seasonYear)} let · {tab === 'G' ? `${sv} %` : `${p.stats.g + p.stats.a} tč`}
+                    {p.injuryDays > 0 && <span style={{ color: 'var(--bad)' }}>· poškodba</span>}
+                  </span>
+                </span>
+                <span className="dot" style={{ background: p.injuryDays > 0 ? '#4a5a78' : formColor(p.form) }} />
+                <span className="badge" style={{ background: `color-mix(in srgb, ${ovrColor(p.ovr)} 16%, transparent)`, color: ovrColor(p.ovr) }}>{p.ovr}</span>
+              </Link>
+            );
+          })}
         </div>
         <div className="muted" style={{ fontSize: 11, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           <span><span className="dot" style={{ background: 'var(--good)' }} /> dobra forma</span>

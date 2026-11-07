@@ -33,6 +33,7 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   const oppId = us ? f.away : f.home;
   const derby = [['czv', 'par'], ['med', 'zag', 'mla'], ['tri', 'sla', 'cel']].some((g) => g.includes(f.home) && g.includes(f.away));
 
+  state.decisions = (state.decisions ?? []).filter((d) => !(d.kind === 'konferenca' && d.fixtureId === f.id));
   // niz in navijači
   state.streak = won ? Math.max(0, state.streak ?? 0) + 1 : Math.min(0, state.streak ?? 0) - 1;
   addFans(state, (won ? 1 : -1) * (derby ? 2 : 1) + (won && my - op >= 4 ? 1 : 0));
