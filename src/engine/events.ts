@@ -119,8 +119,11 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   const home = state.clubs.find((c) => c.id === f.home)!;
   checkAchievements(state, { won, my, op, derby, hatTrick: Object.entries(goalsBy).some(([pid, g]) => g >= 3 && state.players[pid]?.clubId === state.userClubId), soldOut: us && r.attendance >= home.arena.capacity });
 
-  // konferenca po tekmi
-  if (!state.pressDone!.includes(f.id + ':po')) {
+  // konferenca po tekmi: ne po vsaki; pogosteje po derbijih, končnici, visokih rezultatih in če pred tekmo ni bilo konference
+  const hadPre = state.pressDone!.includes(f.id + ':pred+');
+  const notable = f.stage !== 'redni' || derby || Math.abs(my - op) >= 5 || (state.streak ?? 0) === 5 || (state.streak ?? 0) === -3;
+  const postChance = (notable ? 0.6 : 0.22) * (hadPre ? 0.3 : 1);
+  if (!state.pressDone!.includes(f.id + ':po') && pressRoll(state, f.id + 'post') < postChance) {
     state.pressDone!.push(f.id + ':po');
     const mine = (r.box ?? []).filter((b) => (us ? b[1] === 0 : b[1] === 1));
     const best = [...mine].sort((a, b) => b[2] * 2 + b[3] - (a[2] * 2 + a[3]))[0];
@@ -182,12 +185,27 @@ function standingsLite(state: GameState) {
 }
 
 // --- konferenca pred tekmo (na dan tekme) ---
+const isDerbyPair = (a: string, b: string) => [['czv', 'par'], ['med', 'zag', 'mla'], ['tri', 'sla', 'cel']].some((g) => g.includes(a) && g.includes(b));
+// determinističen "met kocke" za posamezno tekmo
+function pressRoll(state: GameState, key: string) {
+  let h = state.seed;
+  for (let i = 0; i < key.length; i++) h = (Math.imul(h ^ key.charCodeAt(i), 2654435761) >>> 0);
+  return (h % 10000) / 10000;
+}
+
 export function preMatchPress(state: GameState, f: Fixture, standingPos: (id: string) => number) {
   ensureV2(state);
   if (state.pressDone!.includes(f.id + ':pred')) return;
   state.pressDone!.push(f.id + ':pred');
   if (state.pressDone!.length > 200) state.pressDone = state.pressDone!.slice(-100);
-  void standingPos;
+  if (f.stage === 'prijateljska') return;
+  // konference niso pred vsako tekmo: pogosteje pred derbiji, končnico in vrhunskimi tekmami
+  const opp = f.home === state.userClubId ? f.away : f.home;
+  const big = f.stage !== 'redni' || isDerbyPair(f.home, f.away) || (standingPos(state.userClubId) <= 3 && standingPos(opp) <= 3);
+  const recent = (state.pressDone ?? []).slice(-3).some((x) => x.endsWith(':pred+'));
+  const chance = (big ? 0.6 : 0.28) * (recent ? 0.4 : 1);
+  if (pressRoll(state, f.id + 'pre') >= chance) return;
+  state.pressDone!.push(f.id + ':pred+');
   const q = buildPress(state, 'pre', pressBase(state, f));
   push(state, { kind: 'konferenca', blocking: false, fixtureId: f.id, expires: state.date, title: 'Novinarska konferenca pred tekmo', body: q.body, options: q.options });
 }
