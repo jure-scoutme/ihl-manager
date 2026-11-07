@@ -18,11 +18,38 @@ export default function Tekma() {
   const update = useGame((s) => s.update);
   const router = useRouter();
   const simRef = useRef<MatchSim | null>(null);
+  const fixtureIdRef = useRef<string | null>(null);
   const [, setTick] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [running, setRunning] = useState(false);
   const [timeoutUsed, setTimeoutUsed] = useState(false);
   const fixture = game ? userFixtureToday(game) : undefined;
+
+  // če zapustiš tekmo (drug zavihek v aplikaciji, zapreš brskalnik), se odsimulira do konca in shrani
+  useEffect(() => {
+    const finishAndSave = () => {
+      const sim = simRef.current;
+      const fx = fixtureIdRef.current;
+      if (!sim || !fx) return;
+      if (!sim.over) sim.runToEnd();
+      useGame.getState().update((g) => {
+        const f = g.fixtures.find((x) => x.id === fx);
+        if (f && !f.played) applyResult(g, f, sim);
+      });
+      simRef.current = null;
+      fixtureIdRef.current = null;
+    };
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') setRunning(false); // ob preklopu aplikacije samo pavza
+    };
+    window.addEventListener('pagehide', finishAndSave);
+    document.addEventListener('visibilitychange', onHide);
+    return () => {
+      window.removeEventListener('pagehide', finishAndSave);
+      document.removeEventListener('visibilitychange', onHide);
+      finishAndSave();
+    };
+  }, []);
 
   useEffect(() => {
     if (!running) return;
@@ -45,6 +72,7 @@ export default function Tekma() {
     const g = useGame.getState().game!;
     const f = g.fixtures.find((x) => x.id === fixture!.id)!;
     simRef.current = makeSim(g, f);
+    fixtureIdRef.current = f.id;
     setRunning(true);
     setTick((t) => t + 1);
   };
@@ -58,7 +86,7 @@ export default function Tekma() {
         <div className="page">
           <h1 className="h title">{t('Tekma')}</h1>
           <section className="hero" style={{ textAlign: 'center', background: heroBg(clubOf(fixture!.home).color, clubOf(fixture!.away).color) }}>
-            <div className="pill" style={{ background: 'rgba(255,255,255,.18)' }}>DANES · {fmtDate(game.date).toUpperCase()}</div>
+            <div className="pill" style={{ background: 'rgba(255,255,255,.18)' }}>{t('DANES ·')} {fmtDate(game.date).toUpperCase()}</div>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 18, margin: '18px 0 10px' }}>
               <Crest club={clubOf(fixture!.home)} size={64} /><span className="score" style={{ fontSize: 24, opacity: 0.7 }}>VS</span><Crest club={clubOf(fixture!.away)} size={64} />
             </div>
@@ -99,6 +127,7 @@ export default function Tekma() {
     });
     const fid = fixture!.id;
     simRef.current = null;
+    fixtureIdRef.current = null;
     router.push(`/porocilo?id=${fid}`);
   };
 
@@ -111,7 +140,7 @@ export default function Tekma() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(sim.home.clubId)} size={52} /><div className="h" style={{ fontSize: 15 }}>{sim.home.name}</div></div>
             <div style={{ textAlign: 'center' }}>
               <div className="score" style={{ fontSize: 56, lineHeight: 1 }}>{sim.home.score}<span style={{ opacity: 0.5, margin: '0 6px' }}>:</span>{sim.away.score}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4, opacity: 0.9 }}>{period}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4, opacity: 0.9 }}>{t(period)}</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(sim.away.clubId)} size={52} /><div className="h" style={{ fontSize: 15 }}>{sim.away.name}</div></div>
           </div>
@@ -124,7 +153,7 @@ export default function Tekma() {
             ].map(([a, l, b]) => (
               <div key={l as string} style={{ display: 'contents' }}>
                 <span style={{ fontWeight: 800, textAlign: 'left' }}>{a}</span>
-                <span style={{ opacity: 0.75, textAlign: 'center' }}>{l}</span>
+                <span style={{ opacity: 0.75, textAlign: 'center' }}>{t(l)}</span>
                 <span style={{ fontWeight: 800, textAlign: 'right' }}>{b}</span>
               </div>
             ))}
@@ -146,7 +175,7 @@ export default function Tekma() {
             {feed.map((e, i) => (
               <div key={i} className={`ev ${e.kind === 'gol' && !sim.shootout ? 'gol' : ''}`}>
                 <span className="t" style={{ color: e.kind === 'gol' ? 'var(--accent)' : undefined }}>{e.kind === 'tretjina' || e.kind === 'konec' ? '' : sim.clock(e.t)}</span>
-                <span style={{ fontWeight: e.kind === 'gol' || e.kind === 'konec' ? 700 : 400, color: e.kind === 'kazen' ? 'var(--gold)' : e.kind === 'gol' ? 'var(--accent)' : undefined }}>{e.text}</span>
+                <span style={{ fontWeight: e.kind === 'gol' || e.kind === 'konec' ? 700 : 400, color: e.kind === 'kazen' ? 'var(--gold)' : e.kind === 'gol' ? 'var(--accent)' : undefined }}>{t(e.text)}</span>
               </div>
             ))}
           </div>
@@ -195,13 +224,13 @@ function LastMatch() {
       )}
       {last?.result && (
         <section className="card">
-          <div className="lbl">Zadnja tekma · {fmtDate(last.date)}</div>
+          <div className="lbl">{t('Zadnja tekma ·')} {fmtDate(last.date)}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', margin: '12px 0' }}>
             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.home)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.home).short}</b></span>
             <span className="score" style={{ fontSize: 40 }}>{last.result.hg}:{last.result.ag}<span style={{ fontSize: 14, opacity: 0.6 }}>{last.result.so ? ' KS' : last.result.ot ? ' POD' : ''}</span></span>
             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.away)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.away).short}</b></span>
           </div>
-          <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Streli {last.result.hShots}:{last.result.aShots} · {last.result.attendance} gledalcev</div>
+          <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{t('Streli')} {last.result.hShots}:{last.result.aShots} · {last.result.attendance} {t('gledalcev')}</div>
           <Link href={`/porocilo?id=${last.id}`} className="btn sec block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '6px 0 8px' }}>{t('Celotno poročilo s tekme')}</Link>
           {last.result.goals.map((g, i) => {
             const p = game.players[g.scorer];
@@ -215,7 +244,7 @@ function LastMatch() {
           })}
         </section>
       )}
-      {!last && !next && <p className="muted">Ni tekem.</p>}
+      {!last && !next && <p className="muted">{t('Ni tekem.')}</p>}
     </div>
   );
 }

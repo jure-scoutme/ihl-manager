@@ -74,6 +74,14 @@ export function Shell({ children, nav = true }: { children: React.ReactNode; nav
   }, [hydrated, game, path, router]);
   const clubColor = game ? game.clubs.find((c) => c.id === game.userClubId)?.color : undefined;
   useEffect(() => {
+    // prosi brskalnik, naj shranjene podatke ohrani trajno (da jih ne pobriše ob pomanjkanju prostora)
+    try {
+      navigator.storage?.persist?.();
+    } catch {
+      /* */
+    }
+  }, []);
+  useEffect(() => {
     if (clubColor) document.documentElement.style.setProperty('--club', clubColor);
   }, [clubColor]);
   if (!hydrated) return <div className="app" />;
@@ -98,10 +106,11 @@ export function Shell({ children, nav = true }: { children: React.ReactNode; nav
 }
 
 export function BackLink({ href, label }: { href: string; label: string }) {
+  const tr = useT();
   return (
     <Link href={href} className="muted" style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, fontSize: 13, height: 32 }}>
       <Icon name="back" size={18} />
-      {label}
+      {tr(label)}
     </Link>
   );
 }

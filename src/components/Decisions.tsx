@@ -23,12 +23,12 @@ export function Decisions() {
           <div className="row">
             <span className="lbl" style={{ color: d.blocking ? 'var(--gold)' : undefined }}>{t(d.kind === 'konferenca' ? 'Mediji' : d.kind === 'garderoba' ? 'Slačilnica' : 'Uprava')}{d.blocking ? ` · ${t('zahteva odločitev')}` : ''}</span>
           </div>
-          <div className="h" style={{ fontSize: 20, margin: '6px 0 4px' }}>{d.title}</div>
-          <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 10px' }}>{d.body}</p>
+          <div className="h" style={{ fontSize: 20, margin: '6px 0 4px' }}>{t(d.title)}</div>
+          <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 10px' }}>{t(d.body)}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {d.options.map((o, i) => (
               <button key={i} className="btn sec" style={{ textAlign: 'left', height: 'auto', minHeight: 44, padding: '10px 14px', lineHeight: 1.35 }} onClick={() => setResult(resolve(d.id, i) || 'Odločitev sprejeta.')}>
-                {o.label}
+                {t(o.label)}
               </button>
             ))}
             {d.kind === 'konferenca' && (

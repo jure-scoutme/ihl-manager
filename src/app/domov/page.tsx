@@ -67,27 +67,27 @@ export default function Domov() {
 
         {game.phase === 'konec' && (
           <section className="hero" style={{ background: heroBg(clubOf(game.champion!).color) }}>
-            <div className="lbl" style={{ color: 'rgba(255,255,255,.75)' }}>Konec sezone {seasonLabel(game.seasonYear)}</div>
+            <div className="lbl" style={{ color: 'rgba(255,255,255,.75)' }}>{t('Konec sezone')} {seasonLabel(game.seasonYear)}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
               <Crest club={clubOf(game.champion!)} size={56} />
-              <div><div style={{ fontSize: 13, opacity: 0.8 }}>Prvak IHL</div><div className="h" style={{ fontSize: 28 }}>{clubOf(game.champion!).short}</div></div>
+              <div><div style={{ fontSize: 13, opacity: 0.8 }}>{t('Prvak IHL')}</div><div className="h" style={{ fontSize: 28 }}>{clubOf(game.champion!).short}</div></div>
             </div>
-            <p style={{ fontSize: 13, margin: '0 0 14px', opacity: 0.85 }}>Redni del ste končali na {myPos}. mestu. Cilj uprave: {club.boardGoal}.</p>
-            <button className="btn white block" onClick={() => update((g) => setSummary(startNewSeason(g)))}>Začni sezono {seasonLabel(game.seasonYear + 1)}</button>
+            <p style={{ fontSize: 13, margin: '0 0 14px', opacity: 0.85 }}>{t('Redni del ste končali na {p}. mestu. Cilj uprave: {g}.', { p: myPos, g: t(club.boardGoal) })}</p>
+            <button className="btn white block" onClick={() => update((g) => setSummary(startNewSeason(g)))}>{t('Začni sezono')} {seasonLabel(game.seasonYear + 1)}</button>
           </section>
         )}
 
         {summary && (
           <section className="card">
-            <div className="row"><span className="lbl">Razvoj igralcev čez poletje</span><button className="chip" onClick={() => setSummary(null)}>{t('Zapri')}</button></div>
+            <div className="row"><span className="lbl">{t('Razvoj igralcev čez poletje')}</span><button className="chip" onClick={() => setSummary(null)}>{t('Zapri')}</button></div>
             {summary.changes.sort((a, b) => b.after - b.before - (a.after - a.before)).slice(0, 10).map((c) => (
               <div key={c.playerId} className="list-row" style={{ justifyContent: 'space-between', fontSize: 13 }}>
-                <span>{c.name} · {c.age}<br /><span className="muted" style={{ fontSize: 11 }}>{c.reason}</span></span>
+                <span>{c.name} · {c.age}<br /><span className="muted" style={{ fontSize: 11 }}>{t(c.reason)}</span></span>
                 <span><span className="muted">{c.before} → {c.after} </span><b style={{ color: c.after > c.before ? 'var(--good)' : 'var(--bad)' }}>{c.after > c.before ? '+' : ''}{c.after - c.before}</b></span>
               </div>
             ))}
-            {summary.retired.length > 0 && <p style={{ fontSize: 13 }}><span className="lbl">Upokojitve: </span>{summary.retired.join(', ')}</p>}
-            {summary.youth.length > 0 && <p style={{ fontSize: 13 }}><span className="lbl">Novi mladinci: </span>{summary.youth.join(', ')}</p>}
+            {summary.retired.length > 0 && <p style={{ fontSize: 13 }}><span className="lbl">{t('Upokojitve:')} </span>{summary.retired.join(', ')}</p>}
+            {summary.youth.length > 0 && <p style={{ fontSize: 13 }}><span className="lbl">{t('Novi mladinci:')} </span>{summary.youth.join(', ')}</p>}
           </section>
         )}
 
@@ -105,12 +105,12 @@ export default function Domov() {
                   <Link key={id} href={id === club.id ? '/kader' : `/ekipa?id=${id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <Crest club={clubOf(id)} size={60} />
                     <div className="h" style={{ fontSize: 16, textAlign: 'center' }}>{clubOf(id).short}</div>
-                    <div style={{ fontSize: 11, opacity: 0.75 }}>{st.findIndex((s) => s.clubId === id) + 1}. mesto · {st.find((s) => s.clubId === id)!.pts} tč</div>
+                    <div style={{ fontSize: 11, opacity: 0.75 }}>{st.findIndex((s) => s.clubId === id) + 1}. {t('mesto ·')} {st.find((s) => s.clubId === id)!.pts} {t('tč')}</div>
                   </Link>
                 ),
               )}
             </div>
-            <div style={{ fontSize: 12, opacity: 0.8, textAlign: 'center' }}>{clubOf(next.home).arena.name}, {clubOf(next.home).arena.city} · {clubOf(next.home).arena.capacity} mest</div>
+            <div style={{ fontSize: 12, opacity: 0.8, textAlign: 'center' }}>{clubOf(next.home).arena.name}, {clubOf(next.home).arena.city} · {clubOf(next.home).arena.capacity} {t('mest')}</div>
             {today && (
               <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                 <button className="btn white" style={{ flex: 1 }} onClick={() => router.push('/tekma')}>{t('▶ Igraj v živo')}</button>
@@ -144,7 +144,7 @@ export default function Domov() {
               [t('Uprava'), Math.round(game.board ?? 55), (game.board ?? 55) < 30 ? 'var(--bad)' : 'var(--gold)'],
             ].map(([l, v, c]) => (
               <div key={l as string}>
-                <div className="row" style={{ marginBottom: 5 }}><span className="muted" style={{ fontWeight: 600 }}>{l}</span><span style={{ fontWeight: 700 }}>{v}%</span></div>
+                <div className="row" style={{ marginBottom: 5 }}><span className="muted" style={{ fontWeight: 600 }}>{t(l)}</span><span style={{ fontWeight: 700 }}>{v}%</span></div>
                 <Bar value={v as number} color={c as string | undefined} />
               </div>
             ))}
@@ -159,11 +159,11 @@ export default function Domov() {
                 <span style={{ width: 36, height: 36, borderRadius: 12, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: NEWS_COLOR[n.kind], background: `color-mix(in srgb, ${NEWS_COLOR[n.kind]} 16%, transparent)` }} aria-hidden="true"><Icon name={NEWS_ICON[n.kind]} size={18} /></span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: n.read ? 500 : 700 }}>{n.title}</span>
+                    <span style={{ fontSize: 14, fontWeight: n.read ? 500 : 700 }}>{t(n.title)}</span>
                     {!n.read && <span className="dot" style={{ background: 'var(--accent)', marginTop: 6, flex: 'none' }} />}
                   </span>
-                  <span className="muted" style={{ display: 'block', fontSize: 12, marginTop: 2 }}>{NEWS_LABEL[n.kind]} · {fmtDate(n.date)}</span>
-                  {openNews === n.id && <span style={{ display: 'block', fontSize: 13, marginTop: 8, lineHeight: 1.55, color: '#d6deec' }}>{n.body}</span>}
+                  <span className="muted" style={{ display: 'block', fontSize: 12, marginTop: 2 }}>{t(NEWS_LABEL[n.kind])} · {fmtDate(n.date)}</span>
+                  {openNews === n.id && <span style={{ display: 'block', fontSize: 13, marginTop: 8, lineHeight: 1.55, color: '#d6deec' }}>{t(n.body)}</span>}
                 </span>
               </button>
               {openNews === n.id && n.fixtureId && <Link href={`/porocilo?id=${n.fixtureId}`} style={{ display: 'block', margin: '-4px 0 12px 48px', fontSize: 13, fontWeight: 600, color: 'var(--accent2)' }}>{t('Poročilo s tekme →')}</Link>}
@@ -195,7 +195,7 @@ export default function Domov() {
         <div className="cta">
           <button className="btn block" onClick={() => setRunning(true)} disabled={blocked} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>{blocked ? t('Najprej sprejmi odločitev') : t('Nadaljuj')}</span>
-            <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 600 }}>{next ? `tekma ${fmtDate(next.date).replace(/ \d{4}$/, '')}` : ''} ›</span>
+            <span style={{ fontSize: 12, opacity: 0.85, fontWeight: 600 }}>{next ? `${t('tekma')} ${fmtDate(next.date).replace(/ \d{4}$/, '')}` : ''} ›</span>
           </button>
         </div>
       )}

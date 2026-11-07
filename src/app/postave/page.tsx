@@ -51,7 +51,7 @@ export default function Postave() {
     const p = P(getAt(lines, path));
     return (
       <button className="slot" onClick={() => setEdit({ path, group, goalie })}>
-        <small>{label}</small>
+        <small>{t(label)}</small>
         <span style={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: p?.injuryDays ? 'var(--bad)' : undefined }}>{p ? `${p.first[0]}. ${p.last}` : 'prazno'}</span>
           {p && <span className="ovr" style={{ fontSize: 15, color: ovrColor(p.ovr) }}>{p.ovr}</span>}
@@ -70,8 +70,8 @@ export default function Postave() {
       <div className="page">
         <BackLink href="/kader" label="Kader" />
         <div className="row">
-          <h1 className="h title">Postave in taktika</h1>
-          <button className="btn sec" onClick={() => update((g) => { g.lines[g.userClubId] = autoLines(clubPlayers(g, g.userClubId)); })}>Samodejno</button>
+          <h1 className="h title">{t('Postave in taktika')}</h1>
+          <button className="btn sec" onClick={() => update((g) => { g.lines[g.userClubId] = autoLines(clubPlayers(g, g.userClubId)); })}>{t('Samodejno')}</button>
         </div>
 
         <div className="seg">
@@ -84,7 +84,7 @@ export default function Postave() {
           <>
             {lines.f.map((_, i) => (
               <section key={i}>
-                <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. napad · {Math.round(tac.lineUsage[i] * 100)} % minutaže</div>
+                <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. {t('napad ·')} {Math.round(tac.lineUsage[i] * 100)} {t('% minutaže')}</div>
                 <div className="grid3">
                   <Slot path={['f', i, 0]} group="main" label="LK" />
                   <Slot path={['f', i, 1]} group="main" label="C" />
@@ -94,7 +94,7 @@ export default function Postave() {
             ))}
             {lines.d.map((_, i) => (
               <section key={i}>
-                <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. obrambni par</div>
+                <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. {t('obrambni par')}</div>
                 <div className="grid2">
                   <Slot path={['d', i, 0]} group="main" label="LB" />
                   <Slot path={['d', i, 1]} group="main" label="DB" />
@@ -102,7 +102,7 @@ export default function Postave() {
               </section>
             ))}
             <section>
-              <div className="lbl" style={{ marginBottom: 6 }}>Golmana</div>
+              <div className="lbl" style={{ marginBottom: 6 }}>{t('Golmana')}</div>
               <div className="grid2">
                 <Slot path={['g', 0]} group="main" label="Začetni" goalie />
                 <Slot path={['g', 1]} group="main" label="Rezerva" goalie />
@@ -114,7 +114,7 @@ export default function Postave() {
         {tab !== 'main' &&
           lines[tab].map((u, i) => (
             <section key={i}>
-              <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. enota</div>
+              <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. {t('enota')}</div>
               <div className={u.f.length === 3 ? 'grid3' : 'grid2'} style={{ marginBottom: 6 }}>
                 {u.f.map((_, j) => <Slot key={j} path={[tab, i, 'f', j]} group={tab} label="Napadalec" />)}
               </div>
@@ -131,30 +131,30 @@ export default function Postave() {
               <button key={k} className={`chip ${tac.forecheck === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ forecheck: k })}>{t(l)}</button>
             ))}
           </div>
-          <div className="lbl">Tempo</div>
+          <div className="lbl">{t('Tempo')}</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {([['hiter', 'Hiter'], ['normalen', 'Normalen'], ['pocasen', 'Počasen']] as const).map(([k, l]) => (
               <button key={k} className={`chip ${tac.tempo === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ tempo: k })}>{t(l)}</button>
             ))}
           </div>
-          <div className="lbl">Minutaža napadov</div>
+          <div className="lbl">{t('Minutaža napadov')}</div>
           <div style={{ display: 'flex', gap: 6 }}>
             {([['Prvi napad', [0.4, 0.3, 0.2, 0.1]], ['Normalno', [0.34, 0.28, 0.22, 0.16]], ['Enakomerno', [0.27, 0.26, 0.25, 0.22]]] as const).map(([l, v]) => (
               <button key={l} className={`chip ${tac.lineUsage[0] === v[0] ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ lineUsage: [...v] as Tactics['lineUsage'] })}>{t(l)}</button>
             ))}
           </div>
-          <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>Agresiven forček prinese več posesti in strelov, a tudi več kazni. Hiter tempo pomeni več priložnosti na obeh straneh in hitrejšo utrujenost.</p>
+          <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>{t('Agresiven forček prinese več posesti in strelov, a tudi več kazni. Hiter tempo pomeni več priložnosti na obeh straneh in hitrejšo utrujenost.')}</p>
         </section>
       </div>
 
       {edit && (
         <div className="sheet" onClick={() => setEdit(null)}>
           <div className="sheet-in" onClick={(e) => e.stopPropagation()}>
-            <div className="row" style={{ marginBottom: 8 }}><span className="lbl">Izberi igralca</span><button className="chip" onClick={() => setEdit(null)}>{t('Zapri')}</button></div>
+            <div className="row" style={{ marginBottom: 8 }}><span className="lbl">{t('Izberi igralca')}</span><button className="chip" onClick={() => setEdit(null)}>{t('Zapri')}</button></div>
             {candidates.map((p) => (
               <button key={p.id} className="pick" onClick={() => choose(p.id)} disabled={p.injuryDays > 0} style={{ opacity: p.injuryDays > 0 ? 0.45 : 1 }}>
                 <span className="muted">{POS_LABEL[p.pos]}</span>
-                <span>{p.first} {p.last}{inUse.has(p.id) ? <span className="muted" style={{ fontSize: 11 }}> · v postavi</span> : ''}{p.injuryDays > 0 ? <span style={{ color: 'var(--bad)', fontSize: 11 }}> · poškodba</span> : ''}</span>
+                <span>{p.first} {p.last}{inUse.has(p.id) ? <span className="muted" style={{ fontSize: 11 }}> {t('· v postavi')}</span> : ''}{p.injuryDays > 0 ? <span style={{ color: 'var(--bad)', fontSize: 11 }}> {t('· poškodba')}</span> : ''}</span>
                 <span className="muted" style={{ fontSize: 12, textAlign: 'right' }}>{Math.round(p.energy)}%</span>
                 <span className="ovr" style={{ textAlign: 'right', color: ovrColor(p.ovr) }}>{p.ovr}</span>
               </button>

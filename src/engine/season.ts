@@ -21,7 +21,7 @@ export const addDays = (d: string, n: number) => {
 const DATE_NAMES: Record<string, { d: string[]; m: string[] }> = {
   sl: { d: ['ned', 'pon', 'tor', 'sre', 'čet', 'pet', 'sob'], m: ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'] },
   hr: { d: ['ned', 'pon', 'uto', 'sri', 'čet', 'pet', 'sub'], m: ['sij', 'velj', 'ožu', 'tra', 'svi', 'lip', 'srp', 'kol', 'ruj', 'lis', 'stu', 'pro'] },
-  sr: { d: ['ned', 'pon', 'uto', 'sre', 'čet', 'pet', 'sub'], m: ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec'] },
+  sr: { d: ['нед', 'пон', 'уто', 'сре', 'чет', 'пет', 'суб'], m: ['јан', 'феб', 'мар', 'апр', 'мај', 'јун', 'јул', 'авг', 'сеп', 'окт', 'нов', 'дец'] },
   en: { d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], m: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] },
 };
 let dateLang = 'sl';

@@ -53,11 +53,11 @@ export default function Koledar() {
         <BackLink href="/domov" label="Domov" />
         <div className="row">
           <h1 className="h title">{t('Koledar')}</h1>
-          <span className="muted" style={{ fontSize: 12 }}>Danes: {fmtDate(game.date)}</span>
+          <span className="muted" style={{ fontSize: 12 }}>{t('Danes:')} {fmtDate(game.date)}</span>
         </div>
         <div className="row">
           <button className="chip" onClick={() => shift(-1)} aria-label="Prejšnji mesec">‹</button>
-          <span className="h" style={{ fontSize: 20 }}>{MONTHS[m - 1]} {y}</span>
+          <span className="h" style={{ fontSize: 20 }}>{t(MONTHS[m - 1])} {y}</span>
           <button className="chip" onClick={() => shift(1)} aria-label="Naslednji mesec">›</button>
         </div>
         <div className="card" style={{ padding: 8 }}>
@@ -94,7 +94,7 @@ export default function Koledar() {
                   }}
                 >
                   <div style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? 'var(--gold)' : undefined }}>{Number(d.slice(8))}</div>
-                  {mine && <div style={{ fontSize: 10, fontWeight: 700, color, marginTop: 2 }}>{label}</div>}
+                  {mine && <div style={{ fontSize: 10, fontWeight: 700, color, marginTop: 2 }}>{t(label)}</div>}
                   {mine && stage[mine.stage] && <div style={{ fontSize: 9, color: 'var(--gold)' }}>{stage[mine.stage]}</div>}
                   {!mine && fx.length > 0 && <div style={{ width: 4, height: 4, borderRadius: 2, background: 'var(--muted)', margin: '6px auto 0' }} />}
                 </button>
@@ -103,16 +103,16 @@ export default function Koledar() {
           </div>
         </div>
         <div className="muted" style={{ fontSize: 11, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <span><span className="dot" style={{ background: '#15283d', border: '1px solid var(--line2)' }} /> doma</span>
-          <span>@ v gosteh</span>
-          <span><span className="dot" style={{ background: 'var(--muted)', width: 5, height: 5 }} /> druge tekme</span>
-          <span style={{ color: 'var(--gold)' }}>□ danes</span>
+          <span><span className="dot" style={{ background: '#15283d', border: '1px solid var(--line2)' }} /> {t('doma')}</span>
+          <span>{t('@ v gosteh')}</span>
+          <span><span className="dot" style={{ background: 'var(--muted)', width: 5, height: 5 }} /> {t('druge tekme')}</span>
+          <span style={{ color: 'var(--gold)' }}>{t('□ danes')}</span>
         </div>
 
         {sel && (
           <section className="card">
             <div className="lbl" style={{ marginBottom: 8 }}>{fmtDate(sel)}</div>
-            {selFixtures.length === 0 && <p className="muted" style={{ fontSize: 13, margin: '0 0 8px' }}>Ta dan ni tekem.</p>}
+            {selFixtures.length === 0 && <p className="muted" style={{ fontSize: 13, margin: '0 0 8px' }}>{t('Ta dan ni tekem.')}</p>}
             {selFixtures.map((f) => (
               <div key={f.id} className="row" style={{ padding: '8px 0', borderTop: '1px solid var(--line)', fontSize: 13 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, fontWeight: f.home === me ? 700 : 500 }}><Crest club={clubOf(f.home)} size={24} />{clubOf(f.home).short}</span>
@@ -128,13 +128,13 @@ export default function Koledar() {
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
                   <input type="checkbox" checked={autoUser} onChange={(e) => setAutoUser(e.target.checked)} style={{ width: 18, height: 18 }} />
-                  Moje tekme odigraj s hitro simulacijo
+                  {t('Moje tekme odigraj s hitro simulacijo')}
                 </label>
-                <button className="btn block" onClick={doSim}>Simuliraj do {fmtDate(sel)}</button>
-                <span className="muted" style={{ fontSize: 11 }}>Igra se ustavi zjutraj na izbrani dan, tako da tekme tega dne še lahko odigraš.</span>
+                <button className="btn block" onClick={doSim}>{t('Simuliraj do')} {fmtDate(sel)}</button>
+                <span className="muted" style={{ fontSize: 11 }}>{t('Igra se ustavi zjutraj na izbrani dan, tako da tekme tega dne še lahko odigraš.')}</span>
               </div>
             )}
-            {msg && <p style={{ fontSize: 13, color: 'var(--accent)', margin: '10px 0 0' }}>{msg}</p>}
+            {msg && <p style={{ fontSize: 13, color: 'var(--accent)', margin: '10px 0 0' }}>{t(msg)}</p>}
           </section>
         )}
       </div>

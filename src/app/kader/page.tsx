@@ -26,7 +26,7 @@ export default function Kader() {
       <header style={{ padding: '18px 16px 0' }} className="row">
         <div>
           <h1 className="h title">{t('Kader')}</h1>
-          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{roster.length} {t('igralcev')} · {t('povp. ocena')} {avg} · {t('plače')} {wages.toLocaleString('sl-SI')} €/mes</div>
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{roster.length} {t('igralcev')} · {t('povp. ocena')} {avg} · {t('plače')} {wages.toLocaleString('sl-SI')} {t('€/mes')}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}><Link href="/mladinci" className="btn sec" style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>{t('Mladinci')}</Link><Link href="/postave" className="btn" style={{ display: 'flex', alignItems: 'center', padding: '0 14px' }}>{t('Postave')}</Link></div>
       </header>
@@ -49,8 +49,8 @@ export default function Kader() {
                   </span>
                   <span className="muted" style={{ display: 'flex', gap: 6, fontSize: 12, marginTop: 2, alignItems: 'center' }}>
                     <span className="pill" style={{ height: 18, fontSize: 10 }}>{POS_LABEL[p.pos]}</span>
-                    #{p.number} · {ageOf(p, game.seasonYear)} let · {tab === 'G' ? `${sv} %` : `${p.stats.g + p.stats.a} tč`}
-                    {p.injuryDays > 0 && <span style={{ color: 'var(--bad)' }}>· poškodba</span>}
+                    #{p.number} · {ageOf(p, game.seasonYear)} {t('let ·')} {tab === 'G' ? `${sv} %` : `${p.stats.g + p.stats.a} ${t('tč')}`}
+                    {p.injuryDays > 0 && <span style={{ color: 'var(--bad)' }}>{t('· poškodba')}</span>}
                   </span>
                 </span>
                 <span className="dot" style={{ background: p.injuryDays > 0 ? '#4a5a78' : formColor(p.form) }} />

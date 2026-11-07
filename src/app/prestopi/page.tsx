@@ -35,7 +35,7 @@ export default function Prestopi() {
           <section style={{ display: 'flex', gap: 8 }}>
             <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
               <div className="lbl" style={{ fontSize: 10 }}>{t('Prostor za plače')}</div>
-              <div className="h" style={{ fontSize: 22, color: fin.wageBudget - wages < 0 ? 'var(--bad)' : undefined }}>{eur(fin.wageBudget - wages)}<span className="muted" style={{ fontSize: 13 }}> /mes</span></div>
+              <div className="h" style={{ fontSize: 22, color: fin.wageBudget - wages < 0 ? 'var(--bad)' : undefined }}>{eur(fin.wageBudget - wages)}<span className="muted" style={{ fontSize: 13 }}> {t('/mes')}</span></div>
             </div>
             <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
               <div className="lbl" style={{ fontSize: 10 }}>{t('Kader')}</div>
@@ -61,17 +61,17 @@ export default function Prestopi() {
             <Link key={p.id} href={`/igralec?id=${p.id}&from=prestopi`} className="card" style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto', gap: 12, alignItems: 'center', padding: '10px 12px' }}>
               <span className="h" style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: ovrColor(p.ovr) }}>{p.ovr}</span>
               <span>
-                <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{p.first} {p.last}{p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> ▲ POT {p.potential}</span>}</span>
-                <span className="muted" style={{ display: 'block', fontSize: 12 }}>{POS_LABEL[p.pos]} · {ageOf(p, game.seasonYear)} let · {p.nat}{p.isAI ? ' · AI' : ''}</span>
+                <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{p.first} {p.last}{p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> {t('▲ POT')} {p.potential}</span>}</span>
+                <span className="muted" style={{ display: 'block', fontSize: 12 }}>{POS_LABEL[p.pos]} · {ageOf(p, game.seasonYear)} {t('let ·')} {p.nat}{p.isAI ? ' · AI' : ''}</span>
               </span>
               <span style={{ textAlign: 'right' }}>
                 <span style={{ display: 'block', fontWeight: 700, fontSize: 13 }}>{eur(p.wage)}</span>
-                <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 9, background: st.bg, color: st.fg, marginTop: 3 }}>{st.label}</span>
+                <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 9, background: st.bg, color: st.fg, marginTop: 3 }}>{t(st.label)}</span>
               </span>
             </Link>
           );
         })}
-        {list.length === 0 && <p className="muted">Ni prostih igralcev za ta filter.</p>}
+        {list.length === 0 && <p className="muted">{t('Ni prostih igralcev za ta filter.')}</p>}
 
         <section className="card" style={{ marginTop: 12 }}>
           <div className="lbl" style={{ marginBottom: 8 }}>{t('Nastavitve')}</div>

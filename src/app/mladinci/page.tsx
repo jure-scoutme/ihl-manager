@@ -37,10 +37,10 @@ export default function Mladinci() {
         <div className="row">
           <div>
             <h1 className="h title">{t('Mladinska šola')}</h1>
-            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Akademija stopnja {yl}/5 · članski kader {seniors}/30</div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t('Akademija stopnja')} {yl}{t('/5 · članski kader')} {seniors}/30</div>
           </div>
         </div>
-        {msg && <div className="card row" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}><span>{msg.text}</span><button className="chip" onClick={() => setMsg(null)}>{t('OK')}</button></div>}
+        {msg && <div className="card row" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}><span>{t(msg.text)}</span><button className="chip" onClick={() => setMsg(null)}>{t('OK')}</button></div>}
 
         <div className="seg">
           {([['U20', 'U20'], ['U18', 'U18'], ['lestvica', 'Lige']] as const).map(([k, l]) => (
@@ -57,7 +57,7 @@ export default function Mladinci() {
               ))}
             </div>
             <div className="card" style={{ padding: '4px 14px' }}>
-              {list.length === 0 && <p className="muted" style={{ fontSize: 13 }}>Ni igralcev.</p>}
+              {list.length === 0 && <p className="muted" style={{ fontSize: 13 }}>{t('Ni igralcev.')}</p>}
               {list.map((p) => {
                 const isG = p.pos === 'G';
                 const sv = p.stats.sa ? ((p.stats.sa - p.stats.ga) / p.stats.sa * 100).toFixed(1) : '—';
@@ -69,9 +69,9 @@ export default function Mladinci() {
                         <span style={{ display: 'block', fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.first} {p.last}</span>
                         <span className="muted" style={{ display: 'flex', gap: 6, fontSize: 12, marginTop: 2, alignItems: 'center' }}>
                           <span className="pill" style={{ height: 18, fontSize: 10 }}>{POS_LABEL[p.pos]}</span>
-                          {game.seasonYear - p.birthYear} let · {p.stats.gp} T · {isG ? `${sv} %` : `${p.stats.g}+${p.stats.a}`}
+                          {game.seasonYear - p.birthYear} {t('let ·')} {p.stats.gp} T · {isG ? `${sv} %` : `${p.stats.g}+${p.stats.a}`}
                         </span>
-                        <span style={{ display: 'block', fontSize: 11, marginTop: 2, color: p.potential >= 76 ? 'var(--gold)' : p.potential >= 69 ? 'var(--good)' : 'var(--muted)' }}>Potencial: {potLabel(p.potential)}</span>
+                        <span style={{ display: 'block', fontSize: 11, marginTop: 2, color: p.potential >= 76 ? 'var(--gold)' : p.potential >= 69 ? 'var(--good)' : 'var(--muted)' }}>{t('Potencial:')} {t(potLabel(p.potential))}</span>
                       </span>
                       <span className="badge" style={{ background: `color-mix(in srgb, ${ovrColor(p.ovr)} 16%, transparent)`, color: ovrColor(p.ovr) }}>{p.ovr}</span>
                     </Link>
@@ -80,14 +80,14 @@ export default function Mladinci() {
                 );
               })}
             </div>
-            <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>Mladinci igrajo svojo ligo vsako nedeljo. Pri 18 letih preidejo iz U18 v U20, pri 21 pa morajo v člansko ekipo, sicer odidejo. Boljša akademija prinese več in boljših talentov.</p>
+            <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>{t('Mladinci igrajo svojo ligo vsako nedeljo. Pri 18 letih preidejo iz U18 v U20, pri 21 pa morajo v člansko ekipo, sicer odidejo. Boljša akademija prinese več in boljših talentov.')}</p>
           </>
         )}
 
         {tab === 'lestvica' && (
           <>
             <div style={{ display: 'flex', gap: 6 }}>
-              {(['U20', 'U18'] as const).map((l) => <button key={l} className={`chip ${lg === l ? 'on' : ''}`} onClick={() => setLg(l)}>Liga {l}</button>)}
+              {(['U20', 'U18'] as const).map((l) => <button key={l} className={`chip ${lg === l ? 'on' : ''}`} onClick={() => setLg(l)}>{t('Liga')} {t(l)}</button>)}
             </div>
             <div className="card" style={{ padding: '4px 10px' }}>
               <table className="t">
@@ -106,7 +106,7 @@ export default function Mladinci() {
               </table>
             </div>
             <section className="card" style={{ fontSize: 13 }}>
-              <div className="lbl" style={{ marginBottom: 6 }}>Tekme tvojih mladincev</div>
+              <div className="lbl" style={{ marginBottom: 6 }}>{t('Tekme tvojih mladincev')}</div>
               {lastYouth.map((f) => (
                 <div key={f.id} className="row" style={{ padding: '5px 0' }}>
                   <span className="muted" style={{ width: 40 }}>{f.league}</span>
@@ -114,8 +114,8 @@ export default function Mladinci() {
                   <b>{f.hg}:{f.ag}{f.ot ? ' p' : ''}</b>
                 </div>
               ))}
-              {nextYouth && <div className="muted" style={{ marginTop: 6 }}>Naslednja tekma: {fmtDate(nextYouth.date)}</div>}
-              {!lastYouth.length && !nextYouth && <span className="muted">Mladinska sezona še ni začela.</span>}
+              {nextYouth && <div className="muted" style={{ marginTop: 6 }}>{t('Naslednja tekma:')} {fmtDate(nextYouth.date)}</div>}
+              {!lastYouth.length && !nextYouth && <span className="muted">{t('Mladinska sezona še ni začela.')}</span>}
             </section>
           </>
         )}

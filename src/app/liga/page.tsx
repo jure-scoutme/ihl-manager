@@ -25,7 +25,7 @@ export default function Liga() {
   return (
     <Shell>
       <header style={{ padding: '18px 16px 0' }}>
-        <h1 className="h title">Liga IHL {seasonLabel(game.seasonYear)}</h1>
+        <h1 className="h title">{t('Liga IHL')} {seasonLabel(game.seasonYear)}</h1>
       </header>
       <div className="page">
         <div className="seg">
@@ -50,7 +50,7 @@ export default function Liga() {
                 ))}
               </tbody>
             </table>
-            <p className="muted" style={{ fontSize: 11, padding: '8px 6px', margin: 0 }}>1.–2. neposredno v polfinale, 3.–6. četrtfinale. Zmaga 3 tč, zmaga po podaljšku 2, poraz po podaljšku 1.</p>
+            <p className="muted" style={{ fontSize: 11, padding: '8px 6px', margin: 0 }}>{t('1.–2. neposredno v polfinale, 3.–6. četrtfinale. Zmaga 3 tč, zmaga po podaljšku 2, poraz po podaljšku 1.')}</p>
           </div>
         )}
 
@@ -82,7 +82,7 @@ export default function Liga() {
             <div className="card" style={{ padding: '0 6px' }}>
               <div className="lbl" style={{ padding: '10px 6px 0' }}>{t('Strelci')}</div>
               <table className="t">
-                <thead><tr><th>Igralec</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></tr></thead>
+                <thead><tr><th>{t('Igralec')}</th><th>{t('Klub')}</th><th className="num">T</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></tr></thead>
                 <tbody>
                   {scorers.map((p) => (
                     <tr key={p.id}>
@@ -117,10 +117,10 @@ export default function Liga() {
 
         {tab === 'koncnica' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {game.series.length === 0 && <p className="muted">Končnica se začne po rednem delu. Igra 6 najboljših: 1. in 2. gresta neposredno v polfinale.</p>}
+            {game.series.length === 0 && <p className="muted">{t('Končnica se začne po rednem delu. Igra 6 najboljših: 1. in 2. gresta neposredno v polfinale.')}</p>}
             {game.series.map((s) => (
               <div key={s.id} className="card">
-                <div className="lbl">{stageName[s.stage]} · na {s.winsNeeded} zmage</div>
+                <div className="lbl">{t(stageName[s.stage])} · na {s.winsNeeded} {t('zmage')}</div>
                 <div className="row" style={{ marginTop: 8, fontSize: 15 }}>
                   <span style={{ fontWeight: s.winner === s.high ? 700 : 500 }}>{clubOf(s.high).short}</span>
                   <span className="h" style={{ fontSize: 22 }}>{s.hw} : {s.lw}</span>
@@ -130,7 +130,7 @@ export default function Liga() {
             ))}
             {game.pastChampions.length > 0 && (
               <div className="card">
-                <div className="lbl">Pretekli prvaki</div>
+                <div className="lbl">{t('Pretekli prvaki')}</div>
                 {game.pastChampions.map((c) => <div key={c.season} className="row" style={{ fontSize: 13, marginTop: 6 }}><span>{c.season}</span><span>{clubOf(c.clubId).short}</span></div>)}
               </div>
             )}

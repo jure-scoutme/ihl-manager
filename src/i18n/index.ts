@@ -185,21 +185,156 @@ const D: Record<string, [string, string, string]> = {
 
 const IDX: Record<Lang, number> = { sl: -1, hr: 0, sr: 1, en: 2 };
 
+// Dodatni slovarji (generirani iz source.json): ključ = slovensko besedilo
+import HR from './hr.json';
+import SR from './sr.json';
+import EN from './en.json';
+const EXT: Record<Exclude<Lang, 'sl'>, Record<string, string>> = { hr: HR as Record<string, string>, sr: SR as Record<string, string>, en: EN as Record<string, string> };
+
+function lookup(lang: Exclude<Lang, 'sl'>, s: string): string | undefined {
+  const d = D[s];
+  if (d) return d[IDX[lang]];
+  return EXT[lang][s];
+}
+
+// ---------- srbska cirilica ----------
+const LAT2CYR: Record<string, string> = {
+  a: 'а', b: 'б', c: 'ц', č: 'ч', ć: 'ћ', d: 'д', đ: 'ђ', e: 'е', f: 'ф', g: 'г', h: 'х', i: 'и', j: 'ј', k: 'к', l: 'л',
+  m: 'м', n: 'н', o: 'о', p: 'п', r: 'р', s: 'с', š: 'ш', t: 'т', u: 'у', v: 'в', z: 'з', ž: 'ж',
+};
+const DIGRAPH: Record<string, string> = { lj: 'љ', nj: 'њ', dž: 'џ' };
+const KEEP_LATIN = new Set(['IHL', 'OVR', 'PP', 'SH', 'EN', 'GAA', 'POT', 'OK', 'MVP', 'SV', 'HK', 'KHL', 'IH', 'HDD', 'PRO', 'KS', 'PR', 'PEN', 'TV', 'PWA', 'EUR']);
+function cyrWord(w: string): string {
+  // kratice (OVR, PP, IHL), besede s q/w/x/y ostanejo v latinici
+  if (w.length > 1 && w === w.toUpperCase() && KEEP_LATIN.has(w)) return w;
+  if (/[qwxy]/i.test(w)) return w;
+  let out = '';
+  for (let i = 0; i < w.length; i++) {
+    const two = w.slice(i, i + 2);
+    const low2 = two.toLowerCase();
+    if (DIGRAPH[low2]) {
+      const c = DIGRAPH[low2];
+      out += two[0] === two[0].toUpperCase() ? c.toUpperCase() : c;
+      i++;
+      continue;
+    }
+    const ch = w[i];
+    const low = ch.toLowerCase();
+    const c = LAT2CYR[low];
+    out += c ? (ch !== low ? c.toUpperCase() : c) : ch;
+  }
+  return out;
+}
+export function toCyrillic(s: string): string {
+  // ne spreminjaj {placeholderjev}
+  return s.replace(/\{[^}]*\}|[A-Za-zČčŠšŽžĆćĐđ]+/g, (m) => (m[0] === '{' ? m : cyrWord(m)));
+}
+
+// ---------- predloge (besedila motorja z {0}, {1} ...) ----------
+type Tpl = { key: string; re: RegExp; n: number; lit: number; order: string[] };
+let TPL: Tpl[] | null = null;
+function esc(x: string) { return x.replace(/[.*+?^$()|[\]\\]/g, '\\$&'); }
+function templates(): Tpl[] {
+  if (TPL) return TPL;
+  const keys = new Set<string>([...Object.keys(D), ...Object.keys(EN as Record<string, string>)]);
+  TPL = [];
+  for (const k of keys) {
+    if (!/\{\w+\}/.test(k)) continue;
+    const parts = k.split(/\{(\w+)\}/);
+    let src = '^';
+    const order: string[] = [];
+    for (let i = 0; i < parts.length; i++) {
+      if (i % 2 === 0) src += esc(parts[i]);
+      else {
+        // sosednje predloge brez ločila: prva = številka ali ime (do vejice/oklepaja), srednje do oklepaja
+        const nextAdj = i + 2 < parts.length && parts[i + 1] === '';
+        const prevAdj = i >= 2 && parts[i - 1] === '';
+        src += nextAdj ? (prevAdj ? '([^(]*)' : '(\\d+|[^,(]*)') : '([\\s\\S]*?)';
+        order.push(parts[i]);
+      }
+    }
+    src += '$';
+    const lit = parts.filter((_, i) => i % 2 === 0).join('').length;
+    if (lit < 2) continue;
+    TPL.push({ key: k, re: new RegExp(src), n: order.length, lit, order });
+  }
+  TPL.sort((a, b) => b.lit - a.lit);
+  return TPL;
+}
+
+const CACHE: Record<string, Map<string, string>> = { hr: new Map(), sr: new Map(), en: new Map() };
+
+// Prevede v ciljni jezik; za sr vrne latinico (cirilica se doda na koncu)
+let HIT = false;
+function tr(lang: Exclude<Lang, 'sl'>, s: string, depth = 0): string {
+  if (!s) return s;
+  const hit = lookup(lang, s);
+  if (hit !== undefined) { HIT = true; return hit; }
+  // obdrži presledke/ločila na robovih
+  const m0 = /^(\s*)([\s\S]*?)([\s.:!?,]*)$/.exec(s);
+  if (m0 && (m0[1] || m0[3]) && m0[2]) {
+    const inner = lookup(lang, m0[2]);
+    if (inner !== undefined) { HIT = true; return m0[1] + inner + m0[3]; }
+  }
+  if (depth > 3 || s.length > 600) return s;
+  for (const t of templates()) {
+    const m = t.re.exec(s);
+    if (!m) continue;
+    const target = lookup(lang, t.key);
+    if (target === undefined) continue;
+    HIT = true;
+    const vals: Record<string, string> = {};
+    t.order.forEach((name, i) => { vals[name] = m[i + 1]; });
+    return target.replace(/\{(\w+)\}/g, (_, d) => {
+      const v = vals[d] ?? '';
+      // ujete dele prevedi rekurzivno (npr. ' po podaljšku'), imena ostanejo
+      const saved = HIT;
+      HIT = false;
+      const inner = tr(lang, v, depth + 1);
+      const ok = HIT;
+      HIT = saved;
+      return ok ? inner : MARK + v + MARK;
+    });
+  }
+  return s;
+}
+// oznaka za dele, ki se ne transliterirajo (imena, številke)
+const MARK = '\u0001';
+
+function finalize(lang: Lang, out: string): string {
+  if (lang !== 'sr') return out.split(MARK).join('');
+  // izven oznak -> cirilica; neprevedeni ujeti deli (imena) ostanejo v latinici
+  return out.split(MARK).map((p, i) => (i % 2 === 0 ? toCyrillic(p) : p)).join('');
+}
+
 export function translate(lang: Lang, s: string, vars?: Record<string, string | number>) {
+  if (s == null) return s;
   let out = s;
-  if (lang !== 'sl') out = D[s]?.[IDX[lang]] ?? s;
+  if (lang !== 'sl') {
+    const c = CACHE[lang];
+    const cached = c.get(s);
+    if (cached !== undefined) out = cached;
+    else {
+      HIT = false;
+      const r = tr(lang, s);
+      out = HIT ? finalize(lang, r) : s;
+      if (c.size > 5000) c.clear();
+      c.set(s, out);
+    }
+  }
   if (vars) out = out.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
   return out;
 }
 
 export function useT() {
   const lang = useGame((s) => s.lang ?? 'sl');
-  return (s: string, vars?: Record<string, string | number>) => translate(lang, s, vars);
+  return (s: string | number | null | undefined, vars?: Record<string, string | number>): string =>
+    s == null ? '' : typeof s === 'number' ? String(s) : translate(lang, s, vars);
 }
 
 export const LANGS: { id: Lang; label: string }[] = [
   { id: 'sl', label: 'Slovenščina' },
   { id: 'hr', label: 'Hrvatski' },
-  { id: 'sr', label: 'Srpski' },
+  { id: 'sr', label: 'Српски' },
   { id: 'en', label: 'English' },
 ];

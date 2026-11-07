@@ -22,7 +22,7 @@ function Report() {
   const id = useSearchParams().get('id') ?? '';
   if (!game) return null;
   const f = game.fixtures.find((x) => x.id === id);
-  if (!f?.result) return <div className="page"><BackLink href="/liga" label="Liga" /><p>Poročilo ni na voljo.</p></div>;
+  if (!f?.result) return <div className="page"><BackLink href="/liga" label="Liga" /><p>{t('Poročilo ni na voljo.')}</p></div>;
   return <ReportBody game={game} f={f} />;
 }
 
@@ -70,7 +70,7 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
   const stat = (label: string, h: string | number, a: string | number) => (
     <div className="row" style={{ fontSize: 13, padding: '6px 0', borderTop: '1px solid var(--line)' }}>
       <span style={{ width: 60, fontWeight: 700 }}>{h}</span>
-      <span className="muted" style={{ flex: 1, textAlign: 'center' }}>{label}</span>
+      <span className="muted" style={{ flex: 1, textAlign: 'center' }}>{t(label)}</span>
       <span style={{ width: 60, textAlign: 'right', fontWeight: 700 }}>{a}</span>
     </div>
   );
@@ -85,17 +85,17 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
     <div className="page">
       <BackLink href="/liga" label="Liga" />
       <section className="hero" style={{ background: heroBg(home.color, away.color) }}>
-        <div style={{ textAlign: 'center' }}><span className="pill" style={{ background: 'rgba(255,255,255,.18)' }}>{stageName[f.stage]} · {fmtDate(f.date)}</span></div>
+        <div style={{ textAlign: 'center' }}><span className="pill" style={{ background: 'rgba(255,255,255,.18)' }}>{t(stageName[f.stage])} · {fmtDate(f.date)}</span></div>
         <div className="row" style={{ margin: '12px 0 6px' }}>
           <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={home} size={48} /><span style={{ fontSize: 20,  }}>{home.short}</span></div>
           <div className="score" style={{ fontSize: 56, lineHeight: 1 }}>{r.hg}<span style={{ opacity: 0.5, margin: '0 6px' }}>:</span>{r.ag}</div>
           <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={away} size={48} /><span style={{ fontSize: 20,  }}>{away.short}</span></div>
         </div>
         <div style={{ fontSize: 12, textAlign: 'center', opacity: 0.85 }}>
-          {r.so ? 'po kazenskih strelih · ' : r.ot ? 'po podaljšku · ' : ''}
+          {r.so ? t('po kazenskih strelih') + ' · ' : r.ot ? t('po podaljšku') + ' · ' : ''}
           ({Array.from({ length: nP }, (_, i) => `${goalsBy('home', i + 1)}:${goalsBy('away', i + 1)}`).join(', ')})
         </div>
-        <div style={{ fontSize: 12, textAlign: 'center', marginTop: 4, opacity: 0.75 }}>{home.arena.name}, {home.arena.city} · {r.attendance} gledalcev</div>
+        <div style={{ fontSize: 12, textAlign: 'center', marginTop: 4, opacity: 0.75 }}>{home.arena.name}, {home.arena.city} · {r.attendance} {t('gledalcev')}</div>
       </section>
 
       <section className="card" style={{ padding: '8px 14px' }}>
@@ -112,19 +112,19 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
       </section>
 
       <section className="card" style={{ padding: '6px 14px' }}>
-        <div className="lbl" style={{ padding: '8px 0' }}>Potek tekme</div>
+        <div className="lbl" style={{ padding: '8px 0' }}>{t('Potek tekme')}</div>
         {Array.from({ length: nP }, (_, i) => i + 1).map((p) => {
           const list = evs.filter((e) => clock(e.t).p === p);
           return (
             <div key={p} style={{ marginBottom: 6 }}>
-              <div className="muted" style={{ fontSize: 11, fontWeight: 700, padding: '6px 0', borderTop: '1px solid var(--line)' }}>{PERIOD_NAME[p]}</div>
-              {list.length === 0 && <div className="muted" style={{ fontSize: 12, paddingBottom: 6 }}>Brez golov in kazni</div>}
+              <div className="muted" style={{ fontSize: 11, fontWeight: 700, padding: '6px 0', borderTop: '1px solid var(--line)' }}>{t(PERIOD_NAME[p])}</div>
+              {list.length === 0 && <div className="muted" style={{ fontSize: 12, paddingBottom: 6 }}>{t('Brez golov in kazni')}</div>}
               {list.map((e, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '42px 1fr 40px', gap: 8, padding: '6px 0', fontSize: 13, alignItems: 'start' }}>
                   <span className="muted" style={{ fontVariantNumeric: 'tabular-nums' }}>{clock(e.t).txt}</span>
                   <span style={{ textAlign: e.side === 'away' ? 'right' : 'left' }}>
-                    <span style={{ fontWeight: e.kind === 'gol' ? 700 : 500, color: e.kind === 'kazen' ? 'var(--gold)' : undefined }}>{e.kind === 'gol' ? '● ' : ''}{e.text}</span>
-                    <span className="muted" style={{ display: 'block', fontSize: 11 }}>{(e.side === 'home' ? home : away).short} · {e.sub}</span>
+                    <span style={{ fontWeight: e.kind === 'gol' ? 700 : 500, color: e.kind === 'kazen' ? 'var(--gold)' : undefined }}>{e.kind === 'gol' ? '● ' : ''}{t(e.text)}</span>
+                    <span className="muted" style={{ display: 'block', fontSize: 11 }}>{(e.side === 'home' ? home : away).short} · {e.sub ? t(e.sub) : ''}</span>
                   </span>
                   <span className="h" style={{ fontSize: 16, textAlign: 'right' }}>{e.score ?? ''}</span>
                 </div>
@@ -134,11 +134,11 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
         })}
         {r.shootout && r.shootout.length > 0 && (
           <div>
-            <div className="muted" style={{ fontSize: 11, fontWeight: 700, padding: '6px 0', borderTop: '1px solid var(--line)' }}>Kazenski streli</div>
+            <div className="muted" style={{ fontSize: 11, fontWeight: 700, padding: '6px 0', borderTop: '1px solid var(--line)' }}>{t('Kazenski streli')}</div>
             {r.shootout.map((x, i) => (
               <div key={i} className="row" style={{ fontSize: 13, padding: '4px 0' }}>
                 <span>{nm(x.playerId)} <span className="muted">({(x.team === 'home' ? home : away).short})</span></span>
-                <span style={{ color: x.scored ? 'var(--good)' : 'var(--muted)', fontWeight: 600 }}>{x.scored ? 'zadetek' : 'zgreši'}</span>
+                <span style={{ color: x.scored ? 'var(--good)' : 'var(--muted)', fontWeight: 600 }}>{x.scored ? t('zadetek') : t('zgreši')}</span>
               </div>
             ))}
           </div>
@@ -155,7 +155,7 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
             <div className="lbl" style={{ padding: '10px 6px 0' }}>{club.name}</div>
             {g && (
               <table className="t">
-                <thead><tr><th>{t('Golman')}</th><th className="num">Streli</th><th className="num">Obr.</th><th className="num">Prej.</th><th className="num">%</th></tr></thead>
+                <thead><tr><th>{t('Golman')}</th><th className="num">{t('Streli')}</th><th className="num">{t('Obr.')}</th><th className="num">{t('Prej.')}</th><th className="num">%</th></tr></thead>
                 <tbody>
                   <tr>
                     <td><Link href={`/igralec?id=${g.id}`} style={{ fontWeight: 600 }}>{nm(g.id)}</Link></td>
@@ -166,7 +166,7 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
               </table>
             )}
             <table className="t">
-              <thead><tr><th>Igralec</th><th>Poz</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th><th className="num">+/-</th><th className="num">S</th><th className="num">KM</th></tr></thead>
+              <thead><tr><th>{t('Igralec')}</th><th>{t('Poz')}</th><th className="num">G</th><th className="num">P</th><th className="num">Tč</th><th className="num">+/-</th><th className="num">S</th><th className="num">KM</th></tr></thead>
               <tbody>
                 {rows.map((b) => {
                   const p = P(b[0]);
@@ -189,8 +189,8 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
           </section>
         );
       })}
-      {!r.box && <p className="muted" style={{ fontSize: 12 }}>Podrobna statistika igralcev je na voljo za tekme, odigrane po tej posodobitvi.</p>}
-      <p className="muted" style={{ fontSize: 11, margin: 0 }}>G goli · P podaje · Tč točke · S streli na gol · KM kazenske minute · PP igralec več · SH igralec manj · PM prazna mreža</p>
+      {!r.box && <p className="muted" style={{ fontSize: 12 }}>{t('Podrobna statistika igralcev je na voljo za tekme, odigrane po tej posodobitvi.')}</p>}
+      <p className="muted" style={{ fontSize: 11, margin: 0 }}>{t('G goli · P podaje · Tč točke · S streli na gol · KM kazenske minute · PP igralec več · SH igralec manj · PM prazna mreža')}</p>
     </div>
   );
 }

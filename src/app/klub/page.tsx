@@ -31,11 +31,11 @@ export default function Klub() {
         <Crest club={club} size={48} />
         <div>
           <h1 className="h title" style={{ fontSize: 26 }}>{club.name}</h1>
-          <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{club.arena.name}, {club.city} · ugled {club.reputation}</div>
+          <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{club.arena.name}, {club.city} {t('· ugled')} {club.reputation}</div>
         </div>
       </header>
       <div className="page">
-        {msg && <div className="card row" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}><span>{msg.text}</span><button className="chip" onClick={() => setMsg(null)}>{t('OK')}</button></div>}
+        {msg && <div className="card row" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}><span>{t(msg.text)}</span><button className="chip" onClick={() => setMsg(null)}>{t('OK')}</button></div>}
 
         <section className="card">
           <div className="lbl" style={{ marginBottom: 8 }}>{t('Uprava in navijači')}</div>
@@ -43,28 +43,28 @@ export default function Klub() {
             <div><div className="row" style={{ marginBottom: 4 }}><span>{t('Zaupanje uprave')}</span><span>{Math.round(game.board ?? 55)} %</span></div><Bar value={game.board ?? 55} color={(game.board ?? 55) < 30 ? 'var(--bad)' : 'var(--gold)'} /></div>
             <div><div className="row" style={{ marginBottom: 4 }}><span>{t('Podpora navijačev')}</span><span>{Math.round(game.fans ?? 50)} %</span></div><Bar value={game.fans ?? 50} color="var(--good)" /></div>
           </div>
-          <div className="row" style={{ fontSize: 13, marginTop: 10 }}><span className="muted">{t('Cilj sezone')}</span><span style={{ fontWeight: 600 }}>{club.boardGoal}</span></div>
+          <div className="row" style={{ fontSize: 13, marginTop: 10 }}><span className="muted">{t('Cilj sezone')}</span><span style={{ fontWeight: 600 }}>{t(club.boardGoal)}</span></div>
           <div className="row" style={{ fontSize: 13 }}><span className="muted">{t('Trenutno mesto')}</span><span style={{ fontWeight: 600 }}>{pos}.</span></div>
-          <p className="muted" style={{ fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>Uprava ocenjuje rezultate glede na cilj in finance. Od zaupanja je odvisno, ali odobri investicije. Navijači vplivajo na obisk in moralo.</p>
+          <p className="muted" style={{ fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>{t('Uprava ocenjuje rezultate glede na cilj in finance. Od zaupanja je odvisno, ali odobri investicije. Navijači vplivajo na obisk in moralo.')}</p>
         </section>
 
         <section className="card">
-          <div className="row" style={{ marginBottom: 6 }}><span className="lbl">{t('Infrastruktura')}</span><span className="muted" style={{ fontSize: 11 }}>vzdrževanje {eur(infraUpkeep(lv))}/mes</span></div>
+          <div className="row" style={{ marginBottom: 6 }}><span className="lbl">{t('Infrastruktura')}</span><span className="muted" style={{ fontSize: 11 }}>{t('vzdrževanje')} {eur(infraUpkeep(lv))}{t('/mes')}</span></div>
           {(Object.keys(INFRA_INFO) as (keyof InfraLevels)[]).map((k) => {
             const cur = lv[k];
             const running = projects.find((p) => p.key === k);
             return (
               <div key={k} style={{ padding: '10px 0', borderTop: '1px solid var(--line)' }}>
                 <div className="row">
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{INFRA_INFO[k].label}</span>
+                  <span style={{ fontWeight: 600, fontSize: 14 }}>{t(INFRA_INFO[k].label)}</span>
                   <span style={{ display: 'flex', gap: 3 }}>{[1, 2, 3, 4, 5].map((i) => <span key={i} style={{ width: 14, height: 8, borderRadius: 2, background: i <= cur ? 'var(--accent)' : '#2a3854' }} />)}</span>
                 </div>
-                <div className="muted" style={{ fontSize: 12, margin: '3px 0 8px' }}>{INFRA_INFO[k].desc}</div>
+                <div className="muted" style={{ fontSize: 12, margin: '3px 0 8px' }}>{t(INFRA_INFO[k].desc)}</div>
                 {running ? (
-                  <div style={{ fontSize: 12, color: 'var(--gold)' }}>Nadgradnja v teku, konec {fmtDate(running.finish)}</div>
+                  <div style={{ fontSize: 12, color: 'var(--gold)' }}>{t('Nadgradnja v teku, konec')} {fmtDate(running.finish)}</div>
                 ) : cur < 5 ? (
                   <button className="btn sec" style={{ width: '100%', height: 40, fontSize: 13 }} onClick={() => update((g) => setMsg(requestUpgrade(g, k)))}>
-                    Nadgradi na {cur + 1} · {eur(infraCost(cur))} · {infraDays(cur)} dni
+                    {t('Nadgradi na {n} · {c} · {d} dni', { n: cur + 1, c: eur(infraCost(cur)), d: infraDays(cur) })}
                   </button>
                 ) : (
                   <div style={{ fontSize: 12, color: 'var(--good)' }}>{t('Najvišja stopnja')}</div>
@@ -76,27 +76,27 @@ export default function Klub() {
 
         <section className="card">
           <div className="lbl" style={{ marginBottom: 6 }}>{t('Dvorana')}</div>
-          <div className="row" style={{ fontSize: 13 }}><span>{club.arena.name}, {club.arena.city}</span><span className="h" style={{ fontSize: 20 }}>{club.arena.capacity} mest</span></div>
+          <div className="row" style={{ fontSize: 13 }}><span>{club.arena.name}, {club.arena.city}</span><span className="h" style={{ fontSize: 20 }}>{club.arena.capacity} {t('mest')}</span></div>
           {projects.find((p) => p.key === 'arena') ? (
-            <div style={{ fontSize: 12, color: 'var(--gold)', marginTop: 8 }}>Širitev v teku, konec {fmtDate(projects.find((p) => p.key === 'arena')!.finish)}</div>
+            <div style={{ fontSize: 12, color: 'var(--gold)', marginTop: 8 }}>{t('Širitev v teku, konec')} {fmtDate(projects.find((p) => p.key === 'arena')!.finish)}</div>
           ) : (
             <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
               {[100, 250].map((s) => (
-                <button key={s} className="btn ghost" style={{ flex: 1, height: 44, fontSize: 13 }} onClick={() => update((g) => setMsg(requestArena(g, s)))}>+{s} mest · {eur(s * 450)}</button>
+                <button key={s} className="btn ghost" style={{ flex: 1, height: 44, fontSize: 13 }} onClick={() => update((g) => setMsg(requestArena(g, s)))}>+{s} {t('mest ·')} {eur(s * 450)}</button>
               ))}
             </div>
           )}
-          <p className="muted" style={{ fontSize: 12, margin: '8px 0 0' }}>Širitev mora odobriti lastnik dvorane (občina). Potrebuješ vsaj 60 % zaupanja uprave.</p>
+          <p className="muted" style={{ fontSize: 12, margin: '8px 0 0' }}>{t('Širitev mora odobriti lastnik dvorane (občina). Potrebuješ vsaj 60 % zaupanja uprave.')}</p>
         </section>
 
         <section className="card" style={{ fontSize: 13 }}>
           <div className="lbl" style={{ marginBottom: 6 }}>{t('Manager')}</div>
           <div className="h" style={{ fontSize: 20 }}>{m.first} {m.last}</div>
-          <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{m.nat} · {m.age} let · stil: {m.style} · ugled {m.reputation}</div>
+          <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{t(m.nat)} · {m.age} {t('let · stil:')} {t(m.style)} {t('· ugled')} {m.reputation}</div>
           <div className="row"><span className="muted">{t('Tekme')}</span><span>{ms.gp}</span></div>
-          <div className="row"><span className="muted">Zmage / porazi</span><span>{ms.w} / {ms.l}{ms.gp ? ` (${Math.round((ms.w / ms.gp) * 100)} %)` : ''}</span></div>
-          <div className="row"><span className="muted">Naslovi</span><span>{ms.titles}</span></div>
-          <div className="row"><span className="muted">Sezone</span><span>{ms.seasons}</span></div>
+          <div className="row"><span className="muted">{t('Zmage / porazi')}</span><span>{ms.w} / {ms.l}{ms.gp ? ` (${Math.round((ms.w / ms.gp) * 100)} %)` : ''}</span></div>
+          <div className="row"><span className="muted">{t('Naslovi')}</span><span>{ms.titles}</span></div>
+          <div className="row"><span className="muted">{t('Sezone')}</span><span>{ms.seasons}</span></div>
         </section>
 
         <section className="card">
@@ -107,7 +107,7 @@ export default function Klub() {
         </section>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link href="/finance" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Finance{fin ? ` · ${eur(fin.balance)}` : ''}</Link>
+          <Link href="/finance" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t('Finance')}{fin ? ` · ${eur(fin.balance)}` : ''}</Link>
           <Link href="/zgodovina" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t('Zgodovina')}</Link>
           <Link href="/mladinci" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t('Mladinci')}</Link>
         </div>

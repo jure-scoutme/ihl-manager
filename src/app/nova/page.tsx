@@ -54,7 +54,7 @@ export default function NovaIgra() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 10 }}>
               <div><label className="lbl" htmlFor="drz">{t('Državljanstvo')}</label>
                 <select className="in" id="drz" value={nat} onChange={(e) => setNat(e.target.value)}>
-                  <option>Slovenija</option><option>Hrvaška</option><option>Srbija</option><option>Drugo</option>
+                  <option>{t('Slovenija')}</option><option>{t('Hrvaška')}</option><option>{t('Srbija')}</option><option>{t('Drugo')}</option>
                 </select>
               </div>
               <div><label className="lbl" htmlFor="let">{t('Starost')}</label><input className="in" id="let" inputMode="numeric" value={age} onChange={(e) => setAge(e.target.value)} /></div>
@@ -64,7 +64,7 @@ export default function NovaIgra() {
               <div style={{ display: 'flex', gap: 6 }}>
                 {([['reprezentant', 'Bivši reprezentant', 'visok ugled'], ['igralec', 'Bivši igralec', 'srednji ugled'], ['brez', 'Brez kariere', 'začneš od nič']] as const).map(([k, l, s]) => (
                   <button type="button" key={k} className={`chip ${bg === k ? 'on' : ''}`} style={{ flex: 1, height: 58, borderRadius: 10, whiteSpace: 'normal', lineHeight: 1.3 }} onClick={() => setBg(k)}>
-                    {l}<br /><span className="muted" style={{ fontWeight: 500, fontSize: 11 }}>{s}</span>
+                    {t(l)}<br /><span className="muted" style={{ fontWeight: 500, fontSize: 11 }}>{t(s)}</span>
                   </button>
                 ))}
               </div>
@@ -77,8 +77,8 @@ export default function NovaIgra() {
                 ))}
               </div>
             </div>
-            <div className="card muted" style={{ fontSize: 12, lineHeight: 1.5 }}>Ugled vpliva na to, katere klube lahko vodiš in kateri igralci se ti želijo pridružiti. Z uspehi raste.</div>
-            {existing && <div className="card" style={{ fontSize: 12, color: 'var(--gold)' }}>Nova igra bo prepisala obstoječo kariero.</div>}
+            <div className="card muted" style={{ fontSize: 12, lineHeight: 1.5 }}>{t('Ugled vpliva na to, katere klube lahko vodiš in kateri igralci se ti želijo pridružiti. Z uspehi raste.')}</div>
+            {existing && <div className="card" style={{ fontSize: 12, color: 'var(--gold)' }}>{t('Nova igra bo prepisala obstoječo kariero.')}</div>}
             <button className="btn block" type="submit">{t('Naprej: izberi ekipo')}</button>
           </form>
         )}
@@ -92,7 +92,7 @@ export default function NovaIgra() {
                   <span>
                     <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{c.name}</span>
                     <span className="muted" style={{ display: 'block', fontSize: 11, marginTop: 2 }}>{c.city} · {c.country} · {c.arena.name} ({c.arena.capacity})</span>
-                    <span className="muted" style={{ display: 'block', fontSize: 11 }}>Cilj uprave: {c.boardGoal}</span>
+                    <span className="muted" style={{ display: 'block', fontSize: 11 }}>{t('Cilj uprave:')} {t(c.boardGoal)}</span>
                   </span>
                   <span className="muted" style={{ fontSize: 11, textAlign: 'right' }}>{t('Proračun')}<br />
                     <span style={{ display: 'inline-flex', gap: 3 }}>{[1, 2, 3, 4, 5].map((i) => <span key={i} style={{ width: 7, height: 7, borderRadius: 2, background: i <= c.budget ? 'var(--accent)' : '#2a3854' }} />)}</span>
@@ -104,7 +104,7 @@ export default function NovaIgra() {
               <button className="btn ghost" style={{ width: 96, height: 52 }} onClick={() => setStep(1)}>{t('Nazaj')}</button>
               <button className="btn block" style={{ flex: 1 }} onClick={start}>{t('Začni kariero')}</button>
             </div>
-            <p className="muted" style={{ fontSize: 11, textAlign: 'center', margin: 0 }}>Igralci so zaenkrat izmišljeni, dokler ne vnesemo prave baze.</p>
+            <p className="muted" style={{ fontSize: 11, textAlign: 'center', margin: 0 }}>{t('Igralci so zaenkrat izmišljeni, dokler ne vnesemo prave baze.')}</p>
           </>
         )}
       </div>

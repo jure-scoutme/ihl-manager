@@ -16,7 +16,7 @@ export default function Finance() {
   const [tab, setTab] = useState<'pregled' | 'vstopnice'>('pregled');
   if (!game) return <Shell>{null}</Shell>;
   const fin = game.finance?.[game.userClubId];
-  if (!fin) return <Shell><div className="page"><p>Nalagam finance…</p></div></Shell>;
+  if (!fin) return <Shell><div className="page"><p>{t('Nalagam finance…')}</p></div></Shell>;
   const club = game.clubs.find((c) => c.id === game.userClubId)!;
   const wages = clubWages(game, club.id);
   const months = Object.keys(fin.ledger).filter((mo) => mo >= `${game.seasonYear}-07` && mo <= `${game.seasonYear + 1}-06`).sort().reverse();
@@ -66,7 +66,7 @@ export default function Finance() {
           <div className="card" style={{ flex: 1, padding: '10px 12px' }}>
             <div className="lbl" style={{ fontSize: 10 }}>{t('Plače / proračun')}</div>
             <div className="h" style={{ fontSize: 24 }}>{eur(wages)}</div>
-            <div className="muted" style={{ fontSize: 11 }}>od {eur(fin.wageBudget)} na mesec</div>
+            <div className="muted" style={{ fontSize: 11 }}>od {eur(fin.wageBudget)} {t('na mesec')}</div>
           </div>
         </section>
 
@@ -78,9 +78,9 @@ export default function Finance() {
         {tab === 'pregled' && (
           <>
             <section className="card">
-              <div className="row"><span className="lbl">Ta mesec ({MONTHS[Number(curMonth.slice(5)) - 1]})</span><span style={{ fontWeight: 700, color: sum(cur, true) + sum(cur, false) >= 0 ? 'var(--good)' : 'var(--bad)' }}>{eur(sum(cur, true) + sum(cur, false))}</span></div>
+              <div className="row"><span className="lbl">{t('Ta mesec (')}{t(MONTHS[Number(curMonth.slice(5)) - 1])})</span><span style={{ fontWeight: 700, color: sum(cur, true) + sum(cur, false) >= 0 ? 'var(--good)' : 'var(--bad)' }}>{eur(sum(cur, true) + sum(cur, false))}</span></div>
               {Object.entries(cur).sort((a, b) => b[1] - a[1]).map(([k, v]) => <Row key={k} k={k} v={v} labels={{ ...INCOME_LABELS, ...EXPENSE_LABELS }} />)}
-              {Object.keys(cur).length === 0 && <p className="muted" style={{ fontSize: 13, margin: '8px 0 0' }}>Ta mesec še ni prometa. Plače in stroški se obračunajo 1. v mesecu.</p>}
+              {Object.keys(cur).length === 0 && <p className="muted" style={{ fontSize: 13, margin: '8px 0 0' }}>{t('Ta mesec še ni prometa. Plače in stroški se obračunajo 1. v mesecu.')}</p>}
             </section>
 
             <section className="card">
@@ -94,23 +94,23 @@ export default function Finance() {
             <section className="card" style={{ fontSize: 13 }}>
               <div className="lbl" style={{ marginBottom: 6 }}>{t('Glavni sponzor')}</div>
               <div className="h" style={{ fontSize: 20 }}>{fin.sponsor.name}</div>
-              <div className="row" style={{ marginTop: 6 }}><span className="muted">Mesečno (sep–apr)</span><span>{eur(fin.sponsor.monthly)}</span></div>
-              <div className="row"><span className="muted">Bonus za končnico</span><span>{eur(fin.sponsor.playoffBonus)}</span></div>
-              <div className="row"><span className="muted">Bonus za naslov</span><span>{eur(fin.sponsor.titleBonus)}</span></div>
+              <div className="row" style={{ marginTop: 6 }}><span className="muted">{t('Mesečno (sep–apr)')}</span><span>{eur(fin.sponsor.monthly)}</span></div>
+              <div className="row"><span className="muted">{t('Bonus za končnico')}</span><span>{eur(fin.sponsor.playoffBonus)}</span></div>
+              <div className="row"><span className="muted">{t('Bonus za naslov')}</span><span>{eur(fin.sponsor.titleBonus)}</span></div>
             </section>
 
             {months.length > 1 && (
               <section className="card" style={{ padding: '0 6px' }}>
                 <div className="lbl" style={{ padding: '10px 6px 0' }}>{t('Po mesecih')}</div>
                 <table className="t">
-                  <thead><tr><th>Mesec</th><th className="num">Prihodki</th><th className="num">Odhodki</th><th className="num">Skupaj</th></tr></thead>
+                  <thead><tr><th>{t('Mesec')}</th><th className="num">{t('Prihodki')}</th><th className="num">{t('Odhodki')}</th><th className="num">{t('Skupaj')}</th></tr></thead>
                   <tbody>
                     {months.map((mo) => {
                       const inc = sum(fin.ledger[mo], true);
                       const exp = sum(fin.ledger[mo], false);
                       return (
                         <tr key={mo}>
-                          <td>{MONTHS[Number(mo.slice(5)) - 1]} {mo.slice(0, 4)}</td>
+                          <td>{t(MONTHS[Number(mo.slice(5)) - 1])} {mo.slice(0, 4)}</td>
                           <td className="num" style={{ color: 'var(--good)' }}>{eur(inc)}</td>
                           <td className="num" style={{ color: 'var(--bad)' }}>{eur(exp)}</td>
                           <td className="num" style={{ fontWeight: 700 }}>{eur(inc + exp)}</td>
@@ -127,16 +127,16 @@ export default function Finance() {
         {tab === 'vstopnice' && (
           <>
             <section className="card" style={{ fontSize: 13, lineHeight: 1.5 }}>
-              <div className="lbl" style={{ marginBottom: 4 }}>{club.arena.name} · {club.arena.capacity} mest</div>
-              Obisk je odvisen od cene, uvrstitve, nasprotnika, derbija in končnice. Previsoka cena pomeni prazno dvorano, prenizka pa izgubljen denar. Priporočena osnovna cena: <b>{ref} €</b>.
+              <div className="lbl" style={{ marginBottom: 4 }}>{club.arena.name} · {club.arena.capacity} {t('mest')}</div>
+              {t('Obisk je odvisen od cene, uvrstitve, nasprotnika, derbija in končnice. Previsoka cena pomeni prazno dvorano, prenizka pa izgubljen denar. Priporočena osnovna cena:')} <b>{ref} €</b>.
             </section>
             {([['regular', 'Redna tekma'], ['derby', 'Derbi'], ['playoff', 'Končnica']] as const).map(([k, l]) => {
               const pv = preview(k);
               return (
                 <section key={k} className="card">
                   <div className="row">
-                    <span className="lbl">{l}</span>
-                    <span className="muted" style={{ fontSize: 12 }}>~{pv.att} gledalcev · {eur(pv.rev)}</span>
+                    <span className="lbl">{t(l)}</span>
+                    <span className="muted" style={{ fontSize: 12 }}>~{pv.att} {t('gledalcev ·')} {eur(pv.rev)}</span>
                   </div>
                   <div className="row" style={{ marginTop: 10 }}>
                     <button className="btn sec" style={{ width: 52 }} onClick={() => setPrice(k, fin.prices[k] - 1)} aria-label="Znižaj ceno">−</button>
@@ -144,13 +144,13 @@ export default function Finance() {
                     <button className="btn sec" style={{ width: 52 }} onClick={() => setPrice(k, fin.prices[k] + 1)} aria-label="Zvišaj ceno">+</button>
                   </div>
                   <div className="bar" style={{ marginTop: 10 }}><div style={{ width: `${(pv.att / club.arena.capacity) * 100}%` }} /></div>
-                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>Zasedenost {Math.round((pv.att / club.arena.capacity) * 100)} %</div>
+                  <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>{t('Zasedenost')} {Math.round((pv.att / club.arena.capacity) * 100)} %</div>
                 </section>
               );
             })}
             {nextHome && (
               <p className="muted" style={{ fontSize: 12, margin: 0 }}>
-                Naslednja domača tekma: {fmtDate(nextHome.date)} proti {game.clubs.find((c) => c.id === nextHome.away)!.short}
+                Naslednja domača tekma: {fmtDate(nextHome.date)} {t('proti')} {game.clubs.find((c) => c.id === nextHome.away)!.short}
 .
               </p>
             )}
