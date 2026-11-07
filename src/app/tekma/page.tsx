@@ -92,8 +92,9 @@ export default function Tekma() {
       const f = g.fixtures.find((x) => x.id === fixture!.id) as Fixture;
       if (!f.played) applyResult(g, f, sim);
     });
+    const fid = fixture!.id;
     simRef.current = null;
-    router.push('/domov');
+    router.push(`/porocilo?id=${fid}`);
   };
 
   return (
@@ -182,6 +183,7 @@ function LastMatch() {
           <div className="lbl">Zadnja tekma · {fmtDate(last.date)}</div>
           <div className="h" style={{ fontSize: 28, margin: '8px 0' }}>{clubOf(last.home).short} {last.result.hg}:{last.result.ag} {clubOf(last.away).short}{last.result.so ? ' (KS)' : last.result.ot ? ' (POD)' : ''}</div>
           <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>Streli {last.result.hShots}:{last.result.aShots} · {last.result.attendance} gledalcev</div>
+          <Link href={`/porocilo?id=${last.id}`} className="btn sec block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '6px 0 8px' }}>Celotno poročilo s tekme</Link>
           {last.result.goals.map((g, i) => {
             const p = game.players[g.scorer];
             const m = Math.floor(g.t / 60);

@@ -90,7 +90,7 @@ export const newId = (prefix: string) => `${prefix}${Date.now().toString(36)}${(
 
 export function makePlayer(
   rng: Rng,
-  opts: { pos: Pos; base: number; clubId: string | null; country: 'SLO' | 'HR' | 'SRB'; seasonYear: number; age?: number; isAI?: boolean; importPlayer?: boolean; usedNumbers?: Set<number> },
+  opts: { pos: Pos; base: number; clubId: string | null; country: 'SLO' | 'HR' | 'SRB'; seasonYear: number; age?: number; isAI?: boolean; importPlayer?: boolean; usedNumbers?: Set<number>; usedNames?: Set<string> },
 ): Player {
   const age = opts.age ?? clamp(Math.round(rng.normal(25, 4.5)), 17, 36);
   let first: string;
@@ -105,6 +105,12 @@ export function makePlayer(
     first = rng.pick(n.first);
     last = rng.pick(n.last);
     nat = opts.country;
+  }
+  if (opts.usedNames) {
+    let guard = 0;
+    const pool = opts.importPlayer ? IMPORT_NAMES : NAMES[opts.country];
+    while (opts.usedNames.has(last) && guard++ < 30) last = rng.pick(pool.last);
+    opts.usedNames.add(last);
   }
   // mladi igralci so še v razvoju, starejši izgubljajo
   let base = opts.base;
@@ -164,6 +170,7 @@ export function generateLeague(rng: Rng, seasonYear: number): Record<string, Pla
   const players: Record<string, Player> = {};
   for (const club of CLUBS) {
     const used = new Set<number>();
+    const usedNames = new Set<string>();
     const importCount = club.budget >= 4 ? 3 : club.budget >= 3 ? 2 : 1;
     ROSTER.forEach((r, i) => {
       const isImport = i < 9 && r.slot <= 1 && rng.chance(importCount / 6);
@@ -178,6 +185,7 @@ export function generateLeague(rng: Rng, seasonYear: number): Record<string, Pla
         age: youngSlot ? rng.int(17, 20) : undefined,
         importPlayer: isImport,
         usedNumbers: used,
+        usedNames,
       });
       players[p.id] = p;
     });

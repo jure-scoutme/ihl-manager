@@ -103,8 +103,8 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   return state;
 }
 
-export function addNews(state: GameState, kind: NewsItem['kind'], title: string, body: string) {
-  state.news.unshift({ id: newId('n'), date: state.date, title, body, kind, read: false });
+export function addNews(state: GameState, kind: NewsItem['kind'], title: string, body: string, fixtureId?: string) {
+  state.news.unshift({ id: newId('n'), date: state.date, title, body, kind, read: false, fixtureId });
   if (state.news.length > 80) state.news.length = 80;
 }
 
@@ -190,6 +190,15 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
     aShots: sim.away.shots,
     goals: sim.goals,
     attendance: attendance(state, f, rng),
+    shotsByPeriod: sim.shotsByPeriod,
+    penalties: sim.penaltyLog.map((x) => ({ t: x.t, team: x.side, playerId: x.playerId, min: x.min, reason: x.reason })),
+    box: [...sim.dressed].map((id) => {
+      const st = sim.stat[id];
+      const side: 0 | 1 = state.players[id]?.clubId === f.home ? 0 : 1;
+      return [id, side, st.g, st.a, st.pm, st.pim, st.sog, st.sa, st.ga];
+    }),
+    shootout: sim.soAttempts.map((x) => ({ team: x.side, playerId: x.playerId, scored: x.scored })),
+    goalies: { home: sim.home.goalie, away: sim.away.goalie },
   };
   f.played = true;
   f.result = result;
@@ -239,7 +248,7 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
     const opG = us ? result.ag : result.hg;
     const opp = state.clubs.find((c) => c.id === (us ? f.away : f.home))!;
     const tag = result.so ? ' po kazenskih strelih' : result.ot ? ' po podaljšku' : '';
-    addNews(state, 'tekma', `${myG > opG ? 'Zmaga' : 'Poraz'} proti ${opp.short} ${myG}:${opG}${tag}`, `Obisk: ${result.attendance} gledalcev. Streli: ${us ? result.hShots : result.aShots}:${us ? result.aShots : result.hShots}.`);
+    addNews(state, 'tekma', `${myG > opG ? 'Zmaga' : 'Poraz'} proti ${opp.short} ${myG}:${opG}${tag}`, `Obisk: ${result.attendance} gledalcev. Streli: ${us ? result.hShots : result.aShots}:${us ? result.aShots : result.hShots}.`, f.id);
   }
 }
 
@@ -409,9 +418,10 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     const need = (pos: ('C' | 'LW' | 'RW' | 'D' | 'G')[], target: number) => target - roster.filter((p) => pos.includes(p.pos)).length;
     const strength = CLUBS.find((x) => x.id === c.id)!.strength;
     const used = new Set(roster.map((p) => p.number));
+    const usedNames = new Set(roster.map((p) => p.last));
     const add = (pos: 'C' | 'LW' | 'RW' | 'D' | 'G', count: number) => {
       for (let i = 0; i < count; i++) {
-        const p = makePlayer(rng, { pos, base: strength - 2, clubId: c.id, country: c.country, seasonYear: nextYear, age: rng.int(17, 18), isAI: true, usedNumbers: used });
+        const p = makePlayer(rng, { pos, base: strength - 2, clubId: c.id, country: c.country, seasonYear: nextYear, age: rng.int(17, 18), isAI: true, usedNumbers: used, usedNames });
         state.players[p.id] = p;
         if (c.id === state.userClubId) youth.push(`${p.first} ${p.last} (${pos}, ${nextYear - p.birthYear} let, ocena ${p.ovr})`);
       }

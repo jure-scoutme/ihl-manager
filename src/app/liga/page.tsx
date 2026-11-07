@@ -65,7 +65,7 @@ export default function Liga() {
                     <tr key={f.id}>
                       <td className="muted" style={{ fontSize: 12, width: 108 }}>{fmtDate(f.date).replace(/ \d{4}$/, '')}</td>
                       <td style={{ fontWeight: f.home === game.userClubId ? 700 : 500 }}>{clubOf(f.home).short}</td>
-                      <td className="num" style={{ fontWeight: 700, width: 54 }}>{f.result ? `${f.result.hg}:${f.result.ag}${f.result.so ? 'k' : f.result.ot ? 'p' : ''}` : '–'}</td>
+                      <td className="num" style={{ fontWeight: 700, width: 54 }}>{f.result ? <Link href={`/porocilo?id=${f.id}`} style={{ color: 'var(--accent)' }}>{`${f.result.hg}:${f.result.ag}${f.result.so ? 'k' : f.result.ot ? 'p' : ''}`}</Link> : '–'}</td>
                       <td style={{ fontWeight: f.away === game.userClubId ? 700 : 500, textAlign: 'right' }}>{clubOf(f.away).short}</td>
                     </tr>
                   ))}

@@ -123,7 +123,8 @@ export default function Domov() {
         <section className="card" style={{ padding: '6px 14px' }}>
           <div className="row" style={{ padding: '8px 0' }}><span className="lbl">Pošta</span><span style={{ fontSize: 12, color: 'var(--accent)' }}>{unread ? `${unread} novih` : ''}</span></div>
           {game.news.slice(0, 6).map((n) => (
-            <button key={n.id} onClick={() => { setOpenNews(openNews === n.id ? null : n.id); if (!n.read) update((g) => { const x = g.news.find((y) => y.id === n.id); if (x) x.read = true; }); }} style={{ display: 'flex', gap: 10, padding: '10px 0', borderTop: '1px solid var(--line)', background: 'none', border: 0, borderTopStyle: 'solid', color: 'var(--text)', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
+            <div key={n.id}>
+            <button onClick={() => { setOpenNews(openNews === n.id ? null : n.id); if (!n.read) update((g) => { const x = g.news.find((y) => y.id === n.id); if (x) x.read = true; }); }} style={{ display: 'flex', gap: 10, padding: '10px 0', borderTop: '1px solid var(--line)', background: 'none', border: 0, borderTopStyle: 'solid', color: 'var(--text)', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
               <span style={{ width: 8, height: 8, borderRadius: 4, background: n.read ? '#4a5a78' : n.kind === 'garderoba' ? 'var(--gold)' : 'var(--accent)', marginTop: 5, flex: 'none' }} />
               <span>
                 <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>{n.title}</span>
@@ -131,6 +132,8 @@ export default function Domov() {
                 {openNews === n.id && <span style={{ display: 'block', fontSize: 13, marginTop: 6, lineHeight: 1.5 }}>{n.body}</span>}
               </span>
             </button>
+            {openNews === n.id && n.fixtureId && <Link href={`/porocilo?id=${n.fixtureId}`} style={{ display: 'block', margin: '-4px 0 10px 18px', fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>Poročilo s tekme →</Link>}
+            </div>
           ))}
         </section>
 

@@ -128,6 +128,13 @@ export interface MatchResult {
   aShots: number;
   goals: GoalEvent[];
   attendance: number;
+  // poročilo s tekme (starejše tekme ga morda nimajo)
+  shotsByPeriod?: { home: number[]; away: number[] };
+  penalties?: { t: number; team: 'home' | 'away'; playerId: string; min: number; reason: string }[];
+  // [id, ekipa 0=domači 1=gostje, goli, podaje, +/-, KM, streli, streli na golmana, prejeti]
+  box?: [string, 0 | 1, number, number, number, number, number, number, number][];
+  shootout?: { team: 'home' | 'away'; playerId: string; scored: boolean }[];
+  goalies?: { home: string; away: string };
 }
 
 export interface Series {
@@ -148,6 +155,7 @@ export interface NewsItem {
   body: string;
   kind: 'liga' | 'garderoba' | 'uprava' | 'tekma' | 'prestopi';
   read: boolean;
+  fixtureId?: string;
 }
 
 export interface Manager {

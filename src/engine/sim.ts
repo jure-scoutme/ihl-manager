@@ -87,6 +87,13 @@ export class MatchSim {
   playoff: boolean;
   dressed = new Set<string>();
   soWinner?: Side;
+  shotsByPeriod: { home: number[]; away: number[] } = { home: [0, 0, 0, 0], away: [0, 0, 0, 0] };
+  penaltyLog: { t: number; side: Side; playerId: string; min: number; reason: string }[] = [];
+  soAttempts: { side: Side; playerId: string; scored: boolean }[] = [];
+
+  private pIdx() {
+    return Math.min(3, this.period - 1);
+  }
 
   constructor(s: MatchSetup) {
     this.rng = new Rng(s.seed);
@@ -319,6 +326,7 @@ export class MatchSim {
     const team = this.team(att);
     const dTeam = this.team(def);
     team.shots++;
+    this.shotsByPeriod[att][this.pIdx()]++;
     this.stat[shooterId].sog++;
     if (dTeam.goaliePulled) {
       this.scoreGoal(att, shooterId, false);
@@ -358,7 +366,10 @@ export class MatchSim {
     const team = this.team(att);
     const dTeam = this.team(def);
     team.score++;
-    if (emptyNet) team.shots++;
+    if (emptyNet) {
+      team.shots++;
+      this.shotsByPeriod[att][this.pIdx()]++;
+    }
     if (!emptyNet && this.stat[dTeam.goalie]) this.stat[dTeam.goalie].ga++;
     if (emptyNet && this.stat[scorerId]) this.stat[scorerId].sog++;
 
@@ -420,6 +431,7 @@ export class MatchSim {
     this.team(this.other(side)).ppOpps++;
     const reasons = ['spotikanje', 'zadrževanje', 'udarec s palico', 'oviranje', 'nedovoljen napad', 'zadrževanje s palico', 'grobost', 'kavljanje'];
     const reason = dur === 300 ? 'napad na glavo' : this.rng.pick(reasons);
+    this.penaltyLog.push({ t: this.t, side, playerId: pid, min: dur / 60, reason });
     this.log({ side, kind: 'kazen', text: `Kazen: ${shortName(this.players[pid])} (${team.name}), ${reason}, ${dur / 60} min.` });
     this.faceoffPending = true;
   }
@@ -554,6 +566,7 @@ export class MatchSim {
       const gq = this.goalieQ(this.other(side));
       const prob = clamp(0.33 * Math.pow((p.attrs.shooting + p.attrs.puckHandling) / 2 / Math.max(5, gq), 1.4), 0.12, 0.6);
       const ok = this.rng.chance(prob);
+      this.soAttempts.push({ side, playerId: p.id, scored: ok });
       this.log({ side, kind: ok ? 'gol' : 'obramba', text: `${shortName(p)}: ${ok ? 'zadetek' : 'zgreši'}` });
       return ok;
     };
