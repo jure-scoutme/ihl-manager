@@ -5,7 +5,8 @@ import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages, sponsorOffers } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
 import { nationalDay } from './national';
-import { abroadSeason, salesDay, unsolicitedOffers } from './sales';
+import { checkBoardPromise } from './board';
+import { abroadSeason, ensureImports, salesDay, unsolicitedOffers } from './sales';
 import { giveAwards, makePrediction } from './awards';
 import { scoutDay } from './scouting';
 import { checkSacking, ensureCareer, seasonEndCareer } from './career';
@@ -145,6 +146,7 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   ensureYouth(state);
   ensureStaff(state);
   ensureCareer(state);
+  ensureImports(state);
   makePrediction(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
@@ -526,6 +528,7 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
   const goalMet = state.champion === state.userClubId || userPos <= target;
   state.board = clamp((state.board ?? 55) + (goalMet ? 12 : -12), 0, 100);
   addNews(state, 'uprava', goalMet ? 'Uprava je zadovoljna s sezono' : 'Uprava je razočarana', goalMet ? `Cilj (${userClub.boardGoal}) je izpolnjen. Zaupanje uprave: ${Math.round(state.board)} %.` : `Cilj (${userClub.boardGoal}) ni bil izpolnjen. Zaupanje uprave: ${Math.round(state.board)} %.`);
+  checkBoardPromise(state, goalMet);
   ensureCareer(state);
   seasonEndCareer(state);
   state.streak = 0;

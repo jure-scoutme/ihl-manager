@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Tutorial } from '@/components/Tutorial';
 import { ACHIEVEMENTS } from '@/engine/achievements';
 import { expiring, transferWindow } from '@/engine/contracts';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ export default function Domov() {
   const update = useGame((s) => s.update);
   const router = useRouter();
   const [summary, setSummary] = useState<{ changes: DevChange[]; retired: string[]; youth: string[] } | null>(null);
+  const [showFans, setShowFans] = useState(false);
   const [openNews, setOpenNews] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   if (!game) return <Shell>{null}</Shell>;
@@ -65,6 +67,7 @@ export default function Domov() {
       </header>
 
       <div className="page">
+        <Tutorial />
         <Decisions />
 
         {game.phase === 'konec' && (
@@ -155,6 +158,19 @@ export default function Domov() {
                 <span className="muted" style={{ display: 'block', fontSize: 11 }}>{t('Nagrada')}: {game.challenge.reward.money ? eur(game.challenge.reward.money) : game.challenge.reward.board ? t('+{n} % zaupanja uprave', { n: game.challenge.reward.board }) : t('+{n} % podpore navijačev', { n: game.challenge.reward.fans ?? 0 })} · {t('do')} {fmtDate(game.challenge.end).replace(/ \d{4}$/, '')}</span>
               </span>
             </span>
+          </section>
+        )}
+
+        {(game.fanFeed ?? []).length > 0 && (
+          <section className="card" style={{ padding: '12px 14px' }}>
+            <div className="row" style={{ marginBottom: 6 }}><span className="lbl">💬 {t('Navijači')}</span><span className="muted" style={{ fontSize: 11 }}>{t('podpora')} {Math.round(game.fans ?? 50)} %</span></div>
+            {(game.fanFeed ?? []).slice(0, showFans ? 10 : 3).map((f, i) => (
+              <div key={i} style={{ padding: '6px 0', borderTop: i ? '1px solid rgba(255,255,255,.06)' : undefined }}>
+                <div style={{ fontSize: 11, color: f.mood < 0 ? 'var(--bad)' : f.mood > 0 ? 'var(--good)' : 'var(--muted)', fontWeight: 700 }}>{f.handle}</div>
+                <div style={{ fontSize: 13, lineHeight: 1.4 }}>{t(f.tpl, Object.fromEntries(f.args.map((a, k) => [String(k), a])))}</div>
+              </div>
+            ))}
+            {(game.fanFeed ?? []).length > 3 && <button className="chip" style={{ marginTop: 6 }} onClick={() => setShowFans(!showFans)}>{showFans ? t('Manj') : t('Več')}</button>}
           </section>
         )}
 

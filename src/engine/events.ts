@@ -3,6 +3,7 @@ import { checkChallenge, derbyBonus } from './challenges';
 import { acceptSponsor } from './finance';
 import { takeJob } from './career';
 import { captainEffect } from './people';
+import { fanPosts, fansAfterMatch } from './fans';
 import { careerTotals, ensureV2 } from './club';
 import { newId } from './players';
 import { Rng, clamp } from './rng';
@@ -76,6 +77,7 @@ export function afterUserMatch(state: GameState, f: Fixture) {
     if (careerTotals(p).gp !== 1 || !(p.homegrown || state.seasonYear - p.birthYear <= 21)) return;
     if ((p.story ?? []).some((x) => x.text.startsWith('Debi'))) return;
     addStory(state, p, `Debi v članski ekipi proti ${clubShort(state, oppId)}`);
+    if (p.homegrown === state.userClubId) fanPosts(state, 'debi', [name(p)], 1);
     if (p.homegrown === state.userClubId) news(state, 'mediji', `Debi vzgojenca: ${name(p)}`, `${state.seasonYear - p.birthYear}-letni ${name(p)} iz domače mladinske šole je debitiral v članski ekipi.`);
   };
   const goalsBy: Record<string, number> = {};
@@ -115,6 +117,7 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   const cr = state.clubRecords![state.userClubId];
   if (won && (!cr.biggestWin || my - op > cr.biggestWin.diff)) cr.biggestWin = { score: `${my}:${op}`, vs: oppId, season: `${state.seasonYear}/${String(state.seasonYear + 1).slice(2)}`, diff: my - op };
 
+  fansAfterMatch(state, { won, my, op, derby, ot: r.ot || r.so });
   checkChallenge(state, f);
   derbyBonus(state, won, derby);
   // dosežki

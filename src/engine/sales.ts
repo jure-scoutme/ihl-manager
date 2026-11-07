@@ -3,6 +3,8 @@ import { addStory, unlock } from './achievements';
 import { transferWindow } from './contracts';
 import { book, clubWages, wageDemand } from './finance';
 import { Rng, clamp } from './rng';
+import { makePlayer } from './players';
+import { fanPosts } from './fans';
 import { transferValue } from './transfers';
 import type { GameState, Player } from './types';
 
@@ -199,6 +201,7 @@ export function acceptOffer(s: GameState, id: string, offerId: string): { ok: bo
   }
   s.counters = { buys: s.counters?.buys ?? 0, frees: s.counters?.frees ?? 0, sales: (s.counters?.sales ?? 0) + 1 };
   if (p.homegrown === s.userClubId) s.fans = clamp((s.fans ?? 50) - 2, 0, 100);
+  fanPosts(s, p.homegrown === s.userClubId ? 'prodaja_domaci' : 'prodaja', [`${p.first} ${p.last}`], 1);
   return { ok: true, text: `${p.first} ${p.last} je prodan klubu ${o.buyer} za ${fmt(o.fee)} €.` };
 }
 
@@ -217,6 +220,7 @@ export function abroadSeason(s: GameState) {
       addStory(s, p, `Vrnil se iz tujine (${was}), prost igralec`);
     }
   }
+  addImports(s, 8);
   // igralci v tujini z deležem od nadaljnje prodaje lahko prestopijo v močnejši klub
   for (const p of Object.values(s.players)) {
     if (!p.abroad || !p.sellOn || p.sellOn.clubId !== s.userClubId) continue;
@@ -251,4 +255,60 @@ export function abroadSeason(s: GameState) {
     p.sellOn = undefined;
     news(s, 'prestopi', `${p.first} ${p.last} odhaja v tujino`, `${from.short} je prodal igralca ${p.first} ${p.last} klubu ${club} (${L.name}).`);
   }
+}
+
+// ---------- uvoz iz tujine ----------
+export const abroadPlayers = (s: GameState) => Object.values(s.players).filter((p) => p.abroad && !p.clubId);
+
+export function addImports(s: GameState, n: number) {
+  const rng = new Rng(s.seed + 4040 + n + s.seasonYear);
+  const positions = ['C', 'LW', 'RW', 'D', 'D', 'C', 'LW', 'RW', 'G'] as const;
+  for (let i = 0; i < n; i++) {
+    const base = rng.int(56, 72);
+    const imp = rng.chance(0.55);
+    const p = makePlayer(rng, { pos: positions[i % positions.length], base, clubId: null, country: rng.pick(['SLO', 'HR', 'SRB'] as const), seasonYear: s.seasonYear, age: rng.int(20, 31), importPlayer: imp, isAI: true });
+    const L = [...FOREIGN].reverse().find((x) => p.ovr >= x.minOvr - 2) ?? FOREIGN[0];
+    p.abroad = { club: rng.pick(L.clubs), league: L.name, since: s.seasonYear - rng.int(0, 3) };
+    p.wage = Math.round((wageDemand(p) * (imp ? 1.3 : 1.1)) / 50) * 50;
+    p.contractUntil = s.seasonYear + rng.int(0, 2);
+    s.players[p.id] = p;
+  }
+}
+
+export function ensureImports(s: GameState) {
+  if (abroadPlayers(s).length < 12) addImports(s, 20);
+}
+
+export const importFee = (s: GameState, p: Player) => Math.round((transferValue(s, p) * 0.7 * contractFactor(s, p)) / 500) * 500;
+export const importWage = (s: GameState, p: Player) => Math.round((Math.max(p.wage, wageDemand(p)) * (p.nat === 'SLO' || p.nat === 'HR' || p.nat === 'SRB' ? 1.05 : 1.25)) / 50) * 50;
+
+export function buyFromAbroad(s: GameState, id: string, wage: number, years: number): { ok: boolean; text: string } {
+  const p = s.players[id];
+  if (!p?.abroad || p.clubId) return { ok: false, text: 'Igralec ni na voljo.' };
+  if (!transferWindow(s).open) return { ok: false, text: 'Nakupi iz tujine so mogoči le v prestopnem roku.' };
+  const fee = importFee(s, p);
+  const fin = s.finance[s.userClubId];
+  if (fin.balance < fee) return { ok: false, text: `Na računu nimaš dovolj denarja (${fmt(fee)} €).` };
+  const roster = Object.values(s.players).filter((x) => x.clubId === s.userClubId);
+  if (roster.length >= 30) return { ok: false, text: 'Kader je poln (največ 30 igralcev). Najprej koga odpusti.' };
+  if (clubWages(s, s.userClubId) + wage > fin.wageBudget) return { ok: false, text: `Presežen proračun za plače (${fmt(fin.wageBudget)} €/mes).` };
+  const want = importWage(s, p);
+  const club = s.clubs.find((c) => c.id === s.userClubId)!;
+  if (p.ovr > club.reputation + 14) return { ok: false, text: `${p.first} ${p.last} meni, da je ${club.short} zanj premajhen klub.` };
+  const rng = new Rng(s.seed++);
+  const chance = clamp(0.5 + ((wage - want) / Math.max(150, want)) * 2.5, 0.03, 0.97);
+  if (!rng.chance(chance)) return { ok: false, text: `${p.first} ${p.last} je ponudbo zavrnil. Pričakuje okoli ${fmt(want)} €/mes.` };
+  const from = p.abroad.club;
+  book(s, s.userClubId, 'nakupi', -fee);
+  p.abroad = undefined;
+  p.clubId = s.userClubId;
+  p.wage = wage;
+  p.contractUntil = s.seasonYear + clamp(years, 1, 3);
+  p.morale = 75;
+  const used = new Set(roster.map((x) => x.number));
+  while (used.has(p.number)) p.number = rng.int(2, 98);
+  s.counters = { buys: (s.counters?.buys ?? 0) + 1, frees: s.counters?.frees ?? 0, sales: s.counters?.sales };
+  fanPosts(s, 'podpis', [`${p.first} ${p.last}`], 1);
+  addStory(s, p, `Prestop iz tujine: ${from} za ${fmt(fee)} €`);
+  return { ok: true, text: `${p.first} ${p.last} prihaja iz kluba ${from} za ${fmt(fee)} €. Pogodba do ${p.contractUntil}, ${fmt(wage)} €/mes.` };
 }

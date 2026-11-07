@@ -1,6 +1,7 @@
 // Kariera managerja: odpustitev, ponudbe drugih klubov, menjava klopi.
 import { Rng, clamp } from './rng';
 import { planOf } from './training';
+import { fanPosts } from './fans';
 import type { GameState } from './types';
 
 export interface CareerEntry {
@@ -126,6 +127,8 @@ export function takeJob(s: GameState, effect: string): string {
   const ms = s.managerStats!;
   s.career!.push({ clubId: id, from: s.date, gp0: ms.gp, w0: ms.w, titles0: ms.titles });
   news(s, 'uprava', `Dobrodošli v klubu ${club.short}`, `Prevzel si ${club.name}. Cilj uprave: ${club.boardGoal}. Zaupanje uprave in navijačev se začne znova.`);
+  s.fanFeed = [];
+  fanPosts(s, 'nov_trener', [], 2);
   news(s, 'liga', `${club.short} ima novega trenerja`, `${s.manager.first} ${s.manager.last} je novi glavni trener kluba ${club.name}.`);
   return `Nova služba: ${club.name}.`;
 }

@@ -1,3 +1,4 @@
+import { fanPosts } from './fans';
 import { transferWindow } from './contracts';
 import { addStory } from './achievements';
 import { book, clubWages, interestIn, wageDemand } from './finance';
@@ -89,6 +90,7 @@ export function offerTransferContract(state: GameState, playerId: string, wage: 
   while (used.has(p.number)) p.number = rng.int(2, 98);
   delete state.agreedFees![playerId];
   state.counters = { buys: (state.counters?.buys ?? 0) + 1, frees: state.counters?.frees ?? 0 };
+  fanPosts(state, 'podpis', [`${p.first} ${p.last}`], 1);
   addStory(state, p, `Prestop iz ${from.short} za ${fee.toLocaleString('sl-SI')} €`);
   return { accepted: true, text: `Prestop je uradno potrjen: ${p.first} ${p.last} prihaja iz ${from.short} za ${fee.toLocaleString('sl-SI')} €. Pogodba do ${p.contractUntil}, ${wage} €/mes.` };
 }

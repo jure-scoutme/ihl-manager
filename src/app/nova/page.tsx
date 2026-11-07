@@ -49,6 +49,7 @@ export default function NovaIgra() {
           <div style={{ flex: 1, height: 4, borderRadius: 2, background: step === 2 ? 'var(--accent)' : '#22304b' }} />
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <a href="/kariere" className="chip" style={{ height: 30, marginLeft: 'auto', order: 2 }}>{t('Shranjene kariere')}</a>
           <span className="muted" style={{ fontSize: 12, fontWeight: 600, marginRight: 2 }}>🌐</span>
           {LANGS.map((l) => <button key={l.id} type="button" className={`chip ${lang === l.id ? 'on' : ''}`} style={{ height: 30 }} onClick={() => setLang(l.id)}>{l.label}</button>)}
         </div>

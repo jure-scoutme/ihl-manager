@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { INTEREST_STYLE, POS_LABEL, Shell, eur, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { fmtDate } from '@/engine/season';
+import { abroadPlayers, importFee, importWage } from '@/engine/sales';
 import { potentialKnown, shownOvr, shownPotential } from '@/engine/scouting';
 import { transferWindow } from '@/engine/contracts';
 import { useT } from '@/i18n';
@@ -17,19 +18,24 @@ export default function Prestopi() {
   const t = useT();
   const [filter, setFilter] = useState<Filter>('vsi');
   const [sort, setSort] = useState<'ocena' | 'placa' | 'starost'>('ocena');
+  const [market, setMarket] = useState<'prosti' | 'tujina'>('prosti');
   if (!game) return <Shell>{null}</Shell>;
   const fin = game.finance?.[game.userClubId];
   const wages = clubWages(game, game.userClubId);
   const roster = Object.values(game.players).filter((p) => p.clubId === game.userClubId).length;
-  const list = freeAgents(game)
+  const list = (market === 'tujina' ? abroadPlayers(game) : freeAgents(game))
     .filter((p) => (filter === 'vsi' ? true : filter === 'F' ? ['C', 'LW', 'RW'].includes(p.pos) : p.pos === filter))
     .sort((a, b) => (sort === 'ocena' ? b.ovr - a.ovr : sort === 'placa' ? a.wage - b.wage : a.birthYear - b.birthYear) * (sort === 'starost' ? -1 : 1));
 
   return (
     <Shell>
       <header style={{ padding: '18px 16px 0' }}>
-        <h1 className="h title">{t('Prosti igralci')}</h1>
-        <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t('Igralci brez kluba, ki jih lahko podpišeš takoj, brez odškodnine.')}</div>
+        <h1 className="h title">{t('Prestopi')}</h1>
+        <div className="seg" style={{ marginTop: 10 }}>
+          <button className={market === 'prosti' ? 'on' : ''} onClick={() => setMarket('prosti')}>{t('Prosti igralci')}</button>
+          <button className={market === 'tujina' ? 'on' : ''} onClick={() => setMarket('tujina')}>{t('Tujina')}</button>
+        </div>
+        <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{market === 'prosti' ? t('Igralci brez kluba, ki jih lahko podpišeš takoj, brez odškodnine.') : t('Igralci v tujih ligah. Kupiš jih z odškodnino v prestopnem roku; pričakujejo višjo plačo.')}</div>
       </header>
       <div className="page">
         {(() => { const w = transferWindow(game); return (
@@ -68,11 +74,11 @@ export default function Prestopi() {
               <span className="h" style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: ovrColor(shownOvr(game, p).value) }}>{shownOvr(game, p).exact ? '' : '~'}{shownOvr(game, p).value}</span>
               <span>
                 <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{p.first} {p.last}{potentialKnown(game, p) && p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> {t('▲ POT')} {shownPotential(game, p)}</span>}</span>
-                <span className="muted" style={{ display: 'block', fontSize: 12 }}>{POS_LABEL[p.pos]} · {ageOf(p, game.seasonYear)} {t('let ·')} {p.nat}{p.isAI ? ' · AI' : ''}</span>
+                <span className="muted" style={{ display: 'block', fontSize: 12 }}>{POS_LABEL[p.pos]} · {ageOf(p, game.seasonYear)} {t('let ·')} {p.nat}{p.abroad ? ` · ${p.abroad.club}` : p.isAI ? ' · AI' : ''}</span>
               </span>
               <span style={{ textAlign: 'right' }}>
-                <span style={{ display: 'block', fontWeight: 700, fontSize: 13 }}>{eur(p.wage)}</span>
-                <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 9, background: st.bg, color: st.fg, marginTop: 3 }}>{t(st.label)}</span>
+                <span style={{ display: 'block', fontWeight: 700, fontSize: 13 }}>{eur(p.abroad ? importWage(game, p) : p.wage)}</span>
+                {p.abroad ? <span className="muted" style={{ display: 'block', fontSize: 11, marginTop: 3 }}>{t('odškodnina')} {eur(importFee(game, p))}</span> : <span style={{ display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 9, background: st.bg, color: st.fg, marginTop: 3 }}>{t(st.label)}</span>}
               </span>
             </Link>
           );

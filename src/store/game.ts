@@ -8,10 +8,22 @@ import { ensureV2 } from '@/engine/club';
 import { ensureYouth } from '@/engine/youth';
 import { ensureStaff } from '@/engine/staff';
 import { ensureCareer } from '@/engine/career';
+import { ensureImports } from '@/engine/sales';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
 export type Lang = 'sl' | 'hr' | 'sr' | 'en';
+
+// posodobi starejšo shranjeno igro na trenutno različico
+export function migrateGame(g: GameState) {
+  ensureFinance(g);
+  ensureV2(g);
+  ensureYouth(g);
+  ensureStaff(g);
+  ensureCareer(g);
+  ensureImports(g);
+  if (g.tutorialDone === undefined && g.fixtures.some((f) => f.played && (f.home === g.userClubId || f.away === g.userClubId))) g.tutorialDone = true;
+}
 export interface DayStep {
   date: string; // obdelani dan
   newDate: string;
@@ -33,6 +45,9 @@ interface Store {
   setLang: (l: Lang) => void;
   simulateUntil: (date: string, autoUser: boolean) => { reached: boolean; stoppedFor?: 'tekma' | 'konec' | 'odlocitev' };
   reset: () => void;
+  loadGame: (g: GameState) => void;
+  sound: boolean;
+  setSound: (v: boolean) => void;
 }
 
 // Shranjevanje v IndexedDB (ni omejitve 5 MB kot pri localStorage). Stara kariera iz localStorage se prenese.
@@ -201,32 +216,26 @@ export const useGame = create<Store>()(
         set({ lang: l, rev: get().rev + 1 });
       },
       reset: () => set({ game: null, rev: get().rev + 1 }),
+      loadGame: (g) => {
+        migrateGame(g);
+        set({ game: g, rev: get().rev + 1 });
+      },
+      sound: true,
+      setSound: (v) => set({ sound: v, rev: get().rev + 1 }),
     }),
     {
       name: 'ihl-manager-save',
       storage: safeStorage,
       version: SAVE_VERSION,
-      partialize: (s) => ({ game: s.game, lang: s.lang }) as Partial<Store>,
+      partialize: (s) => ({ game: s.game, lang: s.lang, sound: s.sound }) as Partial<Store>,
       migrate: (persisted) => {
         const p = persisted as { game: GameState | null };
-        if (p?.game) {
-          ensureFinance(p.game);
-          ensureV2(p.game);
-          ensureYouth(p.game);
-          ensureStaff(p.game);
-          ensureCareer(p.game);
-        }
+        if (p?.game) migrateGame(p.game);
         return p as unknown as Store;
       },
       onRehydrateStorage: () => (state) => {
         if (state?.lang) setDateLang(state.lang);
-        if (state?.game) {
-          ensureFinance(state.game);
-          ensureV2(state.game);
-          ensureYouth(state.game);
-          ensureStaff(state.game);
-          ensureCareer(state.game);
-        }
+        if (state?.game) migrateGame(state.game);
       },
     },
   ),

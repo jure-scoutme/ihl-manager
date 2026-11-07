@@ -12,7 +12,7 @@ export function knowledge(s: GameState, p: Player): number {
   const k = s.scout?.known?.[p.id];
   if (k !== undefined) return k;
   // igralci v ligi so delno znani, prosti igralci in tuji mladinci manj
-  const base = p.youth ? 20 : p.clubId ? 45 : 30;
+  const base = p.youth ? 20 : p.clubId ? 45 : p.abroad ? 25 : 30;
   return clamp(base + (lvl(s) - 1) * 8, 0, 95);
 }
 

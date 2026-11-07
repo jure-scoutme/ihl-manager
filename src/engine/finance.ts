@@ -1,3 +1,4 @@
+import { fanPosts } from './fans';
 import { addStory } from './achievements';
 import { staffWages } from './staff';
 import { CLUBS } from './data';
@@ -231,6 +232,7 @@ export function offerContract(state: GameState, playerId: string, wage: number, 
     while (used.has(p.number)) p.number = rng.int(2, 98);
     state.counters = { buys: state.counters?.buys ?? 0, frees: (state.counters?.frees ?? 0) + 1 };
     addStory(state, p, `Podpisal kot prost igralec`);
+    fanPosts(state, 'podpis', [`${p.first} ${p.last}`], 1);
     return { accepted: true, text: `${p.first} ${p.last} je podpisal pogodbo do ${p.contractUntil} za ${wage} €/mes.` };
   }
   p.wage = Math.round((p.wage * 1.08) / 50) * 50;

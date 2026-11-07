@@ -12,6 +12,7 @@ import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players'
 import { fmtDate, seasonLabel } from '@/engine/season';
 import { assignScout, attrRange, knowledge, scouting, shownOvr, shownPotential } from '@/engine/scouting';
 import { TALKS, captainsOf, talk, talkCooldown } from '@/engine/people';
+import { buyFromAbroad, importFee, importWage } from '@/engine/sales';
 import { acceptOffer, counterOffer, listForSale, listing, rejectOffer, withdrawSale } from '@/engine/sales';
 import { expiring, loanOut, loanTargets, offerRenewal, recallLoan, renewalAsk, transferWindow } from '@/engine/contracts';
 
@@ -159,6 +160,26 @@ function Profil() {
           )}
         </section>
       )}
+
+      {p.abroad && !p.clubId && fin && (() => {
+        const fee0 = importFee(game, p);
+        const w = wage ?? importWage(game, p);
+        return (
+          <section className="card" style={{ borderColor: 'var(--accent)' }}>
+            <div className="row"><span className="lbl">{t('Nakup iz tujine')}</span><span className="muted" style={{ fontSize: 12 }}>{t('odškodnina')} <b style={{ color: 'var(--text)' }}>{eur(fee0)}</b></span></div>
+            <div className="row" style={{ marginTop: 10 }}>
+              <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(Math.max(100, w - 50))} aria-label="Manj">−</button>
+              <span style={{ textAlign: 'center' }}><span className="h" style={{ fontSize: 28 }}>{eur(w)}</span><br /><span className="muted" style={{ fontSize: 11 }}>{t('na mesec · zahteva')} {eur(importWage(game, p))}</span></span>
+              <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(w + 50)} aria-label="Več">+</button>
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>{y} {t(y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta')}</button>)}
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t('Na računu:')} <b style={{ color: fin.balance < fee0 ? 'var(--bad)' : 'var(--text)' }}>{eur(fin.balance)}</b> · {t('Prostor v proračunu za plače:')} <b>{eur(room)}</b></div>
+            <button className="btn block" style={{ marginTop: 10 }} onClick={() => update((g) => { const r = buyFromAbroad(g, p.id, w, years); setMsg({ ok: r.ok, text: r.text }); setWage(null); })}>{t('Kupi igralca')}</button>
+          </section>
+        );
+      })()}
 
       {isMine && (() => {
         const l = listing(game, p.id);

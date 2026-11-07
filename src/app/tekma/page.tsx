@@ -1,5 +1,6 @@
 'use client';
 import { Rink } from '@/components/Rink';
+import { buzzer, cheer, groan, horn } from '@/components/sound';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -63,7 +64,16 @@ export default function Tekma() {
     const iv = setInterval(() => {
       const sim = simRef.current;
       if (!sim) return;
+      const before = sim.events.length;
       for (let i = 0; i < speed && !sim.over; i++) sim.step();
+      if (useGame.getState().sound ?? true) {
+        const fresh = sim.events.slice(before);
+        const my = fixtureIdRef.current && useGame.getState().game?.fixtures.find((x) => x.id === fixtureIdRef.current)?.home === useGame.getState().game?.userClubId ? 'home' : 'away';
+        if (fresh.some((e) => e.kind === 'gol' && e.side === my && !sim.shootout)) { horn(); cheer(); }
+        else if (fresh.some((e) => e.kind === 'gol' && !sim.shootout)) groan();
+        else if (fresh.some((e) => e.kind === 'tretjina' || e.kind === 'konec')) buzzer();
+        else if (fresh.some((e) => e.kind === 'obramba') && Math.random() < 0.25) cheer(0.08, 0.8);
+      }
       if (sim.over) setRunning(false);
       setTick((t) => t + 1);
     }, 110);

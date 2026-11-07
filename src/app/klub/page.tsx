@@ -8,6 +8,7 @@ import { LANGS, useT } from '@/i18n';
 import { INFRA_INFO, infraCost, infraDays, infraOf, infraUpkeep, requestArena, requestUpgrade } from '@/engine/club';
 import { fmtDate, standings } from '@/engine/season';
 import { staffImpact, staffOf } from '@/engine/staff';
+import { BOARD_ASKS, askBoard, boardCooldown } from '@/engine/board';
 import type { InfraLevels } from '@/engine/types';
 
 export default function Klub() {
@@ -19,6 +20,8 @@ export default function Klub() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
   const reset = useGame((s) => s.reset);
+  const sound = useGame((s) => s.sound ?? true);
+  const setSound = useGame((s) => s.setSound);
   const router = useRouter();
   if (!game) return <Shell>{null}</Shell>;
   const club = game.clubs.find((c) => c.id === game.userClubId)!;
@@ -51,6 +54,19 @@ export default function Klub() {
           <div className="row" style={{ fontSize: 13, marginTop: 10 }}><span className="muted">{t('Cilj sezone')}</span><span style={{ fontWeight: 600 }}>{t(club.boardGoal)}</span></div>
           <div className="row" style={{ fontSize: 13 }}><span className="muted">{t('Trenutno mesto')}</span><span style={{ fontWeight: 600 }}>{pos}.</span></div>
           <p className="muted" style={{ fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>{t('Uprava ocenjuje rezultate glede na cilj in finance. Od zaupanja je odvisno, ali odobri investicije. Navijači vplivajo na obisk in moralo.')}</p>
+        </section>
+
+        <section className="card">
+          <div className="row"><span className="lbl">{t('Pogovor z upravo')}</span>{boardCooldown(game) && <span className="muted" style={{ fontSize: 11 }}>{t('naslednji pogovor od {d}', { d: fmtDate(boardCooldown(game)!).replace(/ \d{4}$/, '') })}</span>}</div>
+          {game.boardPromise?.season === game.seasonYear && <p style={{ fontSize: 12, color: 'var(--gold)', margin: '6px 0 0' }}>{t('Obljuba upravi: cilj {g} v tej sezoni.', { g: t(game.boardPromise.goal) })}</p>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            {BOARD_ASKS.map((a) => (
+              <button key={a.id} className="btn sec" disabled={!!boardCooldown(game)} style={{ height: 'auto', padding: '10px 12px', textAlign: 'left', display: 'block' }} onClick={() => update((g) => setMsg(askBoard(g, a.id)))}>
+                <span style={{ display: 'block', fontWeight: 700, fontSize: 13 }}>{t(a.label)}</span>
+                <span className="muted" style={{ display: 'block', fontSize: 11, marginTop: 2, fontWeight: 400 }}>{t(a.desc)}</span>
+              </button>
+            ))}
+          </div>
         </section>
 
         <Link href="/stab" className="card row" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -135,7 +151,13 @@ export default function Klub() {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {LANGS.map((l) => <button key={l.id} className={`chip ${lang === l.id ? 'on' : ''}`} onClick={() => setLang(l.id)}>{l.label}</button>)}
           </div>
+          <div className="muted" style={{ fontSize: 12, fontWeight: 600, margin: '14px 0 6px' }}>{t('Zvoki na tekmi')}</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className={`chip ${sound ? 'on' : ''}`} onClick={() => setSound(true)}>{t('Vklopljeni')}</button>
+            <button className={`chip ${!sound ? 'on' : ''}`} onClick={() => setSound(false)}>{t('Izklopljeni')}</button>
+          </div>
           <div style={{ height: 1, background: 'rgba(255,255,255,.08)', margin: '14px 0' }} />
+          <Link href="/kariere" className="btn sec block" style={{ height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>{t('Kariere in shranjevanje')}</Link>
           {!confirmReset ? (
             <button className="btn ghost block" style={{ height: 44 }} onClick={() => setConfirmReset(true)}>{t('Začni novo igro')}</button>
           ) : (

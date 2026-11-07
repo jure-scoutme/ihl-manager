@@ -287,6 +287,8 @@ export interface ClubRecordStats {
 export interface GameState {
   version: number;
   seed: number;
+  slotId?: string;
+  tutorialDone?: boolean;
   manager: Manager;
   userClubId: string;
   seasonYear: number; // 2026 = sezona 2026/27
@@ -320,6 +322,9 @@ export interface GameState {
   scout?: { known: Record<string, number>; tasks: { playerId: string; until: string }[] };
   prediction?: { season: number; order: string[] };
   lastAwards?: { season: string; list: import('./awards').Award[] };
+  boardTalk?: string;
+  boardPromise?: { season: number; goal: string };
+  fanFeed?: { date: string; handle: string; tpl: string; args: string[]; text: string; mood: number }[];
   captains?: Record<string, { c?: string; a: string[] }>;
   career?: import('./career').CareerEntry[];
   unemployed?: boolean;

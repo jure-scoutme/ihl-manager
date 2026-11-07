@@ -70,7 +70,7 @@ export function Shell({ children, nav = true }: { children: React.ReactNode; nav
   const router = useRouter();
   const path = usePathname();
   useEffect(() => {
-    if (hydrated && !game && path !== '/nova') router.replace('/nova');
+    if (hydrated && !game && path !== '/nova' && path !== '/kariere') router.replace('/nova');
   }, [hydrated, game, path, router]);
   const clubColor = game ? game.clubs.find((c) => c.id === game.userClubId)?.color : undefined;
   useEffect(() => {
@@ -85,7 +85,7 @@ export function Shell({ children, nav = true }: { children: React.ReactNode; nav
     if (clubColor) document.documentElement.style.setProperty('--club', clubColor);
   }, [clubColor]);
   if (!hydrated) return <div className="app" />;
-  if (!game && path !== '/nova') return <div className="app" />;
+  if (!game && path !== '/nova' && path !== '/kariere') return <div className="app" />;
   return (
     <div className="app">
       {children}
