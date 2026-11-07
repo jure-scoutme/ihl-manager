@@ -119,7 +119,8 @@ export function contractReminders(s: GameState) {
   if (!['02', '04', '06'].includes(m)) return;
   const list = expiring(s);
   if (!list.length) return;
-  news(s, 'garderoba', `Pogodba poteče ${list.length} igralcem`, `30. junija poteče pogodba: ${list.map((p) => `${p.first} ${p.last}`).join(', ')}. Podaljšaj jih na strani igralca, sicer odidejo brez odškodnine.`);
+  const names = list.map((p) => p.first + ' ' + p.last).join(', ');
+  news(s, 'garderoba', `Pogodba poteče ${list.length} igralcem`, `30. junija poteče pogodba: ${names}. Podaljšaj jih na strani igralca, sicer odidejo brez odškodnine.`);
 }
 
 // novice ob odprtju/zaprtju prestopnega roka

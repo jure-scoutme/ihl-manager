@@ -1148,5 +1148,9 @@
 " Vrhunec kariere ima za sabo.": " Vrhunac karijere je iza njega.",
 "Ocena {0}: {1}{2} Ocena {3}, potencial {4}.": "Procena {0}: {1}{2} Ocena {3}, potencijal {4}.",
 "Skavtsko poročilo: {0} {1}": "Skautski izveštaj: {0} {1}",
-"Igralec je na posoji in ni naprodaj.": "Igrač je na pozajmici i nije na prodaju."
+"Igralec je na posoji in ni naprodaj.": "Igrač je na pozajmici i nije na prodaju.",
+"30. junija poteče pogodba: {0}. Podaljšaj jih na strani igralca, sicer odidejo brez odškodnine.": "30. juna ističe ugovor: {0}. Produži ih na stranici igrača, inače odlaze bez obeštećenja.",
+"Selektorji so poklicali igralce tvojega kluba: {0}.": "Selektori su pozvali igrače tvog kluba: {0}.",
+"Selektorji so poklicali igralce tvojega kluba: {0}. Odsotni bodo približno {1} dni.": "Selektori su pozvali igrače tvog kluba: {0}. Biće odsutni oko {1} dana.",
+"U20: {0} · U18: {1}": "U20: {0} · U18: {1}"
 }

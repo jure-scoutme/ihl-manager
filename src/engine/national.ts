@@ -40,7 +40,9 @@ function callUp(s: GameState, ev: Event, days: number) {
   }
   const label = ev === 'SP' ? `Svetovno prvenstvo ${year}` : `${EVENT_NAME[ev]} ${year}`;
   if (mine.length) {
-    news(s, 'garderoba', `Vpoklici: ${label}`, `Selektorji so poklicali igralce tvojega kluba: ${mine.join(', ')}. ${ev === 'SP' ? '' : `Odsotni bodo približno ${days} dni.`}`.trim());
+    const who = mine.join(', ');
+    if (ev === 'SP') news(s, 'garderoba', `Vpoklici: ${label}`, `Selektorji so poklicali igralce tvojega kluba: ${who}.`);
+    else news(s, 'garderoba', `Vpoklici: ${label}`, `Selektorji so poklicali igralce tvojega kluba: ${who}. Odsotni bodo približno ${days} dni.`);
     s.fans = clamp((s.fans ?? 50) + Math.min(3, mine.length), 0, 100);
     unlock(s, 'reprezentant');
   } else news(s, 'liga', `Vpoklici: ${label}`, 'Selektorji so objavili sezname. Iz tvojega kluba tokrat ni nikogar.');
