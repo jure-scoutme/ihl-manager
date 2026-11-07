@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bar, Crest, Shell, eur } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { LANGS, useT } from '@/i18n';
@@ -16,6 +17,9 @@ export default function Klub() {
   const setLang = useGame((s) => s.setLang);
   const update = useGame((s) => s.update);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const reset = useGame((s) => s.reset);
+  const router = useRouter();
   if (!game) return <Shell>{null}</Shell>;
   const club = game.clubs.find((c) => c.id === game.userClubId)!;
   const lv = infraOf(game, club.id);
@@ -109,11 +113,24 @@ export default function Klub() {
           <div className="row"><span className="muted">{t('Sezone')}</span><span>{ms.seasons}</span></div>
         </section>
 
-        <section className="card">
-          <div className="lbl" style={{ marginBottom: 8 }}>{t('Jezik')}</div>
+        <section className="card" id="nastavitve">
+          <div className="lbl" style={{ marginBottom: 10 }}>{t('Nastavitve')}</div>
+          <div className="muted" style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{t('Jezik')}</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {LANGS.map((l) => <button key={l.id} className={`chip ${lang === l.id ? 'on' : ''}`} onClick={() => setLang(l.id)}>{l.label}</button>)}
           </div>
+          <div style={{ height: 1, background: 'rgba(255,255,255,.08)', margin: '14px 0' }} />
+          {!confirmReset ? (
+            <button className="btn ghost block" style={{ height: 44 }} onClick={() => setConfirmReset(true)}>{t('Začni novo igro')}</button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{t('Trenutna kariera bo izbrisana. Res želiš začeti znova?')}</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirmReset(false)}>{t('Prekliči')}</button>
+                <button className="btn" style={{ flex: 1, background: 'var(--bad)' }} onClick={() => { reset(); router.replace('/nova'); }}>{t('Izbriši in začni znova')}</button>
+              </div>
+            </div>
+          )}
         </section>
 
         <div style={{ display: 'flex', gap: 8 }}>

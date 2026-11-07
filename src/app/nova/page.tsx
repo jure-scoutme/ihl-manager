@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
@@ -16,6 +16,17 @@ export default function NovaIgra() {
   const t = useT();
   const lang = useGame((s) => s.lang ?? 'sl');
   const setLang = useGame((s) => s.setLang);
+  // ob prvem zagonu predlagaj jezik brskalnika
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('ihl-lang-auto')) return;
+      localStorage.setItem('ihl-lang-auto', '1');
+      const nl = (navigator.language || '').toLowerCase();
+      const pick = nl.startsWith('sl') ? 'sl' : nl.startsWith('hr') || nl.startsWith('bs') ? 'hr' : nl.startsWith('sr') ? 'sr' : nl.startsWith('en') ? 'en' : null;
+      if (pick && pick !== lang) setLang(pick);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [step, setStep] = useState(1);
   const [first, setFirst] = useState('');
   const [last, setLast] = useState('');
@@ -37,7 +48,8 @@ export default function NovaIgra() {
           <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--accent)' }} />
           <div style={{ flex: 1, height: 4, borderRadius: 2, background: step === 2 ? 'var(--accent)' : '#22304b' }} />
         </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="muted" style={{ fontSize: 12, fontWeight: 600, marginRight: 2 }}>🌐</span>
           {LANGS.map((l) => <button key={l.id} type="button" className={`chip ${lang === l.id ? 'on' : ''}`} style={{ height: 30 }} onClick={() => setLang(l.id)}>{l.label}</button>)}
         </div>
         <div>

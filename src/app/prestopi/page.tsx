@@ -12,8 +12,6 @@ type Filter = 'vsi' | 'F' | 'D' | 'G';
 export default function Prestopi() {
   const game = useGame((s) => s.game)!;
   const t = useT();
-  const reset = useGame((s) => s.reset);
-  const [confirm, setConfirm] = useState(false);
   const [filter, setFilter] = useState<Filter>('vsi');
   const [sort, setSort] = useState<'ocena' | 'placa' | 'starost'>('ocena');
   if (!game) return <Shell>{null}</Shell>;
@@ -73,20 +71,6 @@ export default function Prestopi() {
         })}
         {list.length === 0 && <p className="muted">{t('Ni prostih igralcev za ta filter.')}</p>}
 
-        <section className="card" style={{ marginTop: 12 }}>
-          <div className="lbl" style={{ marginBottom: 8 }}>{t('Nastavitve')}</div>
-          {!confirm ? (
-            <button className="btn ghost block" onClick={() => setConfirm(true)}>{t('Začni novo igro')}</button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 13, color: 'var(--gold)', margin: 0 }}>{t('Trenutna kariera bo izbrisana. Res želiš začeti znova?')}</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn sec" style={{ flex: 1 }} onClick={() => setConfirm(false)}>{t('Prekliči')}</button>
-                <button className="btn" style={{ flex: 1 }} onClick={() => reset()}>{t('Izbriši in začni znova')}</button>
-              </div>
-            </div>
-          )}
-        </section>
       </div>
     </Shell>
   );
