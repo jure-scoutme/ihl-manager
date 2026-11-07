@@ -36,7 +36,7 @@ export default function Koledar() {
   const byDate: Record<string, typeof game.fixtures> = {};
   for (const f of game.fixtures) (byDate[f.date] = byDate[f.date] ?? []).push(f);
   const selFixtures = sel ? byDate[sel] ?? [] : [];
-  const stage: Record<string, string> = { cetrtfinale: 'ČF', polfinale: 'PF', finale: 'F' };
+  const stage: Record<string, string> = { cetrtfinale: 'ČF', polfinale: 'PF', finale: 'F', prijateljska: 'PT' };
 
   const doSim = () => {
     if (!sel) return;

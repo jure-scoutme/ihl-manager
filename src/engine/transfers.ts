@@ -1,3 +1,4 @@
+import { transferWindow } from './contracts';
 import { addStory } from './achievements';
 import { book, clubWages, interestIn, wageDemand } from './finance';
 import { Rng, clamp } from './rng';
@@ -7,7 +8,7 @@ import type { GameState, Player } from './types';
 
 export function transferValue(state: GameState, p: Player): number {
   const age = state.seasonYear - p.birthYear;
-  let v = Math.max(0, p.ovr - 40) ** 2 * 55;
+  let v = Math.max(0, p.ovr - 40) ** 2 * 30;
   v *= age <= 22 ? 1.35 : age <= 26 ? 1.15 : age <= 30 ? 1 : age <= 33 ? 0.65 : 0.4;
   v *= 1 + Math.max(0, p.potential - p.ovr) / 40;
   const yearsLeft = Math.max(0, p.contractUntil - state.seasonYear);
@@ -27,6 +28,8 @@ export type ClubResponse = { status: 'sprejeto' | 'protiponudba' | 'zavrnjeno'; 
 export function offerToClub(state: GameState, playerId: string, fee: number): ClubResponse {
   const p = state.players[playerId];
   if (!p || !p.clubId || p.clubId === state.userClubId) return { status: 'zavrnjeno', text: 'Igralec ni na voljo.' };
+  const win = transferWindow(state);
+  if (!win.open) return { status: 'zavrnjeno', text: `${win.label}. Prosti igralci so na voljo kadarkoli.` };
   const seller = state.clubs.find((c) => c.id === p.clubId)!;
   const fin = state.finance[state.userClubId];
   if (fin.balance < fee) return { status: 'zavrnjeno', text: `Na računu nimaš dovolj denarja (${Math.round(fin.balance).toLocaleString('sl-SI')} €).` };

@@ -65,6 +65,7 @@ export interface MatchSetup {
   playoff: boolean;
   seed: number;
   staff?: Record<string, import('./staff').StaffBoost>;
+  chem?: (ids: string[]) => number;
 }
 
 const eff = (p: Player, energy: number, k: keyof Attrs) => p.attrs[k] * (0.72 + 0.28 * (energy / 100)) * (1 + p.form * 0.02) * (0.96 + p.morale / 1250);
@@ -92,6 +93,8 @@ export class MatchSim {
   penaltyLog: { t: number; side: Side; playerId: string; min: number; reason: string }[] = [];
   soAttempts: { side: Side; playerId: string; scored: boolean }[] = [];
   staffB?: MatchSetup['staff'];
+  chemFn?: MatchSetup['chem'];
+  private chemCache: Record<string, number> = {};
 
   private pIdx() {
     return Math.min(3, this.period - 1);
@@ -100,6 +103,7 @@ export class MatchSim {
   constructor(s: MatchSetup) {
     this.rng = new Rng(s.seed);
     this.staffB = s.staff;
+    this.chemFn = s.chem;
     this.players = s.players;
     this.playoff = s.playoff;
     this.home = this.makeTeam(s.homeId, s.homeName, s.lines[s.homeId], s.tactics[s.homeId]);
@@ -204,6 +208,13 @@ export class MatchSim {
     const n = Math.max(1, ids.length);
     off /= n;
     def /= n;
+    if (this.chemFn && ids.length > 1) {
+      const k = [...ids].sort().join(',');
+      const c = this.chemCache[k] ?? (this.chemCache[k] = this.chemFn(ids));
+      const cm = 1 + ((c - 50) / 50) * 0.035;
+      off *= cm;
+      def *= cm;
+    }
     const sb = this.staffB?.[this.team(side).clubId];
     if (sb) {
       off *= sb.off;

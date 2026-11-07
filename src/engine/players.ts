@@ -143,7 +143,7 @@ export function makePlayer(
     energy: 100,
     injuryDays: 0,
     wage: Math.max(100, Math.round(((ovr - 38) * 30) / 50) * 50),
-    contractUntil: opts.seasonYear + rng.int(1, 3),
+    contractUntil: opts.seasonYear + rng.int(0, 2),
     isAI: opts.isAI ?? true,
     stats: emptyStats(),
     history: [],
@@ -198,7 +198,7 @@ export function generateLeague(rng: Rng, seasonYear: number): Record<string, Pla
 const lineScore = (p: Player) => p.ovr + p.form * 1.5 - (p.energy < 60 ? 6 : 0);
 
 export function autoLines(players: Player[]): Lines {
-  const avail = players.filter((p) => p.injuryDays <= 0);
+  const avail = players.filter((p) => p.injuryDays <= 0 && !(p.awayDays ?? 0));
   const by = (pos: Pos[]) => avail.filter((p) => pos.includes(p.pos)).sort((a, b) => lineScore(b) - lineScore(a));
   const used = new Set<string>();
   const take = (pool: Player[], fallback: Player[]) => {
@@ -248,7 +248,7 @@ export function autoLines(players: Player[]): Lines {
 
 export function validateLines(lines: Lines, players: Record<string, Player>, clubId: string): boolean {
   const all = [...lines.f.flat(), ...lines.d.flat(), lines.g[0]];
-  return all.every((id) => id && players[id] && players[id].clubId === clubId && players[id].injuryDays <= 0) && new Set(all).size === all.length;
+  return all.every((id) => id && players[id] && players[id].clubId === clubId && players[id].injuryDays <= 0 && !(players[id].awayDays ?? 0)) && new Set(all).size === all.length;
 }
 
 export const fullName = (p?: Player) => (p ? `${p.first} ${p.last}` : '—');

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { BackLink, POS_LABEL, Shell, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { groupChem } from '@/engine/training';
 import { useT } from '@/i18n';
 import { autoLines } from '@/engine/players';
 import { clubPlayers } from '@/engine/season';
@@ -20,6 +21,12 @@ const groupPaths = (l: Lines, g: Group): Path[] => {
   const units = l[g];
   return units.flatMap((u, i) => [...u.f.map((_, j) => [g, i, 'f', j]), ...u.d.map((_, j) => [g, i, 'd', j])]);
 };
+
+function ChemTag({ v }: { v: number }) {
+  const t = useT();
+  const c = v >= 70 ? 'var(--good)' : v >= 50 ? 'var(--accent)' : v >= 40 ? 'var(--gold)' : 'var(--bad)';
+  return <span style={{ color: c, textTransform: 'none', letterSpacing: 0 }}>{t('kemija')} {v}</span>;
+}
 
 export default function Postave() {
   const game = useGame((s) => s.game)!;
@@ -84,7 +91,7 @@ export default function Postave() {
           <>
             {lines.f.map((_, i) => (
               <section key={i}>
-                <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. {t('napad ·')} {Math.round(tac.lineUsage[i] * 100)} {t('% minutaže')}</div>
+                <div className="lbl row" style={{ marginBottom: 6 }}><span>{i + 1}. {t('napad ·')} {Math.round(tac.lineUsage[i] * 100)} {t('% minutaže')}</span><ChemTag v={groupChem(game, lines.f[i])} /></div>
                 <div className="grid3">
                   <Slot path={['f', i, 0]} group="main" label="LK" />
                   <Slot path={['f', i, 1]} group="main" label="C" />
@@ -94,7 +101,7 @@ export default function Postave() {
             ))}
             {lines.d.map((_, i) => (
               <section key={i}>
-                <div className="lbl" style={{ marginBottom: 6 }}>{i + 1}. {t('obrambni par')}</div>
+                <div className="lbl row" style={{ marginBottom: 6 }}><span>{i + 1}. {t('obrambni par')}</span><ChemTag v={groupChem(game, lines.d[i])} /></div>
                 <div className="grid2">
                   <Slot path={['d', i, 0]} group="main" label="LB" />
                   <Slot path={['d', i, 1]} group="main" label="DB" />

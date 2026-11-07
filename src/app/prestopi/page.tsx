@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { INTEREST_STYLE, POS_LABEL, Shell, eur, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { fmtDate } from '@/engine/season';
+import { transferWindow } from '@/engine/contracts';
 import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
 import { clubWages, freeAgents, interestIn } from '@/engine/finance';
@@ -29,6 +31,11 @@ export default function Prestopi() {
         <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t('Igralci brez kluba, ki jih lahko podpišeš takoj, brez odškodnine.')}</div>
       </header>
       <div className="page">
+        {(() => { const w = transferWindow(game); return (
+          <div className="card row" style={{ fontSize: 13, padding: '10px 14px', borderColor: w.open ? 'var(--good)' : undefined }}>
+            <span><b style={{ color: w.open ? 'var(--good)' : 'var(--gold)' }}>{t(w.label)}</b>{w.closes && <span className="muted"> · {t('do')} {fmtDate(w.closes)}</span>}<br /><span className="muted" style={{ fontSize: 11 }}>{t('Igralce drugih klubov kupiš na strani Liga → klub → igralec. Proste igralce lahko podpišeš kadarkoli.')}</span></span>
+          </div>
+        ); })()}
         {fin && (
           <section style={{ display: 'flex', gap: 8 }}>
             <div className="card" style={{ flex: 1, padding: '10px 12px' }}>

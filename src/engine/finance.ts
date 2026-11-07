@@ -11,6 +11,9 @@ export const INCOME_LABELS: Record<string, string> = {
   sponzorji: 'Sponzorji',
   bonusi: 'Bonusi sponzorjev',
   prodaje: 'Prodaje igralcev',
+  subvencije: 'Občina in subvencije',
+  uprava: 'Nakazila uprave',
+  izzivi: 'Nagrade izzivov',
 };
 export const EXPENSE_LABELS: Record<string, string> = {
   place: 'Plače',
@@ -46,11 +49,12 @@ export function makeFinance(state: GameState, club: Club, rng: Rng): ClubFinance
 
 export function makeSponsor(club: Club, rng: Rng) {
   const pool = SPONSORS.filter((_, i) => (club.country === 'SLO' ? i < 10 : club.country === 'HR' ? i >= 10 && i < 14 : i >= 14) || i % 3 === 0);
+  // glavni sponzor plačuje vseh 12 mesecev; v IHL so sponzorji in občina glavni vir prihodkov
   return {
     name: rng.pick(pool),
-    monthly: Math.round((club.reputation * 55 + club.budget * 400) / 100) * 100,
-    playoffBonus: Math.round(club.reputation * 40 / 100) * 100,
-    titleBonus: Math.round(club.reputation * 120 / 100) * 100,
+    monthly: Math.round((club.reputation * 110 + club.budget * 800) / 100) * 100,
+    playoffBonus: Math.round((club.reputation * 50) / 100) * 100,
+    titleBonus: Math.round((club.reputation * 150) / 100) * 100,
   };
 }
 
@@ -87,21 +91,24 @@ export function expectedAttendance(state: GameState, f: Fixture, price = ticketP
   const home = state.clubs.find((c) => c.id === f.home)!;
   const away = state.clubs.find((c) => c.id === f.away)!;
   const pos = standingPos ?? 4;
-  let fill = 0.26 + home.reputation / 180 + (9 - pos) * 0.012 + away.reputation / 600;
-  if (isDerby(f.home, f.away)) fill += 0.2;
-  if (f.stage !== 'redni') fill += 0.15 + (f.stage === 'finale' ? 0.2 : 0);
+  // realen obisk IHL: redni del nekaj sto gledalcev, derbiji in končnica bistveno več
+  let crowd = 110 + home.reputation * 6;
+  crowd *= 1 + (5 - pos) * 0.04;
+  crowd *= 1 + (away.reputation - 55) / 200;
+  if (isDerby(f.home, f.away)) crowd *= 1.9;
+  if (f.stage !== 'redni') crowd *= f.stage === 'finale' ? 2.3 : f.stage === 'polfinale' ? 1.7 : 1.4;
   const ref = refPrice(home) + (isDerby(f.home, f.away) ? 2 : 0) + (f.stage !== 'redni' ? 3 : 0);
-  fill *= clamp(Math.pow(ref / Math.max(1, price), 1.1), 0.15, 1.5);
+  crowd *= clamp(Math.pow(ref / Math.max(1, price), 1.1), 0.15, 1.6);
   const mk = state.infra?.[f.home]?.marketing ?? 2;
-  fill *= 1 + (mk - 2) * 0.03;
-  if (f.home === state.userClubId && state.fans !== undefined) fill *= 0.9 + state.fans / 500;
-  return Math.round(home.arena.capacity * clamp(fill, 0.05, 1));
+  crowd *= 1 + (mk - 2) * 0.04;
+  if (f.home === state.userClubId && state.fans !== undefined) crowd *= 0.85 + state.fans / 330;
+  return Math.round(clamp(crowd, 40, home.arena.capacity));
 }
 
 export function matchFinances(state: GameState, f: Fixture, attendance: number) {
   const price = ticketPrice(state, f);
   book(state, f.home, 'vstopnice', attendance * price);
-  book(state, f.home, 'bar', Math.round(attendance * 2));
+  book(state, f.home, 'bar', Math.round(attendance * 1.6));
   const h = state.clubs.find((c) => c.id === f.home)!;
   const a = state.clubs.find((c) => c.id === f.away)!;
   const travel = h.city === a.city ? 0 : h.country === a.country ? 350 : 1100;
@@ -113,15 +120,56 @@ export function monthlyFinances(state: GameState) {
     const fin = state.finance?.[c.id];
     if (!fin) continue;
     book(state, c.id, 'place', -clubWages(state, c.id));
+    book(state, c.id, 'subvencije', 1500 + c.budget * 1400);
     book(state, c.id, 'led', -(1800 + c.budget * 350));
     book(state, c.id, 'stab', -(400 + c.budget * 100 + staffWages(state, c.id)));
     book(state, c.id, 'mladinci', -(600 + c.budget * 200));
     // sponzor plačuje med septembrom in aprilom
-    const m = Number(state.date.slice(5, 7));
-    if (m >= 9 || m <= 4) book(state, c.id, 'sponzorji', fin.sponsor.monthly);
+    book(state, c.id, 'sponzorji', fin.sponsor.monthly);
     const lv = state.infra?.[c.id];
-    if (lv) book(state, c.id, 'infrastruktura', -(lv.training + lv.youth + lv.medical + lv.scouting + lv.marketing) * 150);
+    if (lv) book(state, c.id, 'infrastruktura', -(lv.training + lv.youth + lv.medical + lv.scouting + lv.marketing) * 110);
   }
+}
+
+// --- poletje: ponudbe sponzorjev (15. junij) ---
+export function sponsorOffers(state: GameState) {
+  const club = state.clubs.find((c) => c.id === state.userClubId)!;
+  const rng = new Rng(state.seed + state.seasonYear * 3);
+  const base = makeSponsor(club, rng);
+  const fans = state.fans ?? 50;
+  const mk = state.infra?.[club.id]?.marketing ?? 2;
+  const m = 1 + (fans - 50) / 250 + (mk - 2) * 0.05;
+  const names = [...new Set([base.name, makeSponsor(club, rng).name, makeSponsor(club, rng).name, makeSponsor(club, rng).name])];
+  const offers = [
+    { name: names[0], monthly: Math.round((base.monthly * m) / 100) * 100, playoffBonus: base.playoffBonus, titleBonus: base.titleBonus },
+    { name: names[1] ?? names[0], monthly: Math.round((base.monthly * m * 0.82) / 100) * 100, playoffBonus: base.playoffBonus * 3, titleBonus: base.titleBonus * 3 },
+    { name: names[2] ?? names[0], monthly: Math.round((base.monthly * m * 1.12) / 100) * 100, playoffBonus: 0, titleBonus: 0 },
+  ];
+  state.sponsorOffers = offers;
+  const f = (x: number) => x.toLocaleString('sl-SI');
+  state.decisions = state.decisions ?? [];
+  state.decisions.push({
+    id: `d${Date.now().toString(36)}sp`,
+    date: state.date,
+    kind: 'uprava',
+    title: 'Ponudbe sponzorjev',
+    body: 'Za novo sezono so prispele tri ponudbe glavnega sponzorja. Izberi eno.',
+    options: [
+      { label: `${offers[0].name}: ${f(offers[0].monthly)} €/mes, običajni bonusi`, effect: 'spons_0' },
+      { label: `${offers[1].name}: ${f(offers[1].monthly)} €/mes, trojni bonusi za uspeh`, effect: 'spons_1' },
+      { label: `${offers[2].name}: ${f(offers[2].monthly)} €/mes, brez bonusov`, effect: 'spons_2' },
+    ],
+    blocking: true,
+  });
+}
+
+export function acceptSponsor(state: GameState, idx: number): string {
+  const o = state.sponsorOffers?.[idx];
+  const fin = state.finance[state.userClubId];
+  if (!o || !fin) return '';
+  fin.sponsor = o;
+  state.sponsorOffers = undefined;
+  return `Nov glavni sponzor: ${o.name} (${o.monthly.toLocaleString('sl-SI')} €/mes).`;
 }
 
 // --- trg prostih igralcev ---

@@ -20,7 +20,7 @@ export default function Liga() {
   const scorers = players.filter((p) => p.pos !== 'G').sort((a, b) => b.stats.g + b.stats.a - (a.stats.g + a.stats.a) || b.stats.g - a.stats.g).slice(0, 15);
   const goalies = players.filter((p) => p.pos === 'G' && p.stats.gp >= 3).sort((a, b) => (b.stats.sa ? (b.stats.sa - b.stats.ga) / b.stats.sa : 0) - (a.stats.sa ? (a.stats.sa - a.stats.ga) / a.stats.sa : 0)).slice(0, 8);
   const fixtures = game.fixtures.filter((f) => !mine || f.home === game.userClubId || f.away === game.userClubId).sort((a, b) => a.date.localeCompare(b.date));
-  const stageName: Record<string, string> = { cetrtfinale: 'Četrtfinale', polfinale: 'Polfinale', finale: 'Finale' };
+  const stageName: Record<string, string> = { cetrtfinale: 'Četrtfinale', polfinale: 'Polfinale', finale: 'Finale', prijateljska: 'Prijateljska' };
 
   return (
     <Shell>
@@ -65,7 +65,7 @@ export default function Liga() {
                 <tbody>
                   {fixtures.map((f) => (
                     <tr key={f.id}>
-                      <td className="muted" style={{ fontSize: 12, width: 108 }}>{fmtDate(f.date).replace(/ \d{4}$/, '')}</td>
+                      <td className="muted" style={{ fontSize: 12, width: 108 }}>{fmtDate(f.date).replace(/ \d{4}$/, '')}{f.stage === 'prijateljska' && <span style={{ display: 'block', fontSize: 10, color: 'var(--gold)' }}>{t('prijateljska')}</span>}</td>
                       <td style={{ fontWeight: f.home === game.userClubId ? 700 : 500 }}><Link href={f.home === game.userClubId ? '/kader' : `/ekipa?id=${f.home}`}>{clubOf(f.home).short}</Link></td>
                       <td className="num" style={{ fontWeight: 700, width: 54 }}>{f.result ? <Link href={`/porocilo?id=${f.id}`} style={{ color: 'var(--accent)' }}>{`${f.result.hg}:${f.result.ag}${f.result.so ? 'k' : f.result.ot ? 'p' : ''}`}</Link> : '–'}</td>
                       <td style={{ fontWeight: f.away === game.userClubId ? 700 : 500, textAlign: 'right' }}><Link href={f.away === game.userClubId ? '/kader' : `/ekipa?id=${f.away}`}>{clubOf(f.away).short}</Link></td>

@@ -2,13 +2,17 @@ import { CLUBS } from './data';
 import { autoLines, calcOvr, emptyStats, generateLeague, makePlayer, newId, validateLines } from './players';
 import { Rng, clamp } from './rng';
 import { MatchSim } from './sim';
-import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages } from './finance';
+import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages, sponsorOffers } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
+import { nationalDay } from './national';
+import { closeWeek, monthlyBoard, newWeeklyChallenge, summerBudget } from './challenges';
+import { combine, groupChem, growChem, recoveryFactor, trainingBoost, weeklyTraining } from './training';
+import { contractReminders, expireContracts, windowNews } from './contracts';
 import { checkAchievements, unlock, addStory } from './achievements';
 import { aiStaffWeekly, devChance, ensureStaff, staffBoost, staffNewSeason } from './staff';
 import { afterUserMatch, checkPromises, expireDecisions, hasBlocking, preMatchPress, weeklyBoardAndMood, weeklyLocker } from './events';
 import { ensureYouth, makeYouthSchedule, simYouthDay, takeBestYouth, youthNewSeason } from './youth';
-import type { Attrs, Club, Fixture, GameState, Lines, Manager, MatchResult, NewsItem, Player, Series, Standing, Tactics } from './types';
+import type { Pos, Attrs, Club, Fixture, GameState, Lines, Manager, MatchResult, NewsItem, Player, Series, Standing, Tactics } from './types';
 
 export const SAVE_VERSION = 3;
 
@@ -75,12 +79,29 @@ export function makeSchedule(clubIds: string[], seasonYear: number, rng: Rng): F
         const [home, away] = cycle % 2 === 0 ? [x, y] : [y, x];
         fixtures.push({ id: newId('f'), date, round, home, away, stage: 'redni', played: false });
       }
-      // sobota -> sreda (+4), sreda -> sobota (+3)
+      // ritem: sobota -> sreda -> sobota -> (prost teden) sobota ... sezona traja do marca
       const dow = new Date(date + 'T12:00:00Z').getUTCDay();
-      date = addDays(date, dow === 6 ? 4 : 3);
+      date = addDays(date, dow === 6 ? (round % 5 === 0 ? 7 : 4) : 3);
     }
   }
   return fixtures;
+}
+
+// prijateljske tekme v avgustu: vsak klub 3–4 tekme
+export function makeFriendlies(clubIds: string[], seasonYear: number, rng: Rng): Fixture[] {
+  const out: Fixture[] = [];
+  let date = `${seasonYear}-08-14`;
+  while (new Date(date + 'T12:00:00Z').getUTCDay() !== 6) date = addDays(date, 1);
+  for (let r = 0; r < 4; r++) {
+    const ids = [...clubIds];
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = rng.int(0, i);
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    for (let i = 0; i + 1 < ids.length; i += 2) out.push({ id: newId('f'), date, round: 0, home: ids[i], away: ids[i + 1], stage: 'prijateljska', played: false });
+    date = addDays(date, r % 2 === 0 ? 1 : 6); // sobota, nedelja, sobota, nedelja
+  }
+  return out;
 }
 
 // --- nova igra ---
@@ -184,7 +205,8 @@ export function makeSim(state: GameState, f: Fixture, seed?: number) {
     tactics: state.tactics,
     playoff: f.stage !== 'redni',
     seed: seed ?? Math.floor(Math.random() * 2 ** 31),
-    staff: { [f.home]: staffBoost(state, f.home), [f.away]: staffBoost(state, f.away) },
+    staff: { [f.home]: combine(staffBoost(state, f.home), trainingBoost(state, f.home)), [f.away]: combine(staffBoost(state, f.away), trainingBoost(state, f.away)) },
+    chem: (ids) => groupChem(state, ids),
   });
 }
 
@@ -219,9 +241,11 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
   };
   f.played = true;
   f.result = result;
-  matchFinances(state, f, result.attendance);
+  const friendly = f.stage === 'prijateljska';
+  if (!friendly) matchFinances(state, f, result.attendance);
+  else book(state, f.home, 'vstopnice', Math.round(result.attendance * 3));
   const homeWon = result.hg > result.ag;
-  const countStats = true;
+  const countStats = !friendly;
 
   for (const id of sim.dressed) {
     const p = state.players[id];
@@ -248,11 +272,14 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
     p.morale = clamp(Math.round(p.morale + (won ? 3 : loss) + perf), 10, 100);
     p.energy = clamp(p.energy - (16 - p.attrs.stamina * 0.4), 30, 100);
     const med = infraOf(state, p.clubId!).medical;
-    if (p.pos !== 'G' && rng.chance(0.004 * (1.3 - med * 0.1) * (p.energy < 50 ? 1.6 : 1))) {
+    if (p.pos !== 'G' && rng.chance((friendly ? 0.002 : 0.004) * (1.3 - med * 0.1) * (p.energy < 50 ? 1.6 : 1))) {
       p.injuryDays = Math.max(1, Math.round(rng.int(3, 28) * (1.25 - med * 0.1)));
       if (p.clubId === state.userClubId) addNews(state, 'garderoba', `Poškodba: ${p.first} ${p.last}`, `${p.first} ${p.last} se je poškodoval na tekmi in bo odsoten približno ${p.injuryDays} dni.`);
     }
   }
+
+  growChem(state, f.home);
+  growChem(state, f.away);
 
   if (f.seriesId) {
     const s = state.series.find((x) => x.id === f.seriesId)!;
@@ -268,6 +295,10 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
     const opG = us ? result.ag : result.hg;
     const opp = state.clubs.find((c) => c.id === (us ? f.away : f.home))!;
     const tag = result.so ? ' po kazenskih strelih' : result.ot ? ' po podaljšku' : '';
+    if (friendly) {
+      addNews(state, 'tekma', `Prijateljska: ${myG > opG ? 'zmaga' : 'poraz'} proti ${opp.short} ${myG}:${opG}`, `Pripravljalna tekma. Obisk: ${result.attendance} gledalcev.`, f.id);
+      return;
+    }
     addNews(state, 'tekma', `${myG > opG ? 'Zmaga' : 'Poraz'} proti ${opp.short} ${myG}:${opG}${tag}`, `Obisk: ${result.attendance} gledalcev. Streli: ${us ? result.hShots : result.aShots}:${us ? result.aShots : result.hShots}.`, f.id);
     afterUserMatch(state, f);
   }
@@ -292,8 +323,13 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   for (const f of todaysFixtures(state)) if (!f.played) quickSim(state, f);
 
   state.date = addDays(state.date, 1);
+  windowNews(state);
+  nationalDay(state);
   if (state.date.endsWith('-01')) {
+    contractReminders(state);
     monthlyFinances(state);
+    monthlyBoard(state);
+    if (state.date.endsWith('-06-01')) summerBudget(state);
     const bal = state.finance[state.userClubId]?.balance ?? 0;
     if (bal < 0) addNews(state, 'uprava', 'Klub je v minusu', `Stanje na računu: ${bal.toLocaleString('sl-SI')} €. Uprava pričakuje, da zmanjšate stroške ali povečate prihodke.`);
   }
@@ -305,6 +341,10 @@ export function advanceDay(state: GameState): { blocked: boolean } {
     const club = state.clubs.find((c) => c.id === state.userClubId)!;
     if (st[0].gp > 0) weeklyBoardAndMood(state, pos, club.boardGoal);
     if (st[0].gp >= 3) weeklyLocker(state, pos);
+    closeWeek(state);
+    newWeeklyChallenge(state);
+    const trn = weeklyTraining(state);
+    if (trn.length) addNews(state, 'klub', 'Trening', trn.join(' '));
     const staffNews = aiStaffWeekly(state, (id) => st.findIndex((s) => s.clubId === id) + 1, st[0].gp);
     if (staffNews.length) addNews(state, 'liga', 'Menjave trenerjev', staffNews.join(' '));
   }
@@ -319,17 +359,62 @@ export function advanceDay(state: GameState): { blocked: boolean } {
     preMatchPress(state, today, (id) => st.findIndex((s) => s.clubId === id) + 1);
   }
   for (const p of Object.values(state.players)) {
-    p.energy = Math.min(100, p.energy + 9 + p.attrs.stamina * 0.25);
+    p.energy = Math.min(100, p.energy + (9 + p.attrs.stamina * 0.25) * recoveryFactor(state, p.clubId));
     if (p.injuryDays > 0) {
       p.injuryDays--;
       if (p.injuryDays === 0 && p.clubId === state.userClubId) addNews(state, 'garderoba', `${p.first} ${p.last} je spet zdrav`, 'Igralec je okreval in je na voljo za naslednjo tekmo.');
     }
   }
 
+  if (state.phase === 'poletje') {
+    const first = state.fixtures.filter((f) => f.stage === 'redni').map((f) => f.date).sort()[0];
+    if (first && state.date >= addDays(first, -3)) {
+      state.phase = 'redni';
+      for (const c of state.clubs) {
+        const added = fillRoster(state, c.id);
+        if (c.id === state.userClubId && added.length) addNews(state, 'klub', 'Pomočnik je dopolnil kader', `Kader je bil premajhen, zato so se ekipi pridružili: ${added.join(', ')}.`);
+      }
+      addNews(state, 'liga', `Začetek sezone ${seasonLabel(state.seasonYear)}`, `Redni del se začne ${fmtDate(first)}. Kader je zaključen, prosti igralci pa so na voljo vso sezono.`);
+    }
+  }
+  if (state.date.endsWith('-07-01')) expireContracts(state);
+  if (state.date.endsWith('-06-15') && state.phase === 'poletje') sponsorOffers(state);
   if (state.phase === 'redni' && state.fixtures.filter((f) => f.stage === 'redni').every((f) => f.played)) startPlayoffs(state);
   if (state.phase === 'koncnica') progressPlayoffs(state);
   checkAchievements(state);
   return { blocked: false };
+}
+
+// dopolni kader do minimuma (12 napadalcev, 7 branilcev, 2 golmana)
+export function fillRoster(state: GameState, clubId: string): string[] {
+  const out: string[] = [];
+  const rng = new Rng(state.seed++);
+  const club = state.clubs.find((c) => c.id === clubId)!;
+  const roster = () => Object.values(state.players).filter((p) => p.clubId === clubId);
+  const need: [Pos[], number][] = [[['C', 'LW', 'RW'], 12], [['D'], 7], [['G'], 2]];
+  for (const [pos, min] of need) {
+    let guard = 0;
+    while (roster().filter((p) => pos.includes(p.pos)).length < min && guard++ < 10) {
+      const y = takeBestYouth(state, clubId, pos);
+      if (y) {
+        out.push(`${y.first} ${y.last} (U20)`);
+        continue;
+      }
+      const fa = Object.values(state.players).filter((p) => !p.clubId && pos.includes(p.pos)).sort((a, b) => a.wage - b.wage || b.ovr - a.ovr)[0];
+      if (fa) {
+        fa.clubId = clubId;
+        fa.contractUntil = state.seasonYear;
+        out.push(`${fa.first} ${fa.last}`);
+        continue;
+      }
+      const strength = CLUBS.find((x) => x.id === clubId)?.strength ?? 50;
+      const p = makePlayer(rng, { pos: rng.pick(pos), base: strength - 4, clubId, country: club.country, seasonYear: state.seasonYear, age: rng.int(18, 20), isAI: true });
+      state.players[p.id] = p;
+      out.push(`${p.first} ${p.last}`);
+    }
+  }
+  if (out.length) state.lines[clubId] = autoLines(roster());
+  return out;
 }
 
 // --- končnica ---
@@ -359,7 +444,7 @@ function scheduleSeriesGames(state: GameState) {
     const highHome = n % 2 === 1;
     state.fixtures.push({
       id: newId('f'),
-      date: addDays(state.date, 2),
+      date: addDays(state.date, 3),
       round: 100 + n,
       home: highHome ? s.high : s.low,
       away: highHome ? s.low : s.high,
@@ -537,18 +622,19 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     if (state.champion === c.id) c.reputation = Math.min(90, c.reputation + 2);
     const fin = state.finance[c.id];
     if (!fin) continue;
-    fin.sponsor = makeSponsor(c, rng);
+    if (c.id !== state.userClubId) fin.sponsor = makeSponsor(c, rng);
     const mk = infraOf(state, c.id).marketing;
-    fin.sponsor.monthly = Math.round((fin.sponsor.monthly * (1 + (mk - 2) * 0.08)) / 100) * 100;
+    if (c.id !== state.userClubId) fin.sponsor.monthly = Math.round((fin.sponsor.monthly * (1 + (mk - 2) * 0.08)) / 100) * 100;
     fin.wageBudget = Math.max(fin.wageBudget, Math.round((clubWages(state, c.id) * 1.08) / 100) * 100);
   }
-  state.phase = 'redni';
+  state.phase = 'poletje';
   state.champion = undefined;
   state.series = [];
-  state.fixtures = makeSchedule(state.clubs.map((c) => c.id), nextYear, rng);
+  const regular = makeSchedule(state.clubs.map((c) => c.id), nextYear, rng);
+  state.fixtures = [...makeFriendlies(state.clubs.map((c) => c.id), nextYear, rng), ...regular];
   state.youthFixtures = makeYouthSchedule(state);
-  state.date = addDays(state.fixtures[0].date, -3);
-  addNews(state, 'liga', `Začetek sezone ${seasonLabel(nextYear)}`, `Nova sezona IHL se začne ${fmtDate(state.fixtures[0].date)}.`);
+  state.date = addDays(state.date, 1);
+  addNews(state, 'liga', `Poletje ${nextYear}`, `Čas za sestavljanje ekipe: pogodbe, prestopi in sponzorji. Pogodbe potečejo 30. junija. Prijateljske tekme so v avgustu, redni del se začne ${fmtDate(regular[0].date)}.`);
   ensureV2(state);
   return { changes, retired, youth };
 }

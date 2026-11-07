@@ -79,7 +79,7 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
   const ppOpps = (side: 'home' | 'away') => (r.penalties ?? []).filter((x) => x.team !== side).length;
   const gH = goalieRow(0);
   const gA = goalieRow(1);
-  const stageName: Record<string, string> = { redni: `Redni del · ${f.round}. krog`, cetrtfinale: 'Četrtfinale', polfinale: 'Polfinale', finale: 'Finale' };
+  const stageName: Record<string, string> = { redni: `Redni del · ${f.round}. krog`, cetrtfinale: 'Četrtfinale', polfinale: 'Polfinale', finale: 'Finale', prijateljska: 'Prijateljska tekma' };
 
   return (
     <div className="page">

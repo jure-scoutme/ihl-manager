@@ -1,4 +1,5 @@
 'use client';
+import { Rink } from '@/components/Rink';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -11,6 +12,12 @@ import type { MatchSim, Side } from '@/engine/sim';
 import type { Fixture, Tactics } from '@/engine/types';
 
 const SPEEDS = [1, 3, 10];
+
+const sameColor = (a: string, b: string) => {
+  const n = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [n(a), n(b)];
+  return Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]) < 90;
+};
 
 export default function Tekma() {
   const game = useGame((s) => s.game)!;
@@ -159,6 +166,8 @@ export default function Tekma() {
             ))}
           </div>
         </section>
+
+        <Rink sim={sim} homeColor={clubOf(sim.home.clubId).color} awayColor={sameColor(clubOf(sim.home.clubId).color, clubOf(sim.away.clubId).color) ? '#222831' : clubOf(sim.away.clubId).color} goalLabel={t('GOL!')} />
 
         <section className="card" style={{ padding: '10px 14px' }}>
           <div className="row"><span className="lbl">{t('Na ledu')}</span>{ppText && <span style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 600 }}>{ppText}</span>}</div>

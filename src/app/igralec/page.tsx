@@ -10,6 +10,7 @@ import { useGame } from '@/store/game';
 import { useT } from '@/i18n';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
 import { fmtDate, seasonLabel } from '@/engine/season';
+import { expiring, offerRenewal, renewalAsk, transferWindow } from '@/engine/contracts';
 
 function Profil() {
   const game = useGame((s) => s.game)!;
@@ -39,6 +40,10 @@ function Profil() {
   const offerFee = fee ?? value;
   const tWage = wage ?? (isOther ? transferWageDemand(game, p) : p.wage);
   const club = game.clubs.find((c) => c.id === p.clubId);
+  const ask = isMine ? renewalAsk(game, p) : null;
+  const rWage = wage ?? ask?.wage ?? p.wage;
+  const win = transferWindow(game);
+  const expSoon = isMine && expiring(game).some((x) => x.id === p.id);
   const groups = p.pos === 'G' ? [GOALIE_GROUP, { label: 'Mentalni', keys: ['decisions', 'positioning', 'leadership'] as (keyof typeof p.attrs)[] }] : ATTR_GROUPS;
   const s = p.stats;
   const isG = p.pos === 'G';
@@ -73,10 +78,12 @@ function Profil() {
         </div>
       </section>
 
+      {(p.awayDays ?? 0) > 0 && <div className="card" style={{ color: 'var(--accent)', fontSize: 13 }}>🌍 {t('Pri reprezentanci še {n} dni.', { n: p.awayDays ?? 0 })}</div>}
       {p.injuryDays > 0 && <div className="card" style={{ color: 'var(--bad)', fontSize: 13 }}>{t('Poškodovan še')} {p.injuryDays} {t('dni.')}</div>}
 
       {isOther && fin && agreed === undefined && (
         <section className="card" style={{ borderColor: 'var(--accent)' }}>
+          {!win.open && <div style={{ fontSize: 12, color: 'var(--gold)', marginBottom: 8 }}>{t(win.label)}. {t('Proste igralce lahko podpišeš kadarkoli.')}</div>}
           <div className="row"><span className="lbl">{t('Ponudba klubu')} {club?.short}</span><span className="muted" style={{ fontSize: 12 }}>{t('vrednost ~')}{eur(value)}</span></div>
           <div className="row" style={{ marginTop: 10 }}>
             <button className="btn sec" style={{ width: 52 }} onClick={() => setFee(Math.max(500, offerFee - 1000))} aria-label="Manj">−</button>
@@ -97,7 +104,7 @@ function Profil() {
             <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(tWage + 50)} aria-label="Več">+</button>
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-            {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>{y} {y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta'}</button>)}
+            {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>{y} {t(y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta')}</button>)}
           </div>
           <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t('Prostor v proračunu za plače:')} <b style={{ color: room - tWage < 0 ? 'var(--bad)' : 'var(--text)' }}>{eur(room)}</b></div>
           <button className="btn block" style={{ marginTop: 10 }} onClick={() => update((g) => { const r = offerTransferContract(g, p.id, tWage, years); setMsg({ ok: r.accepted, text: r.text }); setWage(null); })}>{t('Ponudi pogodbo igralcu')}</button>
@@ -114,10 +121,30 @@ function Profil() {
             <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(offerWage + 50)} aria-label="Več">+</button>
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-            {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>{y} {y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta'}</button>)}
+            {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>{y} {t(y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta')}</button>)}
           </div>
           <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t('Prostor v proračunu za plače:')} <b style={{ color: room - offerWage < 0 ? 'var(--bad)' : 'var(--text)' }}>{eur(room)}</b></div>
           <button className="btn block" style={{ marginTop: 10 }} onClick={() => update((g) => { const r = offerContract(g, p.id, offerWage, years); setMsg({ ok: r.accepted, text: r.text }); setWage(null); })}>{t('Pošlji ponudbo')}</button>
+        </section>
+      )}
+
+      {isMine && ask && fin && (
+        <section className="card" style={{ borderColor: expSoon ? 'var(--gold)' : undefined }}>
+          <div className="row"><span className="lbl">{t('Pogodba')}</span><span style={{ fontSize: 12, fontWeight: 600, color: expSoon ? 'var(--gold)' : 'var(--muted)' }}>{expSoon ? t('poteče 30. junija') : t('do {y}', { y: p.contractUntil })}</span></div>
+          <p style={{ fontSize: 13, margin: '8px 0', lineHeight: 1.5 }}>{t(ask.reason)} {ask.willing && <span className="muted">{t('Zahteva: {w} €/mes za {n} sez.', { w: ask.wage, n: ask.years })}</span>}</p>
+          {ask.willing && (
+            <>
+              <div className="row">
+                <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(Math.max(100, rWage - 50))} aria-label="Manj">−</button>
+                <span style={{ textAlign: 'center' }}><span className="h" style={{ fontSize: 28 }}>{eur(rWage)}</span><br /><span className="muted" style={{ fontSize: 11 }}>{t('na mesec · zdaj ima')} {eur(p.wage)}</span></span>
+                <button className="btn sec" style={{ width: 52 }} onClick={() => setWage(rWage + 50)} aria-label="Več">+</button>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                {[1, 2, 3].map((y) => <button key={y} className={`chip ${years === y ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setYears(y)}>+{y} {t(y === 1 ? 'leto' : y === 2 ? 'leti' : 'leta')}</button>)}
+              </div>
+              <button className="btn block" style={{ marginTop: 10 }} onClick={() => update((g) => { const r = offerRenewal(g, p.id, rWage, years); setMsg({ ok: r.ok, text: r.text }); setWage(null); })}>{t('Ponudi podaljšanje')}</button>
+            </>
+          )}
         </section>
       )}
 
@@ -186,6 +213,19 @@ function Profil() {
               </div>
             </div>
           )}
+        </section>
+      )}
+
+      {(p.caps ?? []).length > 0 && (
+        <section className="card" style={{ padding: '10px 6px' }}>
+          <div className="lbl" style={{ padding: '0 6px 4px' }}>🌍 {t('Reprezentanca')}</div>
+          <table className="t">
+            <tbody>
+              {[...(p.caps ?? [])].reverse().map((c, i) => (
+                <tr key={i}><td>{t(c.event)}<span className="muted" style={{ display: 'block', fontSize: 11 }}>{c.team} · {c.place}. {t('mesto')}</span></td><td className="num">{c.gp}</td><td className="num">{c.g}</td><td className="num">{c.a}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
 

@@ -94,7 +94,7 @@ export default function Finance() {
             <section className="card" style={{ fontSize: 13 }}>
               <div className="lbl" style={{ marginBottom: 6 }}>{t('Glavni sponzor')}</div>
               <div className="h" style={{ fontSize: 20 }}>{fin.sponsor.name}</div>
-              <div className="row" style={{ marginTop: 6 }}><span className="muted">{t('Mesečno (sep–apr)')}</span><span>{eur(fin.sponsor.monthly)}</span></div>
+              <div className="row" style={{ marginTop: 6 }}><span className="muted">{t('Mesečno')}</span><span>{eur(fin.sponsor.monthly)}</span></div>
               <div className="row"><span className="muted">{t('Bonus za končnico')}</span><span>{eur(fin.sponsor.playoffBonus)}</span></div>
               <div className="row"><span className="muted">{t('Bonus za naslov')}</span><span>{eur(fin.sponsor.titleBonus)}</span></div>
             </section>

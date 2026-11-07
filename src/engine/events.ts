@@ -1,4 +1,6 @@
 import { addStory, checkAchievements } from './achievements';
+import { checkChallenge, derbyBonus } from './challenges';
+import { acceptSponsor } from './finance';
 import { careerTotals, ensureV2 } from './club';
 import { newId } from './players';
 import { Rng, clamp } from './rng';
@@ -111,6 +113,8 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   const cr = state.clubRecords![state.userClubId];
   if (won && (!cr.biggestWin || my - op > cr.biggestWin.diff)) cr.biggestWin = { score: `${my}:${op}`, vs: oppId, season: `${state.seasonYear}/${String(state.seasonYear + 1).slice(2)}`, diff: my - op };
 
+  checkChallenge(state, f);
+  derbyBonus(state, won, derby);
   // dosežki
   const home = state.clubs.find((c) => c.id === f.home)!;
   checkAchievements(state, { won, my, op, derby, hatTrick: Object.entries(goalsBy).some(([pid, g]) => g >= 3 && state.players[pid]?.clubId === state.userClubId), soldOut: us && r.attendance >= home.arena.capacity });
@@ -330,6 +334,7 @@ export function resolveDecision(state: GameState, id: string, optionIdx: number)
   const o = d.otherId ? state.players[d.otherId] : undefined;
   const m = (pl: Player | undefined, v: number) => pl && (pl.morale = clamp(pl.morale + v, 5, 100));
   const isWorker = (pl: Player) => pl.personality === 'profesionalec' || pl.personality === 'delaven';
+  if (opt?.effect?.startsWith('spons_')) return acceptSponsor(state, Number(opt.effect.slice(6)));
   switch (opt?.effect) {
     case 'pre_confident':
       moraleAll(state, 3);

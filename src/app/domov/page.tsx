@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { ACHIEVEMENTS } from '@/engine/achievements';
+import { expiring, transferWindow } from '@/engine/contracts';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Bar, Crest, Icon, SectionTitle, Shell, eur, heroBg } from '@/components/ui';
@@ -49,7 +50,7 @@ export default function Domov() {
       const op = us ? f.result!.ag : f.result!.hg;
       return { won: my > op, txt: `${my}:${op}`, id: f.id };
     });
-  const stageLabel = (s: string) => (s === 'redni' ? 'Redni del' : s === 'cetrtfinale' ? 'Četrtfinale' : s === 'polfinale' ? 'Polfinale' : 'Finale');
+  const stageLabel = (s: string) => (s === 'redni' ? 'Redni del' : s === 'cetrtfinale' ? 'Četrtfinale' : s === 'polfinale' ? 'Polfinale' : s === 'prijateljska' ? 'Prijateljska tekma' : 'Finale');
   const unread = game.news.filter((n) => !n.read).length;
 
   return (
@@ -74,7 +75,7 @@ export default function Domov() {
               <div><div style={{ fontSize: 13, opacity: 0.8 }}>{t('Prvak IHL')}</div><div className="h" style={{ fontSize: 28 }}>{clubOf(game.champion!).short}</div></div>
             </div>
             <p style={{ fontSize: 13, margin: '0 0 14px', opacity: 0.85 }}>{t('Redni del ste končali na {p}. mestu. Cilj uprave: {g}.', { p: myPos, g: t(club.boardGoal) })}</p>
-            <button className="btn white block" onClick={() => update((g) => setSummary(startNewSeason(g)))}>{t('Začni sezono')} {seasonLabel(game.seasonYear + 1)}</button>
+            <button className="btn white block" onClick={() => update((g) => setSummary(startNewSeason(g)))}>{t('Naprej v poletje')} {game.seasonYear + 1} ›</button>
           </section>
         )}
 
@@ -89,6 +90,17 @@ export default function Domov() {
             ))}
             {summary.retired.length > 0 && <p style={{ fontSize: 13 }}><span className="lbl">{t('Upokojitve:')} </span>{summary.retired.join(', ')}</p>}
             {summary.youth.length > 0 && <p style={{ fontSize: 13 }}><span className="lbl">{t('Novi mladinci:')} </span>{summary.youth.join(', ')}</p>}
+          </section>
+        )}
+
+        {game.phase === 'poletje' && (
+          <section className="card">
+            <div className="row"><span className="lbl">{t('Poletje')} {game.seasonYear}</span><span className="pill" style={{ height: 24, background: transferWindow(game).open ? 'rgba(61,220,151,.16)' : 'rgba(255,255,255,.08)', color: transferWindow(game).open ? 'var(--good)' : undefined }}>{t(transferWindow(game).open ? 'Prestopni rok odprt' : 'Prestopni rok zaprt')}</span></div>
+            <p style={{ fontSize: 13, margin: '8px 0 10px', lineHeight: 1.5 }}>{t('Sestavi ekipo za novo sezono: podaljšaj pogodbe, poišči okrepitve in izberi sponzorja. Pogodbe potečejo 30. junija, prijateljske tekme so v avgustu.')}</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Link href="/kader?tab=pogodbe" className="btn sec" style={{ flex: 1, height: 40, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t('Pogodbe')} ({expiring(game).length})</Link>
+              <Link href="/prestopi" className="btn sec" style={{ flex: 1, height: 40, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t('Prestopi')}</Link>
+            </div>
           </section>
         )}
 
@@ -126,6 +138,19 @@ export default function Domov() {
           <Link href="/kader" className="tile"><span className="k">{t('Morala')}</span><span className="v" style={{ color: morale >= 70 ? 'var(--good)' : morale < 50 ? 'var(--bad)' : undefined }}>{morale}%</span><span className="k">{injured ? `${injured} ${t('poškodovanih')}` : t('vsi zdravi')}</span></Link>
           <Link href="/finance" className="tile"><span className="k">{t('Račun')}</span><span className="v" style={{ fontSize: 22, paddingTop: 4, color: (fin?.balance ?? 0) < 0 ? 'var(--bad)' : undefined }}>{fin ? `${Math.round(fin.balance / 1000)}k €` : '—'}</span><span className="k">{fin ? eur(fin.balance) : ''}</span></Link>
         </div>
+
+        {game.challenge && (
+          <section className="card row" style={{ padding: '12px 16px', borderColor: game.challenge.done ? 'var(--good)' : game.challenge.failed ? undefined : 'var(--gold)', opacity: game.challenge.failed ? 0.55 : 1 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 22 }}>{game.challenge.done ? '✅' : game.challenge.failed ? '❌' : '🎯'}</span>
+              <span>
+                <span className="lbl" style={{ display: 'block' }}>{t('Izziv tedna')}</span>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>{t(game.challenge.text)}</span>
+                <span className="muted" style={{ display: 'block', fontSize: 11 }}>{t('Nagrada')}: {game.challenge.reward.money ? eur(game.challenge.reward.money) : game.challenge.reward.board ? t('+{n} % zaupanja uprave', { n: game.challenge.reward.board }) : t('+{n} % podpore navijačev', { n: game.challenge.reward.fans ?? 0 })} · {t('do')} {fmtDate(game.challenge.end).replace(/ \d{4}$/, '')}</span>
+              </span>
+            </span>
+          </section>
+        )}
 
         <Link href="/zgodovina?tab=dosezki" className="card row" style={{ textDecoration: 'none', color: 'inherit', padding: '12px 16px' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
