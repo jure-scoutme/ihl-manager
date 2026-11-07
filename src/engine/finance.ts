@@ -8,6 +8,7 @@ export const INCOME_LABELS: Record<string, string> = {
   bar: 'Bar in dresi',
   sponzorji: 'Sponzorji',
   bonusi: 'Bonusi sponzorjev',
+  prodaje: 'Prodaje igralcev',
 };
 export const EXPENSE_LABELS: Record<string, string> = {
   place: 'Plače',
@@ -17,6 +18,7 @@ export const EXPENSE_LABELS: Record<string, string> = {
   mladinci: 'Mladinska šola',
   odpravnine: 'Odpravnine',
   investicije: 'Investicije',
+  nakupi: 'Nakupi igralcev',
   infrastruktura: 'Vzdrževanje objektov',
 };
 

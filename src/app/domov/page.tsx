@@ -99,11 +99,11 @@ export default function Domov() {
                 id === 'vs' ? (
                   <div key="vs" className="score" style={{ fontSize: 22, opacity: 0.7 }}>VS</div>
                 ) : (
-                  <div key={id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <Link key={id} href={id === club.id ? '/kader' : `/ekipa?id=${id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <Crest club={clubOf(id)} size={60} />
                     <div className="h" style={{ fontSize: 16, textAlign: 'center' }}>{clubOf(id).short}</div>
                     <div style={{ fontSize: 11, opacity: 0.75 }}>{st.findIndex((s) => s.clubId === id) + 1}. mesto · {st.find((s) => s.clubId === id)!.pts} tč</div>
-                  </div>
+                  </Link>
                 ),
               )}
             </div>
@@ -175,7 +175,7 @@ export default function Domov() {
               {st.map((s, i) => (
                 <tr key={s.clubId} style={{ background: s.clubId === club.id ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined }}>
                   <td style={{ width: 24, borderTop: i ? undefined : 0 }} className="muted">{i + 1}</td>
-                  <td style={{ fontWeight: 600, borderTop: i ? undefined : 0 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Crest club={clubOf(s.clubId)} size={24} />{clubOf(s.clubId).short}</span></td>
+                  <td style={{ fontWeight: 600, borderTop: i ? undefined : 0 }}><Link href={s.clubId === club.id ? '/kader' : `/ekipa?id=${s.clubId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Crest club={clubOf(s.clubId)} size={24} />{clubOf(s.clubId).short}</Link></td>
                   <td className="num muted" style={{ borderTop: i ? undefined : 0 }}>{s.gp}</td>
                   <td className="num muted" style={{ borderTop: i ? undefined : 0 }}>{s.gf}:{s.ga}</td>
                   <td className="num" style={{ fontWeight: 800, borderTop: i ? undefined : 0 }}>{s.pts}</td>

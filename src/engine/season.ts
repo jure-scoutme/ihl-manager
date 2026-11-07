@@ -321,8 +321,8 @@ function startPlayoffs(state: GameState) {
   const st = standings(state);
   const seeds = st.map((s) => s.clubId);
   state.series = [
-    { id: newId('s'), stage: 'cetrtfinale', high: seeds[2], low: seeds[5], winsNeeded: 2, hw: 0, lw: 0 },
-    { id: newId('s'), stage: 'cetrtfinale', high: seeds[3], low: seeds[4], winsNeeded: 2, hw: 0, lw: 0 },
+    { id: newId('s'), stage: 'cetrtfinale', high: seeds[2], low: seeds[5], winsNeeded: 3, hw: 0, lw: 0 },
+    { id: newId('s'), stage: 'cetrtfinale', high: seeds[3], low: seeds[4], winsNeeded: 3, hw: 0, lw: 0 },
   ];
   const name = (id: string) => state.clubs.find((c) => c.id === id)!.short;
   addNews(state, 'liga', 'Konec rednega dela', `Prvo mesto: ${name(seeds[0])}. ${name(seeds[0])} in ${name(seeds[1])} gresta neposredno v polfinale. Četrtfinale: ${name(seeds[2])}–${name(seeds[5])}, ${name(seeds[3])}–${name(seeds[4])}.`);

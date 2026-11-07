@@ -305,6 +305,7 @@ export interface GameState {
   pressDone?: string[]; // id tekem, kjer je bila konferenca
   pressMood?: { fixtureId: string; mood: 'confident' | 'humble' };
   pressRecent?: string[];
+  agreedFees?: Record<string, number>; // dogovorjene odškodnine s klubi
   youth?: Record<string, Player>;
   youthFixtures?: YouthFixture[];
 }

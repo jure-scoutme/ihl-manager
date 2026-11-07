@@ -40,7 +40,7 @@ export default function Liga() {
                 {st.map((s, i) => (
                   <tr key={s.clubId} style={{ color: s.clubId === game.userClubId ? 'var(--accent)' : undefined, borderBottom: i === 1 || i === 5 ? '2px solid var(--line2)' : undefined }}>
                     <td className="muted">{i + 1}</td>
-                    <td style={{ fontWeight: 600 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).short}</span></td>
+                    <td style={{ fontWeight: 600 }}><Link href={s.clubId === game.userClubId ? '/kader' : `/ekipa?id=${s.clubId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).short}</Link></td>
                     <td className="num">{s.gp}</td><td className="num">{s.w}</td><td className="num">{s.otw}</td><td className="num">{s.otl}</td><td className="num">{s.l}</td>
                     <td className="num muted">{s.gf}:{s.ga}</td>
                     <td className="num" style={{ fontWeight: 700 }}>{s.pts}</td>
@@ -64,9 +64,9 @@ export default function Liga() {
                   {fixtures.map((f) => (
                     <tr key={f.id}>
                       <td className="muted" style={{ fontSize: 12, width: 108 }}>{fmtDate(f.date).replace(/ \d{4}$/, '')}</td>
-                      <td style={{ fontWeight: f.home === game.userClubId ? 700 : 500 }}>{clubOf(f.home).short}</td>
+                      <td style={{ fontWeight: f.home === game.userClubId ? 700 : 500 }}><Link href={f.home === game.userClubId ? '/kader' : `/ekipa?id=${f.home}`}>{clubOf(f.home).short}</Link></td>
                       <td className="num" style={{ fontWeight: 700, width: 54 }}>{f.result ? <Link href={`/porocilo?id=${f.id}`} style={{ color: 'var(--accent)' }}>{`${f.result.hg}:${f.result.ag}${f.result.so ? 'k' : f.result.ot ? 'p' : ''}`}</Link> : '–'}</td>
-                      <td style={{ fontWeight: f.away === game.userClubId ? 700 : 500, textAlign: 'right' }}>{clubOf(f.away).short}</td>
+                      <td style={{ fontWeight: f.away === game.userClubId ? 700 : 500, textAlign: 'right' }}><Link href={f.away === game.userClubId ? '/kader' : `/ekipa?id=${f.away}`}>{clubOf(f.away).short}</Link></td>
                     </tr>
                   ))}
                 </tbody>
