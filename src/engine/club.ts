@@ -147,6 +147,8 @@ export function archiveSeason(state: GameState, seasonLabelStr: string, st: { cl
     userFinish: st.findIndex((s) => s.clubId === state.userClubId) + 1,
     userClubId: state.userClubId,
   };
+  if (state.lastAwards) rec.awards = state.lastAwards.list;
+  state.lastAwards = undefined;
   state.seasonRecords!.push(rec);
   for (const s of st) {
     const cr = state.clubRecords![s.clubId];

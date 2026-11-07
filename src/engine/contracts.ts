@@ -86,6 +86,7 @@ export function offerRenewal(s: GameState, id: string, wage: number, years: numb
 
 // 1. julij: potekle pogodbe
 export function expireContracts(s: GameState) {
+  returnLoans(s);
   const rng = new Rng(s.seed + 31 + s.seasonYear);
   const left: string[] = [];
   for (const p of Object.values(s.players)) {
@@ -127,4 +128,58 @@ export function windowNews(s: GameState) {
   if (md === '12-01' && s.phase === 'redni') news(s, 'liga', 'Zimski prestopni rok je odprt', 'Do 31. januarja lahko kupuješ igralce od drugih klubov. Po tem roku so mogoči le še podpisi prostih igralcev.');
   if (md === '01-31' && s.phase === 'redni') news(s, 'liga', 'Danes se zapre prestopni rok', 'Zadnji dan za prestope med klubi pred končnico.');
   if (md === '09-01') news(s, 'liga', 'Poletni prestopni rok je zaprt', 'Prestopi med klubi bodo spet mogoči 1. decembra. Proste igralce lahko podpišeš kadarkoli.');
+}
+
+// ---------- posoje ----------
+export function loanTargets(s: GameState, p: Player) {
+  return s.clubs
+    .filter((c) => c.id !== s.userClubId)
+    .filter((c) => {
+      const roster = Object.values(s.players).filter((x) => x.clubId === c.id).sort((a, b) => b.ovr - a.ovr);
+      const cut = roster[Math.min(19, roster.length - 1)]?.ovr ?? 0;
+      return roster.length < 28 && p.ovr >= cut - 4;
+    })
+    .sort((a, b) => a.reputation - b.reputation);
+}
+
+export function loanOut(s: GameState, id: string, clubId: string): { ok: boolean; text: string } {
+  const p = s.players[id];
+  if (!p || p.clubId !== s.userClubId) return { ok: false, text: 'Igralec ni v tvojem klubu.' };
+  if (s.seasonYear - p.birthYear > 23) return { ok: false, text: 'Na posojo lahko pošlješ le igralce do 23 let.' };
+  if (!transferWindow(s).open) return { ok: false, text: 'Posoje so mogoče le v prestopnem roku.' };
+  const roster = Object.values(s.players).filter((x) => x.clubId === s.userClubId);
+  if (roster.length <= 20) return { ok: false, text: 'Kader mora imeti vsaj 20 igralcev.' };
+  if (p.pos === 'G' && roster.filter((x) => x.pos === 'G').length <= 2) return { ok: false, text: 'Potrebuješ vsaj dva golmana.' };
+  const club = loanTargets(s, p).find((c) => c.id === clubId);
+  if (!club) return { ok: false, text: 'Klub igralca ne želi.' };
+  p.loan = { from: s.userClubId, until: s.seasonYear };
+  p.clubId = clubId;
+  p.benchStreak = 0;
+  addStory(s, p, `Posoja v ${club.short}`);
+  return { ok: true, text: `${p.first} ${p.last} gre na posojo v ${club.short} do konca sezone. Tam bo dobil več minutaže.` };
+}
+
+export function recallLoan(s: GameState, id: string): { ok: boolean; text: string } {
+  const p = s.players[id];
+  if (!p?.loan || p.loan.from !== s.userClubId) return { ok: false, text: 'Igralec ni na posoji.' };
+  if (!transferWindow(s).open) return { ok: false, text: 'Igralca lahko vrneš le v prestopnem roku.' };
+  p.clubId = p.loan.from;
+  p.loan = undefined;
+  return { ok: true, text: `${p.first} ${p.last} se je vrnil s posoje.` };
+}
+
+// 1. julij: vrnitev s posoj (pred iztekom pogodb)
+export function returnLoans(s: GameState) {
+  const back: string[] = [];
+  for (const p of Object.values(s.players)) {
+    if (!p.loan || p.loan.until >= s.seasonYear) continue;
+    const gp = p.history[p.history.length - 1]?.stats.gp ?? 0;
+    if (p.loan.from === s.userClubId) {
+      back.push(`${p.first} ${p.last} (${gp} tekem)`);
+      addStory(s, p, `Vrnil se s posoje (${gp} tekem)`);
+    }
+    p.clubId = p.loan.from;
+    p.loan = undefined;
+  }
+  if (back.length) news(s, 'prestopi', 'Vrnitve s posoje', `S posoje so se vrnili: ${back.join(', ')}.`);
 }

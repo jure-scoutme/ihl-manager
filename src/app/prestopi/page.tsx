@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { INTEREST_STYLE, POS_LABEL, Shell, eur, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { fmtDate } from '@/engine/season';
+import { potentialKnown, shownOvr, shownPotential } from '@/engine/scouting';
 import { transferWindow } from '@/engine/contracts';
 import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
@@ -64,9 +65,9 @@ export default function Prestopi() {
           const st = INTEREST_STYLE[it];
           return (
             <Link key={p.id} href={`/igralec?id=${p.id}&from=prestopi`} className="card" style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto', gap: 12, alignItems: 'center', padding: '10px 12px' }}>
-              <span className="h" style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: ovrColor(p.ovr) }}>{p.ovr}</span>
+              <span className="h" style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: ovrColor(shownOvr(game, p).value) }}>{shownOvr(game, p).exact ? '' : '~'}{shownOvr(game, p).value}</span>
               <span>
-                <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{p.first} {p.last}{p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> {t('▲ POT')} {p.potential}</span>}</span>
+                <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{p.first} {p.last}{potentialKnown(game, p) && p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> {t('▲ POT')} {shownPotential(game, p)}</span>}</span>
                 <span className="muted" style={{ display: 'block', fontSize: 12 }}>{POS_LABEL[p.pos]} · {ageOf(p, game.seasonYear)} {t('let ·')} {p.nat}{p.isAI ? ' · AI' : ''}</span>
               </span>
               <span style={{ textAlign: 'right' }}>

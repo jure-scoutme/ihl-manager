@@ -28,6 +28,7 @@ export type ClubResponse = { status: 'sprejeto' | 'protiponudba' | 'zavrnjeno'; 
 export function offerToClub(state: GameState, playerId: string, fee: number): ClubResponse {
   const p = state.players[playerId];
   if (!p || !p.clubId || p.clubId === state.userClubId) return { status: 'zavrnjeno', text: 'Igralec ni na voljo.' };
+  if (p.loan) return { status: 'zavrnjeno', text: 'Igralec je na posoji in ni naprodaj.' };
   const win = transferWindow(state);
   if (!win.open) return { status: 'zavrnjeno', text: `${win.label}. Prosti igralci so na voljo kadarkoli.` };
   const seller = state.clubs.find((c) => c.id === p.clubId)!;

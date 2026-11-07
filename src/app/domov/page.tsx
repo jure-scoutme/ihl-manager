@@ -75,6 +75,12 @@ export default function Domov() {
               <div><div style={{ fontSize: 13, opacity: 0.8 }}>{t('Prvak IHL')}</div><div className="h" style={{ fontSize: 28 }}>{clubOf(game.champion!).short}</div></div>
             </div>
             <p style={{ fontSize: 13, margin: '0 0 14px', opacity: 0.85 }}>{t('Redni del ste končali na {p}. mestu. Cilj uprave: {g}.', { p: myPos, g: t(club.boardGoal) })}</p>
+            {game.lastAwards && (
+              <div style={{ background: 'rgba(0,0,0,.22)', borderRadius: 14, padding: '10px 12px', marginBottom: 12, fontSize: 12 }}>
+                <div style={{ fontWeight: 700, marginBottom: 4 }}>🏅 {t('Nagrade')} {game.lastAwards.season}</div>
+                {game.lastAwards.list.map((aw) => <div key={aw.key} className="row" style={{ padding: '1px 0' }}><span style={{ opacity: 0.8 }}>{t(aw.title)}</span><span style={{ fontWeight: 600 }}>{aw.name} · {clubOf(aw.clubId).short}</span></div>)}
+              </div>
+            )}
             <button className="btn white block" onClick={() => update((g) => setSummary(startNewSeason(g)))}>{t('Naprej v poletje')} {game.seasonYear + 1} ›</button>
           </section>
         )}

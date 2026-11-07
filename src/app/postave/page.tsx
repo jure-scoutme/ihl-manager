@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BackLink, POS_LABEL, Shell, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { groupChem } from '@/engine/training';
+import { captainsOf, setCaptain } from '@/engine/people';
 import { useT } from '@/i18n';
 import { autoLines } from '@/engine/players';
 import { clubPlayers } from '@/engine/season';
@@ -130,6 +131,23 @@ export default function Postave() {
               </div>
             </section>
           ))}
+
+        <section className="card">
+          <div className="lbl" style={{ marginBottom: 8 }}>{t('Kapetan in pomočnika')}</div>
+          {(['c', 'a0', 'a1'] as const).map((role) => {
+            const cap = captainsOf(game, game.userClubId);
+            const cur = role === 'c' ? cap.c : cap.a[role === 'a0' ? 0 : 1];
+            return (
+              <div key={role} className="row" style={{ marginBottom: 6, fontSize: 13 }}>
+                <span style={{ fontWeight: 800, width: 28 }}>{role === 'c' ? 'C' : 'A'}</span>
+                <select value={cur ?? ''} onChange={(e) => update((g) => setCaptain(g, role, e.target.value))} style={{ flex: 1, height: 36, borderRadius: 10, background: 'var(--surface2)', color: 'var(--text)', border: '1px solid rgba(255,255,255,.1)', padding: '0 10px' }}>
+                  {clubPlayers(game, game.userClubId).filter((p) => p.pos !== 'G').sort((a, b) => b.attrs.leadership - a.attrs.leadership).map((p) => <option key={p.id} value={p.id}>{p.first} {p.last} · {t('vodstvo')} {p.attrs.leadership}</option>)}
+                </select>
+              </div>
+            );
+          })}
+          <p className="muted" style={{ fontSize: 11, margin: '4px 0 0' }}>{t('Kapetan z visokim vodstvom dviguje moralo ekipe. Odvzem kapetanskega traku igralca prizadene.')}</p>
+        </section>
 
         <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="lbl">{t('Forček')}</div>

@@ -111,6 +111,22 @@ export default function Klub() {
           <div className="row"><span className="muted">{t('Zmage / porazi')}</span><span>{ms.w} / {ms.l}{ms.gp ? ` (${Math.round((ms.w / ms.gp) * 100)} %)` : ''}</span></div>
           <div className="row"><span className="muted">{t('Naslovi')}</span><span>{ms.titles}</span></div>
           <div className="row"><span className="muted">{t('Sezone')}</span><span>{ms.seasons}</span></div>
+          {(game.career ?? []).length > 0 && (
+            <>
+              <div className="lbl" style={{ margin: '10px 0 4px' }}>{t('Kariera')}</div>
+              {[...(game.career ?? [])].reverse().map((e, i) => {
+                const c = game.clubs.find((x) => x.id === e.clubId);
+                const gp = e.gp ?? ms.gp - e.gp0;
+                const w = e.w ?? ms.w - e.w0;
+                return (
+                  <div key={i} className="row" style={{ fontSize: 12, padding: '3px 0' }}>
+                    <span>{c?.short} <span className="muted">· {e.from.slice(0, 4)}–{e.to ? e.to.slice(0, 4) : t('danes')}{e.reason ? ` · ${t(e.reason)}` : ''}</span></span>
+                    <span className="muted">{gp} {t('tekem')} · {w} {t('zmag')}{(e.titles ?? 0) > 0 ? ` · 🏆${e.titles}` : ''}</span>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </section>
 
         <section className="card" id="nastavitve">

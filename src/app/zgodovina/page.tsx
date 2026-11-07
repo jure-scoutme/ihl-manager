@@ -54,7 +54,19 @@ export default function Zgodovina() {
                   </div>
                   {s.topScorer && <div className="row"><span className="muted">{t('Najboljši po točkah')}</span><span>{s.topScorer.name} ({clubOf(s.topScorer.clubId)?.short}) {s.topScorer.g}+{s.topScorer.a}={s.topScorer.pts}</span></div>}
                   {s.topGoals && <div className="row"><span className="muted">{t('Največ golov')}</span><span>{s.topGoals.name} · {s.topGoals.g}</span></div>}
-                  {s.bestGoalie && <div className="row"><span className="muted">{t('Najboljši golman')}</span><span>{s.bestGoalie.name} · {s.bestGoalie.svp} %</span></div>}
+                  {s.awards?.length ? (
+                    <div style={{ marginTop: 8 }}>
+                      <div className="lbl" style={{ marginBottom: 4 }}>🏅 {t('Nagrade')}</div>
+                      {s.awards.map((aw) => (
+                        <div key={aw.key} className="row" style={{ fontSize: 12, padding: '2px 0' }}>
+                          <span className="muted">{t(aw.title)}</span>
+                          <span style={{ fontWeight: aw.clubId === game.userClubId ? 700 : 500 }}>{aw.name} <span className="muted">({clubOf(aw.clubId)?.short})</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    s.bestGoalie && <div className="row"><span className="muted">{t('Najboljši golman')}</span><span>{s.bestGoalie.name} · {s.bestGoalie.svp} %</span></div>
+                  )}
                 </section>
               );
             })}

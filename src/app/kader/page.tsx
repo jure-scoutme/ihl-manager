@@ -7,6 +7,7 @@ import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
 import { clubPlayers } from '@/engine/season';
 import { expiring } from '@/engine/contracts';
+import { captainsOf } from '@/engine/people';
 
 type Tab = 'F' | 'D' | 'G' | 'pogodbe';
 
@@ -21,6 +22,8 @@ export default function Kader() {
     .sort((a, b) => (tab === 'pogodbe' ? a.contractUntil - b.contractUntil || b.ovr - a.ovr : b.ovr - a.ovr));
   const avg = Math.round(roster.reduce((s, p) => s + p.ovr, 0) / roster.length);
   const wages = roster.reduce((s, p) => s + p.wage, 0);
+  const cap = captainsOf(game, game.userClubId);
+  const loaned = Object.values(game.players).filter((p) => p.loan?.from === game.userClubId);
   const exp = new Set(expiring(game).map((p) => p.id));
   const expSoon = (p: { id: string }) => exp.has(p.id);
 
@@ -48,7 +51,7 @@ export default function Kader() {
                 <Portrait player={p} size={42} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 14 }}>
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.first} {p.last}{p.homegrown === game.userClubId ? ' 🎓' : ''}</span>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.first} {p.last}{cap.c === p.id ? ' (C)' : cap.a.includes(p.id) ? ' (A)' : ''}{p.homegrown === game.userClubId ? ' 🎓' : ''}{p.loan ? ' ↗' : ''}</span>
                     {p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}>▲</span>}
                   </span>
                   <span className="muted" style={{ display: 'flex', gap: 6, fontSize: 12, marginTop: 2, alignItems: 'center' }}>
@@ -64,6 +67,17 @@ export default function Kader() {
             );
           })}
         </div>
+        {loaned.length > 0 && (
+          <section className="card" style={{ padding: '10px 14px' }}>
+            <div className="lbl" style={{ marginBottom: 6 }}>{t('Na posoji')}</div>
+            {loaned.map((p) => (
+              <Link key={p.id} href={`/igralec?id=${p.id}`} className="row" style={{ fontSize: 13, padding: '4px 0' }}>
+                <span>{p.first} {p.last} <span className="muted">· {game.clubs.find((c) => c.id === p.clubId)?.short}</span></span>
+                <span className="muted">{p.stats.gp} {t('tekem')} · {p.stats.g + p.stats.a} {t('tč')}</span>
+              </Link>
+            ))}
+          </section>
+        )}
         <div className="muted" style={{ fontSize: 11, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           <span><span className="dot" style={{ background: 'var(--good)' }} /> {t('dobra forma')}</span>
           <span><span className="dot" style={{ background: 'var(--gold)' }} /> {t('povprečna')}</span>

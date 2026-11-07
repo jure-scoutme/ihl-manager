@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BackLink, Crest, POS_LABEL, Portrait, Shell, eur, heroBg, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { shownOvr } from '@/engine/scouting';
 import { ROLES, ROLE_LABEL, staffOf } from '@/engine/staff';
 import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
@@ -28,7 +29,7 @@ function Ekipa() {
   const row = st.find((s) => s.clubId === club.id)!;
   const roster = Object.values(game.players).filter((p) => p.clubId === club.id);
   const list = roster.filter((p) => (tab === 'F' ? ['C', 'LW', 'RW'].includes(p.pos) : p.pos === tab)).sort((a, b) => b.ovr - a.ovr);
-  const avg = Math.round(roster.reduce((s, p) => s + p.ovr, 0) / Math.max(1, roster.length));
+  const avg = Math.round(roster.reduce((s, p) => s + shownOvr(game, p).value, 0) / Math.max(1, roster.length));
   const top = [...roster].filter((p) => p.pos !== 'G').sort((a, b) => b.stats.g + b.stats.a - (a.stats.g + a.stats.a))[0];
   const next = game.fixtures.filter((f) => !f.played && (f.home === club.id || f.away === club.id)).sort((a, b) => a.date.localeCompare(b.date))[0];
   const clubOf = (cid: string) => game.clubs.find((c) => c.id === cid)!;
@@ -91,7 +92,7 @@ function Ekipa() {
                 {ageOf(p, game.seasonYear)} {t('let ·')} {p.pos === 'G' ? `${p.stats.gp} ${t('T')}` : `${p.stats.g + p.stats.a} ${t('tč')}`} · ~{eur(transferValue(game, p))}
               </span>
             </span>
-            <span className="badge" style={{ background: `color-mix(in srgb, ${ovrColor(p.ovr)} 16%, transparent)`, color: ovrColor(p.ovr) }}>{p.ovr}</span>
+            <span className="badge" style={{ background: `color-mix(in srgb, ${ovrColor(shownOvr(game, p).value)} 16%, transparent)`, color: ovrColor(shownOvr(game, p).value) }}>{shownOvr(game, p).exact ? '' : '~'}{shownOvr(game, p).value}</span>
           </Link>
         ))}
       </div>

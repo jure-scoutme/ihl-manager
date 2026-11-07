@@ -1,6 +1,8 @@
 import { addStory, checkAchievements } from './achievements';
 import { checkChallenge, derbyBonus } from './challenges';
 import { acceptSponsor } from './finance';
+import { takeJob } from './career';
+import { captainEffect } from './people';
 import { careerTotals, ensureV2 } from './club';
 import { newId } from './players';
 import { Rng, clamp } from './rng';
@@ -326,8 +328,9 @@ export function weeklyBoardAndMood(state: GameState, pos: number, goal: string) 
   addBoard(state, clamp((target + 1 - pos) * 0.4, -1.5, 1.2) + ((state.finance[state.userClubId]?.balance ?? 0) < 0 ? -1 : 0.3));
   const team = roster(state);
   const leaders = team.filter((p) => p.personality === 'vodja').length;
+  const capFx = captainEffect(state);
   team.forEach((p) => {
-    const tgt = 62 + leaders * 3 + (state.fans ?? 50) / 20;
+    const tgt = 62 + leaders * 3 + (state.fans ?? 50) / 20 + capFx;
     p.morale = clamp(Math.round(p.morale + (tgt - p.morale) * 0.15), 5, 100);
   });
   if ((state.board ?? 55) < 20) {
@@ -352,6 +355,7 @@ export function resolveDecision(state: GameState, id: string, optionIdx: number)
   const o = d.otherId ? state.players[d.otherId] : undefined;
   const m = (pl: Player | undefined, v: number) => pl && (pl.morale = clamp(pl.morale + v, 5, 100));
   const isWorker = (pl: Player) => pl.personality === 'profesionalec' || pl.personality === 'delaven';
+  if (opt?.effect?.startsWith('job_')) return takeJob(state, opt.effect);
   if (opt?.effect?.startsWith('spons_')) return acceptSponsor(state, Number(opt.effect.slice(6)));
   switch (opt?.effect) {
     case 'pre_confident':

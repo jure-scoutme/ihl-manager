@@ -5,6 +5,9 @@ import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages, sponsorOffers } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
 import { nationalDay } from './national';
+import { giveAwards, makePrediction } from './awards';
+import { scoutDay } from './scouting';
+import { checkSacking, ensureCareer, seasonEndCareer } from './career';
 import { closeWeek, monthlyBoard, newWeeklyChallenge, summerBudget } from './challenges';
 import { combine, groupChem, growChem, recoveryFactor, trainingBoost, weeklyTraining } from './training';
 import { contractReminders, expireContracts, windowNews } from './contracts';
@@ -140,6 +143,8 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   ensureV2(state);
   ensureYouth(state);
   ensureStaff(state);
+  ensureCareer(state);
+  makePrediction(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
   return state;
@@ -325,6 +330,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   state.date = addDays(state.date, 1);
   windowNews(state);
   nationalDay(state);
+  scoutDay(state);
   if (state.date.endsWith('-01')) {
     contractReminders(state);
     monthlyFinances(state);
@@ -341,6 +347,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
     const club = state.clubs.find((c) => c.id === state.userClubId)!;
     if (st[0].gp > 0) weeklyBoardAndMood(state, pos, club.boardGoal);
     if (st[0].gp >= 3) weeklyLocker(state, pos);
+    checkSacking(state);
     closeWeek(state);
     newWeeklyChallenge(state);
     const trn = weeklyTraining(state);
@@ -374,6 +381,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
         const added = fillRoster(state, c.id);
         if (c.id === state.userClubId && added.length) addNews(state, 'klub', 'Pomočnik je dopolnil kader', `Kader je bil premajhen, zato so se ekipi pridružili: ${added.join(', ')}.`);
       }
+      makePrediction(state);
       addNews(state, 'liga', `Začetek sezone ${seasonLabel(state.seasonYear)}`, `Redni del se začne ${fmtDate(first)}. Kader je zaključen, prosti igralci pa so na voljo vso sezono.`);
     }
   }
@@ -477,6 +485,7 @@ function progressPlayoffs(state: GameState) {
   } else if (fin?.winner && state.phase === 'koncnica') {
     state.phase = 'konec';
     state.champion = fin.winner;
+    giveAwards(state, standings(state));
     const won = fin.winner === state.userClubId;
     addNews(state, 'liga', `${name(fin.winner)} je prvak IHL`, `${name(fin.winner)} je v finalu premagal ${name(fin.winner === fin.high ? fin.low : fin.high)} z ${Math.max(fin.hw, fin.lw)}:${Math.min(fin.hw, fin.lw)} v zmagah.`);
     book(state, fin.winner, 'bonusi', state.finance[fin.winner]?.sponsor.titleBonus ?? 0);
@@ -514,6 +523,8 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
   const goalMet = state.champion === state.userClubId || userPos <= target;
   state.board = clamp((state.board ?? 55) + (goalMet ? 12 : -12), 0, 100);
   addNews(state, 'uprava', goalMet ? 'Uprava je zadovoljna s sezono' : 'Uprava je razočarana', goalMet ? `Cilj (${userClub.boardGoal}) je izpolnjen. Zaupanje uprave: ${Math.round(state.board)} %.` : `Cilj (${userClub.boardGoal}) ni bil izpolnjen. Zaupanje uprave: ${Math.round(state.board)} %.`);
+  ensureCareer(state);
+  seasonEndCareer(state);
   state.streak = 0;
   // igralci na seznamu za prodajo odidejo
   for (const p of Object.values(state.players)) {

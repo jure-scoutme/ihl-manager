@@ -198,8 +198,19 @@ export default function Tekma() {
                 <button key={k} className={`chip ${me.tactics.forecheck === k ? 'on' : ''}`} style={{ flex: 1 }} onClick={() => setTac({ forecheck: k })}>{t(l)}</button>
               ))}
             </div>
+            <div className="lbl">{t('Taktika')}</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button className={`chip ${me.tactics.lineMatch ? 'on' : ''}`} onClick={() => setTac({ lineMatch: !me.tactics.lineMatch })}>{t('1. napad proti njihovemu 1. napadu')}</button>
+              <button className={`chip ${sim.manualPull[mySide] ? 'on' : ''}`} disabled={sim.period < 3 || sim.inOT} onClick={() => { sim.manualPull[mySide] = !sim.manualPull[mySide]; setTick((x) => x + 1); }}>{sim.manualPull[mySide] ? t('Vrni golmana') : t('Umakni golmana')}</button>
+            </div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
+              <span className="muted" style={{ whiteSpace: 'nowrap' }}>{t('Samodejni umik golmana')}</span>
+              {([['zgodaj', 'Zgodaj'], ['normalno', 'Normalno'], ['pozno', 'Pozno']] as const).map(([k, l]) => (
+                <button key={k} className={`chip ${(me.tactics.pull ?? 'normalno') === k ? 'on' : ''}`} style={{ flex: 1, height: 30 }} onClick={() => setTac({ pull: k })}>{t(l)}</button>
+              ))}
+            </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button className="btn sec" style={{ flex: 1 }} disabled={timeoutUsed} onClick={() => { onIceIds.forEach((id) => (sim.energy[id] = Math.min(100, (sim.energy[id] ?? 80) + 15))); setTimeoutUsed(true); sim.events.push({ t: sim.t, side: mySide, kind: 'info', text: `${me.name} vzame time-out.` }); }}>{t('Time-out')}</button>
+              <button className="btn sec" style={{ flex: 1 }} disabled={timeoutUsed} onClick={() => { onIceIds.forEach((id) => (sim.energy[id] = Math.min(100, (sim.energy[id] ?? 80) + 15))); setTimeoutUsed(true); sim.boostUntil[mySide] = sim.t + 180; sim.events.push({ t: sim.t, side: mySide, kind: 'info', text: `${me.name} vzame time-out.` }); }}>{t('Time-out')}</button>
               <button className="btn sec" style={{ flex: 1 }} onClick={() => setRunning(!running)}>{running ? t('Pavza') : t('Nadaljuj')}</button>
               <button className="btn" style={{ flex: 1 }} onClick={() => setSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}>{t('Hitrost')} {speed}×</button>
             </div>

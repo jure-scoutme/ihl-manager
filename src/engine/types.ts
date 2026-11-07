@@ -69,6 +69,8 @@ export interface Player {
   youth?: 'U20' | 'U18'; // igralec mladinske šole
   homegrown?: string;
   negotiations?: number;
+  lastTalk?: string;
+  loan?: { from: string; until: number };
   awayDays?: number; // odsoten zaradi reprezentance
   caps?: { event: string; team: string; gp: number; g: number; a: number; place: number }[]; // klub, v katerem je bil vzgojen
   story?: { date: string; text: string }[];
@@ -110,6 +112,8 @@ export interface Tactics {
   forecheck: Forecheck;
   tempo: Tempo;
   lineUsage: [number, number, number, number]; // deleži minutaže napadov
+  pull?: 'zgodaj' | 'normalno' | 'pozno'; // kdaj umakniti golmana
+  lineMatch?: boolean; // najboljši napad proti najboljšemu napadu nasprotnika
 }
 
 export interface Fixture {
@@ -230,6 +234,7 @@ export interface SeasonRecord {
   season: string;
   champion: string;
   regularWinner: string;
+  awards?: import('./awards').Award[];
   final?: string; // npr. "3:1"
   runnerUp?: string;
   topScorer?: { name: string; clubId: string; pts: number; g: number; a: number };
@@ -310,6 +315,12 @@ export interface GameState {
   training?: Record<string, import('./training').TrainingPlan>;
   chem?: Record<string, number>;
   challenge?: import('./challenges').Challenge;
+  scout?: { known: Record<string, number>; tasks: { playerId: string; until: string }[] };
+  prediction?: { season: number; order: string[] };
+  lastAwards?: { season: string; list: import('./awards').Award[] };
+  captains?: Record<string, { c?: string; a: string[] }>;
+  career?: import('./career').CareerEntry[];
+  unemployed?: boolean;
   sponsorOffers?: { name: string; monthly: number; playoffBonus: number; titleBonus: number }[];
   national?: { event: 'U18' | 'U20' | 'SP'; year: number; squads: Record<string, string[]> };
   counters?: { buys: number; frees: number };

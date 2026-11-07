@@ -93,6 +93,8 @@ export class MatchSim {
   penaltyLog: { t: number; side: Side; playerId: string; min: number; reason: string }[] = [];
   soAttempts: { side: Side; playerId: string; scored: boolean }[] = [];
   staffB?: MatchSetup['staff'];
+  manualPull: Record<Side, boolean> = { home: false, away: false };
+  boostUntil: Record<Side, number> = { home: 0, away: 0 };
   chemFn?: MatchSetup['chem'];
   private chemCache: Record<string, number> = {};
 
@@ -214,6 +216,10 @@ export class MatchSim {
       const cm = 1 + ((c - 50) / 50) * 0.035;
       off *= cm;
       def *= cm;
+    }
+    if (this.t < this.boostUntil[side]) {
+      off *= 1.03;
+      def *= 1.03;
     }
     const sb = this.staffB?.[this.team(side).clubId];
     if (sb) {
@@ -476,7 +482,9 @@ export class MatchSim {
       const me = this.team(side);
       const opp = this.team(this.other(side));
       const behind = opp.score - me.score;
-      const shouldPull = behind >= 1 && behind <= 2 && this.t >= 3600 - (behind === 2 ? 150 : 90) && me.penalties.length === 0;
+      const early = me.tactics.pull === 'zgodaj' ? 1.6 : me.tactics.pull === 'pozno' ? 0.6 : 1;
+      const auto = behind >= 1 && behind <= 2 && this.t >= 3600 - (behind === 2 ? 150 : 90) * early && me.penalties.length === 0;
+      const shouldPull = (auto || this.manualPull[side]) && me.penalties.length === 0;
       if (shouldPull && !me.goaliePulled) this.log({ side, kind: 'info', text: `${me.name} umakne golmana za dodatnega napadalca.` });
       me.goaliePulled = shouldPull;
     }
@@ -498,8 +506,11 @@ export class MatchSim {
         const w = me.tactics.lineUsage;
         let best = 0;
         let bestScore = -1;
+        const opp = this.team(this.other(side));
+        const matchBest = me.tactics.lineMatch && opp.fIdx === 0 && me.fIdx !== 0 && (me.lines.f[0].reduce((s, id) => s + (this.energy[id] ?? 80), 0) / 3) > 60;
         for (let i = 0; i < 4; i++) {
           if (i === me.fIdx) continue;
+          if (matchBest && i !== 0) continue;
           const line = me.lines.f[i];
           const en = line.reduce((s, id) => s + (this.energy[id] ?? 80), 0) / 3;
           const score = (w[i] / (me.fUsed[i] + 1)) * (en / 100);

@@ -7,6 +7,7 @@ import { ensureFinance } from '@/engine/finance';
 import { ensureV2 } from '@/engine/club';
 import { ensureYouth } from '@/engine/youth';
 import { ensureStaff } from '@/engine/staff';
+import { ensureCareer } from '@/engine/career';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
@@ -213,6 +214,7 @@ export const useGame = create<Store>()(
           ensureV2(p.game);
           ensureYouth(p.game);
           ensureStaff(p.game);
+          ensureCareer(p.game);
         }
         return p as unknown as Store;
       },
@@ -223,6 +225,7 @@ export const useGame = create<Store>()(
           ensureV2(state.game);
           ensureYouth(state.game);
           ensureStaff(state.game);
+          ensureCareer(state.game);
         }
       },
     },

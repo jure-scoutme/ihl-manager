@@ -10,7 +10,9 @@ import { useGame } from '@/store/game';
 import { useT } from '@/i18n';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
 import { fmtDate, seasonLabel } from '@/engine/season';
-import { expiring, offerRenewal, renewalAsk, transferWindow } from '@/engine/contracts';
+import { assignScout, attrRange, knowledge, scouting, shownOvr, shownPotential } from '@/engine/scouting';
+import { TALKS, captainsOf, talk, talkCooldown } from '@/engine/people';
+import { expiring, loanOut, loanTargets, offerRenewal, recallLoan, renewalAsk, transferWindow } from '@/engine/contracts';
 
 function Profil() {
   const game = useGame((s) => s.game)!;
@@ -34,12 +36,16 @@ function Profil() {
   const offerWage = wage ?? p.wage;
   const fin = game.finance?.[game.userClubId];
   const room = fin ? fin.wageBudget - clubWages(game, game.userClubId) : 0;
-  const isOther = !!p.clubId && p.clubId !== game.userClubId && !isYouth;
+  const myLoan = p.loan?.from === game.userClubId;
+  const isOther = !!p.clubId && p.clubId !== game.userClubId && !isYouth && !p.loan;
   const agreed = game.agreedFees?.[p.id];
   const value = isOther ? transferValue(game, p) : 0;
   const offerFee = fee ?? value;
   const tWage = wage ?? (isOther ? transferWageDemand(game, p) : p.wage);
   const club = game.clubs.find((c) => c.id === p.clubId);
+  const shown = shownOvr(game, p);
+  const know = knowledge(game, p);
+  const scoutTask = scouting(game, p.id);
   const ask = isMine ? renewalAsk(game, p) : null;
   const rWage = wage ?? ask?.wage ?? p.wage;
   const win = transferWindow(game);
@@ -64,14 +70,16 @@ function Profil() {
             {p.homegrown && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 24, marginTop: 6, fontSize: 11 }}>🎓 {t('Vzgojenec kluba')} {game.clubs.find((c) => c.id === p.homegrown)?.short ?? ''}</span>}
           </div>
           <div style={{ textAlign: 'center', background: 'rgba(0,0,0,.25)', borderRadius: 16, padding: '8px 10px' }}>
-            <div className="score" style={{ fontSize: 36, lineHeight: 1, color: ovrColor(p.ovr) }}>{p.ovr}</div>
-            <div style={{ fontSize: 10, opacity: 0.8, fontWeight: 700 }}>POT {p.potential}</div>
+            <div className="score" style={{ fontSize: 36, lineHeight: 1, color: ovrColor(shown.value) }}>{shown.exact ? '' : '~'}{shown.value}</div>
+            <div style={{ fontSize: 10, opacity: 0.8, fontWeight: 700 }}>POT {shownPotential(game, p)}</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 12, flexWrap: 'wrap' }}>
           {club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}><Crest club={club} size={18} /> {club.short}</span>}
           {!club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{t('Prost igralec')}</span>}
           <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>#{p.number}</span>
+          {p.clubId && captainsOf(game, p.clubId).c === p.id && <span className="pill" style={{ background: 'rgba(255,255,255,.28)', height: 26, fontWeight: 800 }}>C · {t('kapetan')}</span>}
+          {p.clubId && captainsOf(game, p.clubId).a.includes(p.id) && <span className="pill" style={{ background: 'rgba(255,255,255,.2)', height: 26, fontWeight: 800 }}>A</span>}
           <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{t('Strel')} {p.shoots}</span>
           <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{isFree ? t('zahteva {w} €/mes', { w: p.wage }) : t('{w} €/mes · do {y}', { w: p.wage, y: p.contractUntil })}</span>
           {p.isAI && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>AI</span>}
@@ -148,6 +156,48 @@ function Profil() {
         </section>
       )}
 
+      {myLoan && (
+        <section className="card row" style={{ fontSize: 13, borderColor: 'var(--accent)' }}>
+          <span><span className="lbl" style={{ display: 'block' }}>{t('Na posoji')}</span>{t('V klubu {c} do konca sezone.', { c: club?.short ?? '' })}</span>
+          <button className="btn sec" style={{ height: 38, padding: '0 14px', fontSize: 13 }} onClick={() => update((g) => setMsg(recallLoan(g, p.id)))}>{t('Vrni s posoje')}</button>
+        </section>
+      )}
+
+      {isMine && game.seasonYear - p.birthYear <= 23 && (
+        <section className="card">
+          <div className="lbl" style={{ marginBottom: 6 }}>{t('Posoja')}</div>
+          {(() => { const opts = loanTargets(game, p); return opts.length ? (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select id="loanclub" defaultValue={opts[0].id} style={{ flex: 1, height: 40, borderRadius: 10, background: 'var(--surface2)', color: 'var(--text)', border: '1px solid rgba(255,255,255,.1)', padding: '0 10px' }}>
+                {opts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <button className="btn sec" style={{ height: 40, padding: '0 14px', fontSize: 13 }} onClick={() => { const v = (document.getElementById('loanclub') as HTMLSelectElement).value; update((g) => setMsg(loanOut(g, p.id, v))); }}>{t('Pošlji na posojo')}</button>
+            </div>
+          ) : <p className="muted" style={{ fontSize: 12, margin: 0 }}>{t('Trenutno ga noben klub ne želi na posojo.')}</p>; })()}
+          <p className="muted" style={{ fontSize: 11, margin: '8px 0 0' }}>{t('Na posoji igra več in hitreje napreduje. Vrne se 1. julija. Plačo plača drugi klub.')}</p>
+        </section>
+      )}
+
+      {isMine && (
+        <section className="card">
+          <div className="row"><span className="lbl">{t('Pogovor z igralcem')}</span>{talkCooldown(game, p) && <span className="muted" style={{ fontSize: 11 }}>{t('naslednji pogovor čez nekaj dni')}</span>}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+            {TALKS.map((x) => <button key={x.id} className="btn sec" disabled={!!talkCooldown(game, p)} style={{ height: 40, fontSize: 13 }} onClick={() => update((g) => setMsg(talk(g, p.id, x.id)))}>{t(x.label)}</button>)}
+          </div>
+          <p className="muted" style={{ fontSize: 11, margin: '8px 0 0' }}>{t('Odziv je odvisen od osebnosti in forme igralca.')}</p>
+        </section>
+      )}
+
+      {!isMine && know < 100 && (
+        <section className="card row" style={{ fontSize: 13 }}>
+          <span>
+            <span className="lbl" style={{ display: 'block' }}>{t('Skavtiranje')} · {know} %</span>
+            <span className="muted" style={{ fontSize: 12 }}>{scoutTask ? t('Skavt spremlja igralca, poročilo do {d}.', { d: fmtDate(scoutTask.until).replace(/ \d{4}$/, '') }) : t('Atributi in potencial so ocena. Skavt jih razkrije.')}</span>
+          </span>
+          {!scoutTask && <button className="btn sec" style={{ height: 38, padding: '0 14px', fontSize: 13 }} onClick={() => update((g) => { const r = assignScout(g, p.id); setMsg({ ok: r.ok, text: r.text }); })}>{t('Pošlji skavta')}</button>}
+        </section>
+      )}
+
       {msg && <div className="card" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}>{t(msg.text)}</div>}
 
       <section className="card" style={{ display: 'flex', padding: '10px 6px' }}>
@@ -164,12 +214,15 @@ function Profil() {
           <div key={g.label} style={{ marginTop: gi ? 10 : 0 }}>
             <div className="lbl" style={{ marginBottom: 6 }}>{t(g.label)}</div>
             {g.keys.map((k) => {
-              const v = p.attrs[k];
+              const [lo, hi] = attrRange(game, p, k);
+              const v = Math.round((lo + hi) / 2);
               return (
-                <div key={k} style={{ display: 'grid', gridTemplateColumns: '130px 1fr 24px', gap: 10, alignItems: 'center', height: 22, fontSize: 13 }}>
+                <div key={k} style={{ display: 'grid', gridTemplateColumns: '130px 1fr 40px', gap: 10, alignItems: 'center', height: 22, fontSize: 13 }}>
                   <span>{t(ATTR_LABELS[k])}</span>
-                  <div className="bar"><div style={{ width: `${(v / 20) * 100}%`, background: attrColor(v) }} /></div>
-                  <span style={{ fontWeight: 700, textAlign: 'right' }}>{v}</span>
+                  <div className="bar" style={{ position: 'relative' }}>
+                    {lo === hi ? <div style={{ width: `${(v / 20) * 100}%`, background: attrColor(v) }} /> : <div style={{ position: 'absolute', left: `${(lo / 20) * 100}%`, width: `${((hi - lo) / 20) * 100}%`, top: 0, bottom: 0, background: attrColor(v), opacity: 0.55, borderRadius: 4 }} />}
+                  </div>
+                  <span style={{ fontWeight: 700, textAlign: 'right' }}>{lo === hi ? v : `${lo}–${hi}`}</span>
                 </div>
               );
             })}
