@@ -1,3 +1,4 @@
+import { staffWages } from './staff';
 import { CLUBS } from './data';
 import { makePlayer } from './players';
 import { Rng, clamp } from './rng';
@@ -112,7 +113,7 @@ export function monthlyFinances(state: GameState) {
     if (!fin) continue;
     book(state, c.id, 'place', -clubWages(state, c.id));
     book(state, c.id, 'led', -(1800 + c.budget * 350));
-    book(state, c.id, 'stab', -(1200 + c.budget * 300));
+    book(state, c.id, 'stab', -(400 + c.budget * 100 + staffWages(state, c.id)));
     book(state, c.id, 'mladinci', -(600 + c.budget * 200));
     // sponzor plačuje med septembrom in aprilom
     const m = Number(state.date.slice(5, 7));

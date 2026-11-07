@@ -6,6 +6,7 @@ import { advanceDay, createGame, quickSim, SAVE_VERSION, setDateLang, userFixtur
 import { ensureFinance } from '@/engine/finance';
 import { ensureV2 } from '@/engine/club';
 import { ensureYouth } from '@/engine/youth';
+import { ensureStaff } from '@/engine/staff';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
@@ -211,6 +212,7 @@ export const useGame = create<Store>()(
           ensureFinance(p.game);
           ensureV2(p.game);
           ensureYouth(p.game);
+          ensureStaff(p.game);
         }
         return p as unknown as Store;
       },
@@ -220,6 +222,7 @@ export const useGame = create<Store>()(
           ensureFinance(state.game);
           ensureV2(state.game);
           ensureYouth(state.game);
+          ensureStaff(state.game);
         }
       },
     },

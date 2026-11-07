@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BackLink, Crest, POS_LABEL, Portrait, Shell, eur, heroBg, ovrColor } from '@/components/ui';
 import { useGame } from '@/store/game';
+import { ROLES, ROLE_LABEL, staffOf } from '@/engine/staff';
 import { useT } from '@/i18n';
 import { ageOf } from '@/engine/players';
 import { fmtDate, standings } from '@/engine/season';
@@ -55,9 +56,22 @@ function Ekipa() {
 
       <section className="card" style={{ fontSize: 13 }}>
         <div className="row"><span className="muted">{t('Tekme')}</span><span>{row.gp} · {row.w + row.otw} {t('zmag ·')} {row.gf}:{row.ga}</span></div>
-        {top && <div className="row"><span className="muted">{t('Najboljši strelec')}</span><span>{top.first} {top.last} · {top.stats.g + top.stats.a} tč</span></div>}
-        {next && <div className="row"><span className="muted">{t('Naslednja tekma')}</span><span>{fmtDate(next.date).replace(/ \d{4}$/, '')} · {next.home === club.id ? 'doma' : '@'} {clubOf(next.home === club.id ? next.away : next.home).short}</span></div>}
+        {top && <div className="row"><span className="muted">{t('Najboljši strelec')}</span><span>{top.first} {top.last} · {top.stats.g + top.stats.a} {t('tč')}</span></div>}
+        {next && <div className="row"><span className="muted">{t('Naslednja tekma')}</span><span>{fmtDate(next.date).replace(/ \d{4}$/, '')} · {next.home === club.id ? t('doma') : '@'} {clubOf(next.home === club.id ? next.away : next.home).short}</span></div>}
         <div className="row"><span className="muted">{t('Cilj uprave')}</span><span>{t(club.boardGoal)}</span></div>
+      </section>
+
+      <section className="card" style={{ fontSize: 13 }}>
+        <div className="lbl" style={{ marginBottom: 6 }}>{t('Strokovni štab')}</div>
+        {ROLES.map((r) => {
+          const s = staffOf(game, club.id, r);
+          return (
+            <div key={r} className="row">
+              <span className="muted">{t(ROLE_LABEL[r])}</span>
+              <span>{s ? `${s.first} ${s.last} · ${s.rep}` : t('prosto mesto')}</span>
+            </div>
+          );
+        })}
       </section>
 
       <div className="seg">

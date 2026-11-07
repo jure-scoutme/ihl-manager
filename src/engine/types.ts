@@ -300,6 +300,7 @@ export interface GameState {
   seasonRecords?: SeasonRecord[];
   legends?: Legend[];
   clubRecords?: Record<string, ClubRecordStats>;
+  staff?: Record<string, import('./staff').Staff>;
   managerStats?: { gp: number; w: number; l: number; titles: number; seasons: number };
   streak?: number; // + zmage zapored, - porazi zapored (tvoj klub)
   pressDone?: string[]; // id tekem, kjer je bila konferenca

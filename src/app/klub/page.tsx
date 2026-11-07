@@ -6,6 +6,7 @@ import { useGame } from '@/store/game';
 import { LANGS, useT } from '@/i18n';
 import { INFRA_INFO, infraCost, infraDays, infraOf, infraUpkeep, requestArena, requestUpgrade } from '@/engine/club';
 import { fmtDate, standings } from '@/engine/season';
+import { staffImpact, staffOf } from '@/engine/staff';
 import type { InfraLevels } from '@/engine/types';
 
 export default function Klub() {
@@ -47,6 +48,15 @@ export default function Klub() {
           <div className="row" style={{ fontSize: 13 }}><span className="muted">{t('Trenutno mesto')}</span><span style={{ fontWeight: 600 }}>{pos}.</span></div>
           <p className="muted" style={{ fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>{t('Uprava ocenjuje rezultate glede na cilj in finance. Od zaupanja je odvisno, ali odobri investicije. Navijači vplivajo na obisk in moralo.')}</p>
         </section>
+
+        <Link href="/stab" className="card row" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <span>
+            <span className="lbl" style={{ display: 'block' }}>{t('Strokovni štab')}</span>
+            <span style={{ display: 'block', fontSize: 14, fontWeight: 600, marginTop: 4 }}>{staffOf(game, club.id, 'glavni') ? `${staffOf(game, club.id, 'glavni')!.first} ${staffOf(game, club.id, 'glavni')!.last}` : t('Ni glavnega trenerja')}</span>
+            <span className="muted" style={{ display: 'block', fontSize: 12, marginTop: 2 }}>{t('Vpliv štaba na moč: {x} %', { x: (staffImpact(game, club.id) >= 0 ? '+' : '') + staffImpact(game, club.id).toFixed(1) })}</span>
+          </span>
+          <span style={{ fontSize: 22, opacity: 0.6 }}>›</span>
+        </Link>
 
         <section className="card">
           <div className="row" style={{ marginBottom: 6 }}><span className="lbl">{t('Infrastruktura')}</span><span className="muted" style={{ fontSize: 11 }}>{t('vzdrževanje')} {eur(infraUpkeep(lv))}{t('/mes')}</span></div>

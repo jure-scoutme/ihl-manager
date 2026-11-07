@@ -64,6 +64,7 @@ export interface MatchSetup {
   tactics: Record<string, Tactics>;
   playoff: boolean;
   seed: number;
+  staff?: Record<string, import('./staff').StaffBoost>;
 }
 
 const eff = (p: Player, energy: number, k: keyof Attrs) => p.attrs[k] * (0.72 + 0.28 * (energy / 100)) * (1 + p.form * 0.02) * (0.96 + p.morale / 1250);
@@ -90,6 +91,7 @@ export class MatchSim {
   shotsByPeriod: { home: number[]; away: number[] } = { home: [0, 0, 0, 0], away: [0, 0, 0, 0] };
   penaltyLog: { t: number; side: Side; playerId: string; min: number; reason: string }[] = [];
   soAttempts: { side: Side; playerId: string; scored: boolean }[] = [];
+  staffB?: MatchSetup['staff'];
 
   private pIdx() {
     return Math.min(3, this.period - 1);
@@ -97,6 +99,7 @@ export class MatchSim {
 
   constructor(s: MatchSetup) {
     this.rng = new Rng(s.seed);
+    this.staffB = s.staff;
     this.players = s.players;
     this.playoff = s.playoff;
     this.home = this.makeTeam(s.homeId, s.homeName, s.lines[s.homeId], s.tactics[s.homeId]);
@@ -201,6 +204,14 @@ export class MatchSim {
     const n = Math.max(1, ids.length);
     off /= n;
     def /= n;
+    const sb = this.staffB?.[this.team(side).clubId];
+    if (sb) {
+      off *= sb.off;
+      def *= sb.def;
+      const oppN = this.onIceIds(this.other(side)).length;
+      if (ids.length > oppN) off *= sb.pp;
+      else if (ids.length < oppN) def *= sb.pk;
+    }
     if (tac.forecheck === 'agresiven') {
       off *= 1.04;
       def *= 0.97;
@@ -217,7 +228,8 @@ export class MatchSim {
     const g = this.players[team.goalie];
     if (!g) return 6;
     const e = this.energy[team.goalie] ?? 100;
-    return (1.2 * eff(g, e, 'reflexes') + eff(g, e, 'gPositioning') + 0.5 * eff(g, e, 'reboundControl')) / 2.7;
+    const gb = this.staffB?.[team.clubId]?.goalie ?? 1;
+    return ((1.2 * eff(g, e, 'reflexes') + eff(g, e, 'gPositioning') + 0.5 * eff(g, e, 'reboundControl')) / 2.7) * gb;
   }
 
   // --- en korak ---

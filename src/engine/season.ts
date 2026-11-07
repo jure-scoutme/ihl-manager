@@ -4,6 +4,7 @@ import { Rng, clamp } from './rng';
 import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
+import { aiStaffWeekly, devChance, ensureStaff, staffBoost, staffNewSeason } from './staff';
 import { afterUserMatch, checkPromises, expireDecisions, hasBlocking, preMatchPress, weeklyBoardAndMood, weeklyLocker } from './events';
 import { ensureYouth, makeYouthSchedule, simYouthDay, takeBestYouth, youthNewSeason } from './youth';
 import type { Attrs, Club, Fixture, GameState, Lines, Manager, MatchResult, NewsItem, Player, Series, Standing, Tactics } from './types';
@@ -116,6 +117,7 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   ensureFinance(state);
   ensureV2(state);
   ensureYouth(state);
+  ensureStaff(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
   return state;
@@ -181,6 +183,7 @@ export function makeSim(state: GameState, f: Fixture, seed?: number) {
     tactics: state.tactics,
     playoff: f.stage !== 'redni',
     seed: seed ?? Math.floor(Math.random() * 2 ** 31),
+    staff: { [f.home]: staffBoost(state, f.home), [f.away]: staffBoost(state, f.away) },
   });
 }
 
@@ -301,6 +304,8 @@ export function advanceDay(state: GameState): { blocked: boolean } {
     const club = state.clubs.find((c) => c.id === state.userClubId)!;
     if (st[0].gp > 0) weeklyBoardAndMood(state, pos, club.boardGoal);
     if (st[0].gp >= 3) weeklyLocker(state, pos);
+    const staffNews = aiStaffWeekly(state, (id) => st.findIndex((s) => s.clubId === id) + 1, st[0].gp);
+    if (staffNews.length) addNews(state, 'liga', 'Menjave trenerjev', staffNews.join(' '));
   }
   expireDecisions(state);
   checkPromises(state);
@@ -455,9 +460,9 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     const gp = p.history[p.history.length - 1]?.stats.gp ?? 0;
     if (age <= 23) {
       const tr = p.clubId ? infraOf(state, p.clubId).training : 2;
-      const bonus = (gp > 20 ? 1 : 0) + (rng.chance((tr - 2) * 0.3) ? 1 : 0) + ((p.personality === 'profesionalec' || p.personality === 'delaven') && rng.chance(0.5) ? 1 : 0) + (p.mentorId && state.players[p.mentorId]?.clubId === p.clubId ? 1 : 0);
+      const bonus = (gp > 20 ? 1 : 0) + (rng.chance((tr - 2) * 0.3) ? 1 : 0) + ((p.personality === 'profesionalec' || p.personality === 'delaven') && rng.chance(0.5) ? 1 : 0) + (p.mentorId && state.players[p.mentorId]?.clubId === p.clubId ? 1 : 0) + (p.clubId && rng.chance(devChance(state, p.clubId, p.pos === 'G')) ? 1 : 0);
       delta = Math.min(p.potential - p.ovr, rng.int(1, 4) + bonus);
-      reason = [gp > 20 ? 'minutaža' : '', tr >= 4 ? 'trening center' : 'trening', p.mentorId ? 'mentor' : '', p.personality === 'profesionalec' ? 'profesionalnost' : ''].filter(Boolean).join(', ');
+      reason = [gp > 20 ? 'minutaža' : '', tr >= 4 ? 'trening center' : 'trening', p.clubId && devChance(state, p.clubId, p.pos === 'G') >= 0.25 ? 'trenerji' : '', p.mentorId ? 'mentor' : '', p.personality === 'profesionalec' ? 'profesionalnost' : ''].filter(Boolean).join(', ');
     } else if (age <= 28) {
       delta = rng.int(-1, 2);
       reason = 'v najboljših letih';
@@ -521,6 +526,8 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
   fa.slice(50).forEach((p) => delete state.players[p.id]);
   const sc = infraOf(state, state.userClubId).scouting;
   addFreeAgents(state, 10 + sc * 2, sc - 1);
+  const sn = staffNewSeason(state);
+  if (sn.length) addNews(state, 'klub', 'Spremembe v štabu', sn.join(' '));
   for (const c of state.clubs) {
     if (state.champion === c.id) c.reputation = Math.min(90, c.reputation + 2);
     const fin = state.finance[c.id];
