@@ -5,6 +5,7 @@ import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval';
 import { advanceDay, createGame, quickSim, SAVE_VERSION, userFixtureToday } from '@/engine/season';
 import { ensureFinance } from '@/engine/finance';
 import { ensureV2 } from '@/engine/club';
+import { ensureYouth } from '@/engine/youth';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
@@ -166,6 +167,7 @@ export const useGame = create<Store>()(
         if (p?.game) {
           ensureFinance(p.game);
           ensureV2(p.game);
+          ensureYouth(p.game);
         }
         return p as unknown as Store;
       },
@@ -173,6 +175,7 @@ export const useGame = create<Store>()(
         if (state?.game) {
           ensureFinance(state.game);
           ensureV2(state.game);
+          ensureYouth(state.game);
         }
       },
     },

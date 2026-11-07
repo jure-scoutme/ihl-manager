@@ -26,7 +26,7 @@ export default function Kader() {
           <h1 className="h title">Kader</h1>
           <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{roster.length} igralcev · povp. ocena {avg} · plače {wages.toLocaleString('sl-SI')} €/mes</div>
         </div>
-        <Link href="/postave" className="btn" style={{ display: 'flex', alignItems: 'center' }}>Postave</Link>
+        <div style={{ display: 'flex', gap: 8 }}><Link href="/mladinci" className="btn sec" style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>Mladinci</Link><Link href="/postave" className="btn" style={{ display: 'flex', alignItems: 'center', padding: '0 14px' }}>Postave</Link></div>
       </header>
       <div className="page">
         <div className="seg">

@@ -66,6 +66,7 @@ export interface Player {
   benchStreak?: number; // zaporedne tekme brez igranja ali v 4. napadu
   mentorId?: string;
   listed?: boolean; // na seznamu za prodajo
+  youth?: 'U20' | 'U18'; // igralec mladinske šole
   stats: SkaterStats; // tekoča sezona
   history: { season: string; clubId: string; stats: SkaterStats }[];
 }
@@ -303,4 +304,18 @@ export interface GameState {
   streak?: number; // + zmage zapored, - porazi zapored (tvoj klub)
   pressDone?: string[]; // id tekem, kjer je bila konferenca
   pressMood?: { fixtureId: string; mood: 'confident' | 'humble' };
+  pressRecent?: string[];
+  youth?: Record<string, Player>;
+  youthFixtures?: YouthFixture[];
+}
+
+export interface YouthFixture {
+  id: string;
+  date: string;
+  league: 'U20' | 'U18';
+  home: string;
+  away: string;
+  hg?: number;
+  ag?: number;
+  ot?: boolean;
 }

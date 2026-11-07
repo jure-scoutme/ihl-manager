@@ -98,6 +98,7 @@ export default function Klub() {
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/finance" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Finance{fin ? ` · ${eur(fin.balance)}` : ''}</Link>
           <Link href="/zgodovina" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Zgodovina</Link>
+          <Link href="/mladinci" className="btn sec" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Mladinci</Link>
         </div>
       </div>
     </Shell>

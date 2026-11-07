@@ -5,6 +5,7 @@ import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
 import { afterUserMatch, checkPromises, expireDecisions, hasBlocking, preMatchPress, weeklyBoardAndMood, weeklyLocker } from './events';
+import { ensureYouth, makeYouthSchedule, simYouthDay, takeBestYouth, youthNewSeason } from './youth';
 import type { Attrs, Club, Fixture, GameState, Lines, Manager, MatchResult, NewsItem, Player, Series, Standing, Tactics } from './types';
 
 export const SAVE_VERSION = 3;
@@ -104,6 +105,7 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   };
   ensureFinance(state);
   ensureV2(state);
+  ensureYouth(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
   return state;
@@ -292,6 +294,8 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   }
   expireDecisions(state);
   checkPromises(state);
+  const yres = simYouthDay(state);
+  if (yres.length) addNews(state, 'klub', 'Rezultati mladincev', yres.join(' · '));
   for (const t of processProjects(state)) addNews(state, 'klub', 'Nadgradnja končana', t);
   const today = userFixtureToday(state);
   if (today) {
@@ -468,7 +472,12 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     if (p.clubId === state.userClubId && p.ovr !== before) changes.push({ playerId: p.id, name: `${p.first} ${p.last}`, age, before, after: p.ovr, reason });
   }
 
-  // mladinci (AI) zapolnijo kader
+  // mladinska šola: razvoj, prehod U18 -> U20, prestari odidejo, nova generacija
+  const yr = youthNewSeason(state, rng, season);
+  if (yr.aged.length) addNews(state, 'klub', 'Mladinci, prestari za U20', `Niso bili poklicani v člansko ekipo in so odšli kot prosti igralci: ${yr.aged.join(', ')}.`);
+  if (yr.intake.length) addNews(state, 'klub', 'Nova generacija v mladinski šoli', `V U18 prihajajo: ${yr.intake.join(', ')}.`);
+  youth.push(...yr.intake);
+  // kader dopolnijo najprej igralci iz U20, nato AI mladinci
   for (const c of state.clubs) {
     const roster = Object.values(state.players).filter((p) => p.clubId === c.id);
     const need = (pos: ('C' | 'LW' | 'RW' | 'D' | 'G')[], target: number) => target - roster.filter((p) => pos.includes(p.pos)).length;
@@ -477,9 +486,14 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     const usedNames = new Set(roster.map((p) => p.last));
     const add = (pos: 'C' | 'LW' | 'RW' | 'D' | 'G', count: number) => {
       for (let i = 0; i < count; i++) {
+        const fromYouth = takeBestYouth(state, c.id, pos === 'LW' || pos === 'RW' ? ['LW', 'RW'] : [pos]);
+        if (fromYouth) {
+          if (c.id === state.userClubId) addNews(state, 'klub', `${fromYouth.first} ${fromYouth.last} poklican iz U20`, 'Zaradi premalo igralcev na poziciji je pomočnik trenerja poklical mladinca v člansko ekipo.');
+          continue;
+        }
         const p = makePlayer(rng, { pos, base: strength - 2, clubId: c.id, country: c.country, seasonYear: nextYear, age: rng.int(17, 18), isAI: true, usedNumbers: used, usedNames });
         state.players[p.id] = p;
-        if (c.id === state.userClubId) youth.push(`${p.first} ${p.last} (${pos}, ${nextYear - p.birthYear} let, ocena ${p.ovr})`);
+
       }
     };
     add('C', Math.max(0, need(['C'], 5)));
@@ -510,6 +524,7 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
   state.champion = undefined;
   state.series = [];
   state.fixtures = makeSchedule(state.clubs.map((c) => c.id), nextYear, rng);
+  state.youthFixtures = makeYouthSchedule(state);
   state.date = addDays(state.fixtures[0].date, -3);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(nextYear)}`, `Nova sezona IHL se začne ${fmtDate(state.fixtures[0].date)}.`);
   ensureV2(state);

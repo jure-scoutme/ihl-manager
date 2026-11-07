@@ -42,6 +42,7 @@ export default function Koledar() {
     if (r.reached) setMsg(`Simulirano do ${fmtDate(sel)}.`);
     else if (r.stoppedFor === 'tekma') setMsg('Ustavljeno: danes igra tvoja ekipa.');
     else if (r.stoppedFor === 'konec') setMsg('Sezona je končana.');
+    else if (r.stoppedFor === 'odlocitev') setMsg(`Ustavljeno ${fmtDate(useGame.getState().game!.date)}: na Domov te čaka odločitev.`);
   };
 
   return (

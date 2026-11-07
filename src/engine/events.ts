@@ -1,6 +1,7 @@
 import { careerTotals, ensureV2 } from './club';
 import { newId } from './players';
 import { Rng, clamp } from './rng';
+import { buildPress, type PressCtx } from './press';
 import type { Decision, Fixture, GameState, Player } from './types';
 
 const name = (p: Player) => `${p.first} ${p.last}`;
@@ -95,32 +96,63 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   // konferenca po tekmi
   if (!state.pressDone!.includes(f.id + ':po')) {
     state.pressDone!.push(f.id + ':po');
-    const best = (r.box ?? []).filter((b) => (us ? b[1] === 0 : b[1] === 1)).sort((a, b) => b[2] * 2 + b[3] - (a[2] * 2 + a[3]))[0];
-    const bestP = best ? state.players[best[0]] : undefined;
-    if (won) {
-      push(state, {
-        kind: 'konferenca', blocking: false, fixtureId: f.id, playerId: bestP?.id, expires: addDay(state.date, 1),
-        title: 'Novinarska konferenca po tekmi',
-        body: `Zmaga ${my}:${op} proti ${clubShort(state, oppId)}. Kaj je bilo odločilno?`,
-        options: [
-          { label: 'Pohvala celotni ekipi.', effect: 'post_win_team' },
-          ...(bestP ? [{ label: `Izpostavil bi ${name(bestP)}.`, effect: 'post_win_star' }] : []),
-          { label: 'Še vedno imamo veliko dela.', effect: 'post_win_humble' },
-        ],
-      });
-    } else {
-      push(state, {
-        kind: 'konferenca', blocking: false, fixtureId: f.id, expires: addDay(state.date, 1),
-        title: 'Novinarska konferenca po tekmi',
-        body: `Poraz ${my}:${op} proti ${clubShort(state, oppId)}. Kaj je šlo narobe?`,
-        options: [
-          { label: 'Prevzemam odgovornost.', effect: 'post_loss_me' },
-          { label: 'Igralci niso dali vsega od sebe.', effect: 'post_loss_players' },
-          { label: 'Sodniki so odločili tekmo.', effect: 'post_loss_refs' },
-        ],
-      });
+    const mine = (r.box ?? []).filter((b) => (us ? b[1] === 0 : b[1] === 1));
+    const best = [...mine].sort((a, b) => b[2] * 2 + b[3] - (a[2] * 2 + a[3]))[0];
+    const bestP = best && best[2] + best[3] > 0 ? state.players[best[0]] : undefined;
+    // preobrat: ali smo kdaj zaostajali
+    let hs = 0;
+    let as = 0;
+    let trailed = false;
+    for (const g of [...r.goals].sort((x, y) => x.t - y.t)) {
+      if (g.team === 'home') hs++;
+      else as++;
+      if ((us ? hs - as : as - hs) < 0) trailed = true;
     }
+    const pim = (r.penalties ?? []).filter((x) => x.team === (us ? 'home' : 'away')).reduce((a, x) => a + x.min, 0);
+    const ctx: PressCtx = {
+      ...pressBase(state, f),
+      won, my, op, ot: r.ot, so: r.so, comeback: won && trailed,
+      star: bestP ? name(bestP) : undefined, starGoals: best?.[2] ?? 0,
+      shutout: op === 0, pim, shotsFor: us ? r.hShots : r.aShots, shotsAgainst: us ? r.aShots : r.hShots,
+    };
+    const q = buildPress(state, 'post', ctx);
+    push(state, { kind: 'konferenca', blocking: false, fixtureId: f.id, playerId: bestP?.id, expires: addDay(state.date, 1), title: 'Novinarska konferenca po tekmi', body: q.body, options: q.options });
   }
+}
+
+function pressBase(state: GameState, f: Fixture): PressCtx {
+  const oppId = f.home === state.userClubId ? f.away : f.home;
+  const derby = [['czv', 'par'], ['med', 'zag', 'mla'], ['tri', 'sla', 'cel']].some((g) => g.includes(f.home) && g.includes(f.away));
+  const st = standingsLite(state);
+  const mine = roster(state);
+  const avg = mine.reduce((a, p) => a + p.ovr, 0) / Math.max(1, mine.length);
+  const injured = mine.filter((p) => p.injuryDays > 0 && p.ovr >= avg + 4).sort((a, b) => b.ovr - a.ovr)[0];
+  const oppPlayers = Object.values(state.players).filter((p) => p.clubId === oppId && p.pos !== 'G');
+  const oppTop = oppPlayers.sort((a, b) => b.stats.g + b.stats.a - (a.stats.g + a.stats.a))[0];
+  const young = mine.filter((p) => state.seasonYear - p.birthYear <= 21 && p.stats.gp >= 5 && p.stats.g + p.stats.a >= p.stats.gp * 0.6).sort((a, b) => b.stats.g + b.stats.a - (a.stats.g + a.stats.a))[0];
+  const home = state.clubs.find((c) => c.id === f.home)!;
+  return {
+    opp: clubShort(state, oppId), derby, playoff: f.stage !== 'redni', streak: state.streak ?? 0,
+    myPos: st(state.userClubId), oppPos: st(oppId),
+    injuredStar: injured ? name(injured) : undefined,
+    oppStar: oppTop && oppTop.stats.gp >= 5 && oppTop.stats.g + oppTop.stats.a >= oppTop.stats.gp ? name(oppTop) : undefined,
+    youngStar: young ? name(young) : undefined,
+    fans: state.fans ?? 50, board: state.board ?? 55, round: f.round, home: f.home === state.userClubId, arena: home.arena.name,
+  };
+}
+
+function standingsLite(state: GameState) {
+  const pts: Record<string, number> = {};
+  for (const c of state.clubs) pts[c.id] = 0;
+  for (const f of state.fixtures) {
+    if (f.stage !== 'redni' || !f.result) continue;
+    const hw = f.result.hg > f.result.ag;
+    const extra = f.result.ot || f.result.so;
+    pts[hw ? f.home : f.away] += extra ? 2 : 3;
+    if (extra) pts[hw ? f.away : f.home] += 1;
+  }
+  const order = Object.entries(pts).sort((a, b) => b[1] - a[1]).map(([id]) => id);
+  return (id: string) => order.indexOf(id) + 1;
 }
 
 // --- konferenca pred tekmo (na dan tekme) ---
@@ -129,27 +161,9 @@ export function preMatchPress(state: GameState, f: Fixture, standingPos: (id: st
   if (state.pressDone!.includes(f.id + ':pred')) return;
   state.pressDone!.push(f.id + ':pred');
   if (state.pressDone!.length > 200) state.pressDone = state.pressDone!.slice(-100);
-  const oppId = f.home === state.userClubId ? f.away : f.home;
-  const opp = clubShort(state, oppId);
-  const derby = [['czv', 'par'], ['med', 'zag', 'mla'], ['tri', 'sla', 'cel']].some((g) => g.includes(f.home) && g.includes(f.away));
-  const streak = state.streak ?? 0;
-  let body: string;
-  if (f.stage !== 'redni') body = `Končnica proti ${opp}. Ste pripravljeni na serijo?`;
-  else if (derby) body = `Danes je derbi proti ${opp}. Kakšna so pričakovanja?`;
-  else if (streak <= -3) body = `Izgubili ste ${-streak} tekme zapored. Je vaš položaj ogrožen?`;
-  else if (streak >= 3) body = `Niz ${streak} zmag. Ste zdaj favoriti za naslov?`;
-  else if (standingPos(oppId) < standingPos(state.userClubId)) body = `${opp} je na lestvici višje. Kako se boste postavili nasproti njim?`;
-  else body = `Kako ocenjujete današnjega nasprotnika ${opp}?`;
-  push(state, {
-    kind: 'konferenca', blocking: false, fixtureId: f.id, expires: state.date,
-    title: 'Novinarska konferenca pred tekmo',
-    body,
-    options: [
-      { label: streak <= -3 ? 'Verjamem v ekipo, obrat prihaja.' : 'Zmagali bomo, o tem ni dvoma.', effect: 'pre_confident' },
-      { label: streak <= -3 ? 'Igralci morajo prevzeti odgovornost.' : 'Spoštujemo nasprotnika, a smo pripravljeni.', effect: streak <= -3 ? 'pre_demand' : 'pre_respect' },
-      { label: 'Za nas je to tekma kot vsaka druga.', effect: 'pre_neutral' },
-    ],
-  });
+  void standingPos;
+  const q = buildPress(state, 'pre', pressBase(state, f));
+  push(state, { kind: 'konferenca', blocking: false, fixtureId: f.id, expires: state.date, title: 'Novinarska konferenca pred tekmo', body: q.body, options: q.options });
 }
 
 // --- dogodki v slačilnici (enkrat na teden) ---
@@ -311,6 +325,13 @@ export function resolveDecision(state: GameState, id: string, optionIdx: number)
       return 'Pritisk na igralce. Delavni so motivirani, ostali manj.';
     case 'pre_neutral':
       return 'Brez posebnega odziva.';
+    case 'pre_pressure':
+      moraleAll(state, 2);
+      return 'Prenos pritiska na nasprotnika je ekipo sprostil.';
+    case 'post_loss_positive':
+      moraleAll(state, 1);
+      addFans(state, -1);
+      return 'Ekipa ceni podporo, navijači bi raje videli bolj kritičen odziv.';
     case 'post_win_team':
       moraleAll(state, 2);
       return 'Ekipa ceni pohvalo.';

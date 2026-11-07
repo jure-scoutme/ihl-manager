@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { BackLink, Crest, INTEREST_STYLE, POS_FULL, Portrait, Shell, attrColor, eur, heroBg, ovrColor } from '@/components/ui';
 import { clubWages, interestIn, offerContract, releasePlayer } from '@/engine/finance';
 import { PERSONALITY_INFO } from '@/engine/club';
+import { demote, promote } from '@/engine/youth';
 import { useGame } from '@/store/game';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
 import { seasonLabel } from '@/engine/season';
@@ -19,10 +20,11 @@ function Profil() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmRelease, setConfirmRelease] = useState(false);
   if (!game) return null;
-  const p = game.players[id];
-  const back = from === 'prestopi' ? { href: '/prestopi', label: 'Prosti igralci' } : from === 'liga' ? { href: '/liga', label: 'Liga' } : { href: '/kader', label: 'Kader' };
+  const p = game.players[id] ?? game.youth?.[id];
+  const isYouth = !!game.youth?.[id];
+  const back = from === 'prestopi' ? { href: '/prestopi', label: 'Prosti igralci' } : from === 'liga' ? { href: '/liga', label: 'Liga' } : from === 'mladinci' ? { href: '/mladinci', label: 'Mladinska šola' } : { href: '/kader', label: 'Kader' };
   if (!p) return <div className="page"><BackLink href={back.href} label={back.label} /><p>Igralec ne obstaja več.</p></div>;
-  const isMine = p.clubId === game.userClubId;
+  const isMine = p.clubId === game.userClubId && !isYouth;
   const isFree = p.clubId === null;
   const offerWage = wage ?? p.wage;
   const fin = game.finance?.[game.userClubId];
@@ -118,6 +120,18 @@ function Profil() {
         {p.mentorId && game.players[p.mentorId] && <div className="row"><span className="muted">Mentor</span><span>{game.players[p.mentorId].first} {game.players[p.mentorId].last}</span></div>}
         {p.listed && <div className="row"><span className="muted">Status</span><span style={{ color: 'var(--gold)' }}>na seznamu za prodajo</span></div>}
       </section>
+
+      {isYouth && p.clubId === game.userClubId && (
+        <section className="card" style={{ borderColor: 'var(--accent)' }}>
+          <div className="lbl" style={{ marginBottom: 6 }}>Mladinska šola · {p.youth}</div>
+          <p className="muted" style={{ fontSize: 13, margin: '0 0 10px' }}>Potencial: {p.potential >= 76 ? 'izjemen' : p.potential >= 69 ? 'visok' : p.potential >= 62 ? 'srednji' : 'nizek'}. Statistika zgoraj je iz mladinske lige.</p>
+          <button className="btn block" onClick={() => update((g) => setMsg(promote(g, p.id)))}>Pokliči v člansko ekipo</button>
+        </section>
+      )}
+
+      {isMine && game.seasonYear - p.birthYear <= 20 && (
+        <button className="btn ghost block" onClick={() => update((g) => { const r = demote(g, p.id); setMsg(r); })}>Pošlji v mladinsko ekipo</button>
+      )}
 
       {isMine && (
         <section className="card">
