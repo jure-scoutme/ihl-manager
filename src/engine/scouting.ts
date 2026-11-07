@@ -64,7 +64,7 @@ export function assignScout(s: GameState, id: string): { ok: boolean; text: stri
   const d = new Date(s.date + 'T12:00:00Z');
   d.setUTCDate(d.getUTCDate() + scoutDays(s));
   s.scout.tasks.push({ playerId: id, until: d.toISOString().slice(0, 10) });
-  return { ok: true, text: `Skavt je odšel spremljat ${p.first} ${p.last}a. Poročilo pričakuj čez ${scoutDays(s)} dni.` };
+  return { ok: true, text: `Skavt je odšel spremljat igralca ${p.first} ${p.last}. Poročilo pričakuj čez ${scoutDays(s)} dni.` };
 }
 
 function report(s: GameState, p: Player): string {

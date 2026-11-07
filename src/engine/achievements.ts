@@ -50,6 +50,7 @@ export const ACHIEVEMENTS: AchDef[] = [
   { id: 'prvak', icon: '👑', title: 'Prvak IHL', desc: 'Osvoji naslov prvaka.', check: (s) => s.champion === s.userClubId || (s.managerStats?.titles ?? 0) >= 1 },
   { id: 'dinastija', icon: '🏰', title: 'Dinastija', desc: 'Osvoji tri naslove.', check: (s) => (s.managerStats?.titles ?? 0) + (s.champion === s.userClubId && s.phase === 'konec' ? 1 : 0) >= 3 },
   { id: 'reprezentant', icon: '🌍', title: 'Reprezentant', desc: 'Tvoj igralec dobi vpoklic v reprezentanco.' },
+  { id: 'izvoz', icon: '✈️', title: 'Izvoz talentov', desc: 'Prodaj igralca v tujino.' },
   { id: 'trener_leta', icon: '🎖️', title: 'Trener leta', desc: 'Prejmi nagrado za trenerja leta.' },
   { id: 'zvest', icon: '🤝', title: 'Zvestoba', desc: 'Odvodi tri sezone.', check: (s) => (s.managerStats?.seasons ?? 0) >= 3 },
 ];

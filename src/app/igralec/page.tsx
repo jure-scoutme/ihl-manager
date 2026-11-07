@@ -12,6 +12,7 @@ import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players'
 import { fmtDate, seasonLabel } from '@/engine/season';
 import { assignScout, attrRange, knowledge, scouting, shownOvr, shownPotential } from '@/engine/scouting';
 import { TALKS, captainsOf, talk, talkCooldown } from '@/engine/people';
+import { acceptOffer, counterOffer, listForSale, listing, rejectOffer, withdrawSale } from '@/engine/sales';
 import { expiring, loanOut, loanTargets, offerRenewal, recallLoan, renewalAsk, transferWindow } from '@/engine/contracts';
 
 function Profil() {
@@ -26,13 +27,15 @@ function Profil() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmRelease, setConfirmRelease] = useState(false);
   const [fee, setFee] = useState<number | null>(null);
+  const [askFee, setAskFee] = useState<number | null>(null);
+  const [counter, setCounter] = useState<Record<string, number>>({});
   if (!game) return null;
   const p = game.players[id] ?? game.youth?.[id];
   const isYouth = !!game.youth?.[id];
   const back = from === 'prestopi' ? { href: '/prestopi', label: 'Prosti igralci' } : from === 'liga' ? { href: '/liga', label: 'Liga' } : from === 'mladinci' ? { href: '/mladinci', label: 'Mladinska šola' } : from === 'ekipa' ? { href: `/ekipa?id=${params.get('club')}`, label: 'Ekipa' } : { href: '/kader', label: 'Kader' };
   if (!p) return <div className="page"><BackLink href={back.href} label={back.label} /><p>{t('Igralec ne obstaja več.')}</p></div>;
   const isMine = p.clubId === game.userClubId && !isYouth;
-  const isFree = p.clubId === null;
+  const isFree = p.clubId === null && !p.abroad;
   const offerWage = wage ?? p.wage;
   const fin = game.finance?.[game.userClubId];
   const room = fin ? fin.wageBudget - clubWages(game, game.userClubId) : 0;
@@ -76,7 +79,8 @@ function Profil() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 12, flexWrap: 'wrap' }}>
           {club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}><Crest club={club} size={18} /> {club.short}</span>}
-          {!club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{t('Prost igralec')}</span>}
+          {!club && !p.abroad && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{t('Prost igralec')}</span>}
+          {p.abroad && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>✈️ {p.abroad.club} · {p.abroad.league}</span>}
           <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>#{p.number}</span>
           {p.clubId && captainsOf(game, p.clubId).c === p.id && <span className="pill" style={{ background: 'rgba(255,255,255,.28)', height: 26, fontWeight: 800 }}>C · {t('kapetan')}</span>}
           {p.clubId && captainsOf(game, p.clubId).a.includes(p.id) && <span className="pill" style={{ background: 'rgba(255,255,255,.2)', height: 26, fontWeight: 800 }}>A</span>}
@@ -155,6 +159,47 @@ function Profil() {
           )}
         </section>
       )}
+
+      {isMine && (() => {
+        const l = listing(game, p.id);
+        const val = transferValue(game, p);
+        const askV = askFee ?? Math.round(val / 500) * 500;
+        return (
+          <section className="card" style={{ borderColor: l?.offers.length ? 'var(--gold)' : undefined }}>
+            <div className="row"><span className="lbl">{t('Prodaja')}</span><span className="muted" style={{ fontSize: 12 }}>{t('vrednost ~')}{eur(val)}</span></div>
+            {!l ? (
+              <>
+                <div className="row" style={{ marginTop: 8 }}>
+                  <button className="btn sec" style={{ width: 52 }} onClick={() => setAskFee(Math.max(0, askV - 1000))} aria-label="Manj">−</button>
+                  <span style={{ textAlign: 'center' }}><span className="h" style={{ fontSize: 26 }}>{askV ? eur(askV) : t('najboljša ponudba')}</span><br /><span className="muted" style={{ fontSize: 11 }}>{t('želena odškodnina')}</span></span>
+                  <button className="btn sec" style={{ width: 52 }} onClick={() => setAskFee(askV + 1000)} aria-label="Več">+</button>
+                </div>
+                <button className="btn sec block" style={{ marginTop: 10 }} onClick={() => update((g) => setMsg(listForSale(g, p.id, askV || null)))}>{t('Ponudi igralca klubom')}</button>
+                <p className="muted" style={{ fontSize: 11, margin: '8px 0 0' }}>{t('Ponudbe lahko pošljejo IHL klubi, ki si ga lahko privoščijo, in klubi iz tujine (Alps HL, ICEHL, DEL2, Extraliga …).')}</p>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: 13, margin: '8px 0' }}>{l.offers.length ? t('Ponudbe:') : t('Igralec je na trgu do {d}. Čakamo na ponudbe.', { d: fmtDate(l.until).replace(/ \d{4}$/, '') })}</p>
+                {l.offers.map((o) => (
+                  <div key={o.id} style={{ border: '1px solid rgba(255,255,255,.1)', borderRadius: 12, padding: 10, marginBottom: 8 }}>
+                    <div className="row" style={{ fontSize: 13 }}><b>{o.buyer}</b><b style={{ color: 'var(--good)' }}>{eur(o.fee)}</b></div>
+                    <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{o.league ? `${o.league}` : 'IHL'}{o.sellOn ? ` · ${t('{n} % od nadaljnje prodaje', { n: o.sellOn })}` : ''} · {t('velja do {d}', { d: fmtDate(o.expires).replace(/ \d{4}$/, '') })}</div>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                      <button className="btn" style={{ flex: 1, height: 36, fontSize: 13 }} onClick={() => update((g) => setMsg(acceptOffer(g, p.id, o.id)))}>{t('Sprejmi')}</button>
+                      <button className="btn sec" style={{ flex: 1, height: 36, fontSize: 12 }} onClick={() => update((g) => setMsg(counterOffer(g, p.id, o.id, counter[o.id] ?? Math.round((o.fee * 1.2) / 500) * 500)))}>{t('Protiponudba')} {eur(counter[o.id] ?? Math.round((o.fee * 1.2) / 500) * 500)}</button>
+                      <button className="btn ghost" style={{ width: 44, height: 36 }} onClick={() => update((g) => rejectOffer(g, p.id, o.id))}>✕</button>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      {[1.1, 1.2, 1.35].map((m) => <button key={m} className={`chip ${(counter[o.id] ?? Math.round((o.fee * 1.2) / 500) * 500) === Math.round((o.fee * m) / 500) * 500 ? 'on' : ''}`} style={{ flex: 1, height: 28, fontSize: 11 }} onClick={() => setCounter({ ...counter, [o.id]: Math.round((o.fee * m) / 500) * 500 })}>+{Math.round((m - 1) * 100)} %</button>)}
+                    </div>
+                  </div>
+                ))}
+                <button className="btn ghost block" style={{ height: 40 }} onClick={() => update((g) => withdrawSale(g, p.id))}>{t('Umakni s trga')}</button>
+              </>
+            )}
+          </section>
+        );
+      })()}
 
       {myLoan && (
         <section className="card row" style={{ fontSize: 13, borderColor: 'var(--accent)' }}>

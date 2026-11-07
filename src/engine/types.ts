@@ -71,6 +71,8 @@ export interface Player {
   negotiations?: number;
   lastTalk?: string;
   loan?: { from: string; until: number };
+  abroad?: { club: string; league: string; since: number };
+  sellOn?: { clubId: string; pct: number };
   awayDays?: number; // odsoten zaradi reprezentance
   caps?: { event: string; team: string; gp: number; g: number; a: number; place: number }[]; // klub, v katerem je bil vzgojen
   story?: { date: string; text: string }[];
@@ -323,7 +325,8 @@ export interface GameState {
   unemployed?: boolean;
   sponsorOffers?: { name: string; monthly: number; playoffBonus: number; titleBonus: number }[];
   national?: { event: 'U18' | 'U20' | 'SP'; year: number; squads: Record<string, string[]> };
-  counters?: { buys: number; frees: number };
+  counters?: { buys: number; frees: number; sales?: number };
+  sales?: Record<string, import('./sales').SaleListing>;
   managerStats?: { gp: number; w: number; l: number; titles: number; seasons: number };
   streak?: number; // + zmage zapored, - porazi zapored (tvoj klub)
   pressDone?: string[]; // id tekem, kjer je bila konferenca

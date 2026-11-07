@@ -79,7 +79,7 @@ export function offerRenewal(s: GameState, id: string, wage: number, years: numb
   }
   if (p.negotiations >= 3) {
     p.morale = clamp(p.morale - 10, 0, 100);
-    return { ok: false, text: `Agent ${p.first} ${p.last}a je užaljen zaradi nizkih ponudb. Morala igralca je padla.` };
+    return { ok: false, text: `Agent igralca ${p.first} ${p.last} je užaljen zaradi nizkih ponudb. Morala igralca je padla.` };
   }
   return { ok: false, text: `Agent ponudbo zavrača. Zahteva okoli ${ask.wage} €/mes za ${ask.years} ${ask.years === 1 ? 'leto' : 'leta'}.` };
 }

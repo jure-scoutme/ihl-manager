@@ -5,6 +5,7 @@ import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages, sponsorOffers } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
 import { nationalDay } from './national';
+import { abroadSeason, salesDay, unsolicitedOffers } from './sales';
 import { giveAwards, makePrediction } from './awards';
 import { scoutDay } from './scouting';
 import { checkSacking, ensureCareer, seasonEndCareer } from './career';
@@ -331,6 +332,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   windowNews(state);
   nationalDay(state);
   scoutDay(state);
+  salesDay(state);
   if (state.date.endsWith('-01')) {
     contractReminders(state);
     monthlyFinances(state);
@@ -348,6 +350,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
     if (st[0].gp > 0) weeklyBoardAndMood(state, pos, club.boardGoal);
     if (st[0].gp >= 3) weeklyLocker(state, pos);
     checkSacking(state);
+    unsolicitedOffers(state);
     closeWeek(state);
     newWeeklyChallenge(state);
     const trn = weeklyTraining(state);
@@ -408,7 +411,7 @@ export function fillRoster(state: GameState, clubId: string): string[] {
         out.push(`${y.first} ${y.last} (U20)`);
         continue;
       }
-      const fa = Object.values(state.players).filter((p) => !p.clubId && pos.includes(p.pos)).sort((a, b) => a.wage - b.wage || b.ovr - a.ovr)[0];
+      const fa = Object.values(state.players).filter((p) => !p.clubId && !p.abroad && pos.includes(p.pos)).sort((a, b) => a.wage - b.wage || b.ovr - a.ovr)[0];
       if (fa) {
         fa.clubId = clubId;
         fa.contractUntil = state.seasonYear;
@@ -544,7 +547,7 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     p.stats = emptyStats();
     const age = nextYear - p.birthYear;
     // upokojitev
-    if (!p.clubId && age >= 33) {
+    if (!p.clubId && age >= (p.abroad ? 35 : 33)) {
       delete state.players[p.id];
       continue;
     }
@@ -623,10 +626,11 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
 
   state.seasonYear = nextYear;
   // prosti igralci se postarajo, pridejo novi; novi sponzorji in proračuni
-  const fa = Object.values(state.players).filter((p) => !p.clubId).sort((a, b) => b.ovr - a.ovr);
+  const fa = Object.values(state.players).filter((p) => !p.clubId && !p.abroad).sort((a, b) => b.ovr - a.ovr);
   fa.slice(50).forEach((p) => delete state.players[p.id]);
   const sc = infraOf(state, state.userClubId).scouting;
   addFreeAgents(state, 10 + sc * 2, sc - 1);
+  abroadSeason(state);
   const sn = staffNewSeason(state);
   if (sn.length) addNews(state, 'klub', 'Spremembe v štabu', sn.join(' '));
   for (const c of state.clubs) {

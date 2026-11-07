@@ -207,14 +207,14 @@ export function interestIn(state: GameState, p: Player, clubId: string): Interes
   return 'visok';
 }
 
-export const freeAgents = (state: GameState) => Object.values(state.players).filter((p) => p.clubId === null);
+export const freeAgents = (state: GameState) => Object.values(state.players).filter((p) => p.clubId === null && !p.abroad);
 
 export function offerContract(state: GameState, playerId: string, wage: number, years: number): { accepted: boolean; text: string } {
   const p = state.players[playerId];
   const clubId = state.userClubId;
   const fin = state.finance[clubId];
   const rng = new Rng(state.seed++);
-  if (!p || p.clubId !== null) return { accepted: false, text: 'Igralec ni več prost.' };
+  if (!p || p.clubId !== null || p.abroad) return { accepted: false, text: 'Igralec ni več prost.' };
   const roster = Object.values(state.players).filter((x) => x.clubId === clubId);
   if (roster.length >= 30) return { accepted: false, text: 'Kader je poln (največ 30 igralcev). Najprej koga odpusti.' };
   if (clubWages(state, clubId) + wage > fin.wageBudget) return { accepted: false, text: `Presežen proračun za plače (${fin.wageBudget.toLocaleString('sl-SI')} €/mes).` };
