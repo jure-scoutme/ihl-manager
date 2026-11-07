@@ -178,6 +178,6 @@ export function recordRetirement(state: GameState, p: Player, seasonLabelStr: st
 }
 
 export function careerTotals(p: Player) {
-  const all = [...p.history.map((h) => h.stats), p.stats];
+  const all = [...p.history.filter((h) => !/ U\d\d$/.test(h.season)).map((h) => h.stats), p.stats];
   return { gp: all.reduce((s, x) => s + x.gp, 0), g: all.reduce((s, x) => s + x.g, 0), a: all.reduce((s, x) => s + x.a, 0) };
 }

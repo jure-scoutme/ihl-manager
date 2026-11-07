@@ -4,6 +4,7 @@ import { Rng, clamp } from './rng';
 import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
+import { checkAchievements, unlock, addStory } from './achievements';
 import { aiStaffWeekly, devChance, ensureStaff, staffBoost, staffNewSeason } from './staff';
 import { afterUserMatch, checkPromises, expireDecisions, hasBlocking, preMatchPress, weeklyBoardAndMood, weeklyLocker } from './events';
 import { ensureYouth, makeYouthSchedule, simYouthDay, takeBestYouth, youthNewSeason } from './youth';
@@ -327,6 +328,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
 
   if (state.phase === 'redni' && state.fixtures.filter((f) => f.stage === 'redni').every((f) => f.played)) startPlayoffs(state);
   if (state.phase === 'koncnica') progressPlayoffs(state);
+  checkAchievements(state);
   return { blocked: false };
 }
 
@@ -343,6 +345,8 @@ function startPlayoffs(state: GameState) {
   addNews(state, 'liga', 'Konec rednega dela', `Prvo mesto: ${name(seeds[0])}. ${name(seeds[0])} in ${name(seeds[1])} gresta neposredno v polfinale. Četrtfinale: ${name(seeds[2])}–${name(seeds[5])}, ${name(seeds[3])}–${name(seeds[4])}.`);
   for (const id of seeds.slice(0, 6)) book(state, id, 'bonusi', state.finance[id]?.sponsor.playoffBonus ?? 0);
   if (!seeds.slice(0, 6).includes(state.userClubId)) addNews(state, 'uprava', 'Brez končnice', 'Ekipa se ni uvrstila v končnico. Uprava je razočarana.');
+  else unlock(state, 'koncnica');
+  if (seeds[0] === state.userClubId) unlock(state, 'prvi_redni');
   scheduleSeriesGames(state);
 }
 
@@ -484,6 +488,7 @@ export function startNewSeason(state: GameState): { changes: DevChange[]; retire
     p.form = 0;
     p.energy = 100;
     p.injuryDays = 0;
+    if (p.clubId === state.userClubId && p.ovr - before >= 4) addStory(state, p, `Preboj v sezoni: ocena ${before} → ${p.ovr}`);
     if (p.clubId === state.userClubId && p.ovr !== before) changes.push({ playerId: p.id, name: `${p.first} ${p.last}`, age, before, after: p.ovr, reason });
   }
 

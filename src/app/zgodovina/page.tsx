@@ -5,13 +5,15 @@ import { BackLink, Crest, Shell } from '@/components/ui';
 import { useGame } from '@/store/game';
 import { useT } from '@/i18n';
 import { careerTotals } from '@/engine/club';
+import { ACHIEVEMENTS } from '@/engine/achievements';
+import { fmtDate } from '@/engine/season';
 
-type Tab = 'sezone' | 'klubi' | 'legende';
+type Tab = 'sezone' | 'klubi' | 'legende' | 'dosezki';
 
 export default function Zgodovina() {
   const game = useGame((s) => s.game)!;
   const t = useT();
-  const [tab, setTab] = useState<Tab>('sezone');
+  const [tab, setTab] = useState<Tab>(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'dosezki' ? 'dosezki' : 'sezone'));
   if (!game) return <Shell>{null}</Shell>;
   const clubOf = (id: string) => game.clubs.find((c) => c.id === id);
   const seasons = [...(game.seasonRecords ?? [])].reverse();
@@ -30,7 +32,7 @@ export default function Zgodovina() {
         <BackLink href="/klub" label="Klub" />
         <h1 className="h title">{t('Zgodovina')}</h1>
         <div className="seg">
-          {([['sezone', 'Sezone'], ['klubi', 'Večna lestvica'], ['legende', 'Legende']] as const).map(([k, l]) => (
+          {([['sezone', 'Sezone'], ['klubi', 'Večna lestvica'], ['legende', 'Legende'], ['dosezki', 'Dosežki']] as const).map(([k, l]) => (
             <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{t(l)}</button>
           ))}
         </div>
@@ -106,6 +108,27 @@ export default function Zgodovina() {
               </tbody>
             </table>
           </div>
+        )}
+        {tab === 'dosezki' && (
+          <>
+            <div className="card row" style={{ fontSize: 13 }}>
+              <span className="muted">{t('Odklenjeno')}</span>
+              <span className="score" style={{ fontSize: 22 }}>{(game.achievements ?? []).length} / {ACHIEVEMENTS.length}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {ACHIEVEMENTS.map((a) => {
+                const got = (game.achievements ?? []).find((x) => x.id === a.id);
+                return (
+                  <div key={a.id} className="card" style={{ padding: 12, margin: 0, opacity: got ? 1 : 0.45, borderColor: got ? 'var(--gold)' : undefined }}>
+                    <div style={{ fontSize: 26, filter: got ? 'none' : 'grayscale(1)' }}>{got ? a.icon : '🔒'}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginTop: 6 }}>{t(a.title)}</div>
+                    <div className="muted" style={{ fontSize: 11, marginTop: 3, lineHeight: 1.4 }}>{t(a.desc)}</div>
+                    {got && <div style={{ fontSize: 10, marginTop: 6, color: 'var(--gold)' }}>{fmtDate(got.date)}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </Shell>

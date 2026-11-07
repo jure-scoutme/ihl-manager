@@ -67,6 +67,8 @@ export interface Player {
   mentorId?: string;
   listed?: boolean; // na seznamu za prodajo
   youth?: 'U20' | 'U18'; // igralec mladinske šole
+  homegrown?: string; // klub, v katerem je bil vzgojen
+  story?: { date: string; text: string }[];
   stats: SkaterStats; // tekoča sezona
   history: { season: string; clubId: string; stats: SkaterStats }[];
 }
@@ -301,6 +303,8 @@ export interface GameState {
   legends?: Legend[];
   clubRecords?: Record<string, ClubRecordStats>;
   staff?: Record<string, import('./staff').Staff>;
+  achievements?: { id: string; date: string }[];
+  counters?: { buys: number; frees: number };
   managerStats?: { gp: number; w: number; l: number; titles: number; seasons: number };
   streak?: number; // + zmage zapored, - porazi zapored (tvoj klub)
   pressDone?: string[]; // id tekem, kjer je bila konferenca

@@ -1,3 +1,4 @@
+import { addStory } from './achievements';
 import { book, clubWages, interestIn, wageDemand } from './finance';
 import { Rng, clamp } from './rng';
 import type { GameState, Player } from './types';
@@ -83,6 +84,8 @@ export function offerTransferContract(state: GameState, playerId: string, wage: 
   const used = new Set(myRoster.map((x) => x.number));
   while (used.has(p.number)) p.number = rng.int(2, 98);
   delete state.agreedFees![playerId];
+  state.counters = { buys: (state.counters?.buys ?? 0) + 1, frees: state.counters?.frees ?? 0 };
+  addStory(state, p, `Prestop iz ${from.short} za ${fee.toLocaleString('sl-SI')} €`);
   return { accepted: true, text: `Prestop je uradno potrjen: ${p.first} ${p.last} prihaja iz ${from.short} za ${fee.toLocaleString('sl-SI')} €. Pogodba do ${p.contractUntil}, ${wage} €/mes.` };
 }
 

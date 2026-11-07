@@ -1,3 +1,4 @@
+import { addStory, checkAchievements } from './achievements';
 import { careerTotals, ensureV2 } from './club';
 import { newId } from './players';
 import { Rng, clamp } from './rng';
@@ -67,24 +68,41 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   if (won && my - op >= 5) news(state, 'mediji', `Visoka zmaga: ${cl} ${my}:${op}`, `${cl} je razbil ${clubShort(state, oppId)}. Mediji pišejo o eni najprepričljivejših predstav sezone.`);
   if (state.streak === 5) news(state, 'mediji', 'Pet zmag zapored', `${cl} je v izjemni formi. Navijači sanjajo o naslovu.`);
   if (state.streak === -4) news(state, 'mediji', 'Kriza v klubu?', `${cl} je izgubil štiri tekme zapored. Mediji se sprašujejo o prihodnosti trenerja.`);
+  const debut = (p: Player) => {
+    if (careerTotals(p).gp !== 1 || !(p.homegrown || state.seasonYear - p.birthYear <= 21)) return;
+    if ((p.story ?? []).some((x) => x.text.startsWith('Debi'))) return;
+    addStory(state, p, `Debi v članski ekipi proti ${clubShort(state, oppId)}`);
+    if (p.homegrown === state.userClubId) news(state, 'mediji', `Debi vzgojenca: ${name(p)}`, `${state.seasonYear - p.birthYear}-letni ${name(p)} iz domače mladinske šole je debitiral v članski ekipi.`);
+  };
   const goalsBy: Record<string, number> = {};
   r.goals.forEach((g) => (goalsBy[g.scorer] = (goalsBy[g.scorer] ?? 0) + 1));
   for (const [pid, g] of Object.entries(goalsBy)) {
     const p = state.players[pid];
     if (!p) continue;
     if (g >= 3) news(state, 'mediji', `Hat-trick: ${name(p)}`, `${name(p)} (${clubShort(state, p.clubId!)}) je dosegel ${g} gole na tekmi.`);
+    if (p.clubId === state.userClubId) debut(p);
+    if (g >= 3 && p.clubId === state.userClubId && !(p.story ?? []).some((x) => x.text.startsWith('Prvi hat-trick'))) addStory(state, p, `Prvi hat-trick: proti ${clubShort(state, oppId)} (${my}:${op})`);
     if (p.clubId === state.userClubId) {
       const tot = careerTotals(p);
       const age = state.seasonYear - p.birthYear;
       if (tot.g === g && age <= 20) news(state, 'mediji', `Prvi gol za ${name(p)}`, `${age}-letni ${name(p)} je dosegel svoj prvi gol v članski konkurenci.`);
-      for (const m of [50, 100, 150, 200]) if (tot.g >= m && tot.g - g < m) news(state, 'mediji', `${m}. gol: ${name(p)}`, `${name(p)} je dosegel ${m}. gol v karieri.`);
+      if (tot.g === g && (p.homegrown || age <= 21)) addStory(state, p, `Prvi gol v članski konkurenci proti ${clubShort(state, oppId)}`);
+      for (const m of [50, 100, 150, 200]) if (tot.g >= m && tot.g - g < m) {
+        news(state, 'mediji', `${m}. gol: ${name(p)}`, `${name(p)} je dosegel ${m}. gol v karieri.`);
+        addStory(state, p, `${m}. gol v karieri`);
+      }
+      if (p.stats.g >= 20 && p.stats.g - g < 20) addStory(state, p, `20 golov v sezoni ${state.seasonYear}/${String(state.seasonYear + 1).slice(2)}`);
     }
   }
   for (const pid of dressed) {
     const p = state.players[pid];
     if (!p || p.clubId !== state.userClubId) continue;
     const tot = careerTotals(p);
-    if ([100, 200, 300, 400, 500].includes(tot.gp)) news(state, 'mediji', `${tot.gp}. nastop: ${name(p)}`, `${name(p)} je odigral ${tot.gp}. tekmo v karieri.`);
+    if ([100, 200, 300, 400, 500].includes(tot.gp)) {
+      news(state, 'mediji', `${tot.gp}. nastop: ${name(p)}`, `${name(p)} je odigral ${tot.gp}. tekmo v karieri.`);
+      addStory(state, p, `${tot.gp}. tekma v karieri`);
+    }
+    debut(p);
   }
   const myGoalie = r.goalies?.[us ? 'home' : 'away'];
   if (op === 0 && myGoalie && state.players[myGoalie]) news(state, 'mediji', `Ničla: ${name(state.players[myGoalie])}`, `Golman ${name(state.players[myGoalie])} je ohranil mrežo nedotaknjeno.`);
@@ -92,6 +110,10 @@ export function afterUserMatch(state: GameState, f: Fixture) {
   // rekord kluba
   const cr = state.clubRecords![state.userClubId];
   if (won && (!cr.biggestWin || my - op > cr.biggestWin.diff)) cr.biggestWin = { score: `${my}:${op}`, vs: oppId, season: `${state.seasonYear}/${String(state.seasonYear + 1).slice(2)}`, diff: my - op };
+
+  // dosežki
+  const home = state.clubs.find((c) => c.id === f.home)!;
+  checkAchievements(state, { won, my, op, derby, hatTrick: Object.entries(goalsBy).some(([pid, g]) => g >= 3 && state.players[pid]?.clubId === state.userClubId), soldOut: us && r.attendance >= home.arena.capacity });
 
   // konferenca po tekmi
   if (!state.pressDone!.includes(f.id + ':po')) {

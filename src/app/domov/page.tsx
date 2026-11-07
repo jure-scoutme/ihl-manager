@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ACHIEVEMENTS } from '@/engine/achievements';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Bar, Crest, Icon, SectionTitle, Shell, eur, heroBg } from '@/components/ui';
@@ -125,6 +126,14 @@ export default function Domov() {
           <Link href="/kader" className="tile"><span className="k">{t('Morala')}</span><span className="v" style={{ color: morale >= 70 ? 'var(--good)' : morale < 50 ? 'var(--bad)' : undefined }}>{morale}%</span><span className="k">{injured ? `${injured} ${t('poškodovanih')}` : t('vsi zdravi')}</span></Link>
           <Link href="/finance" className="tile"><span className="k">{t('Račun')}</span><span className="v" style={{ fontSize: 22, paddingTop: 4, color: (fin?.balance ?? 0) < 0 ? 'var(--bad)' : undefined }}>{fin ? `${Math.round(fin.balance / 1000)}k €` : '—'}</span><span className="k">{fin ? eur(fin.balance) : ''}</span></Link>
         </div>
+
+        <Link href="/zgodovina?tab=dosezki" className="card row" style={{ textDecoration: 'none', color: 'inherit', padding: '12px 16px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 22 }}>🏆</span>
+            <span><span className="lbl" style={{ display: 'block' }}>{t('Dosežki')}</span><span style={{ fontSize: 13, fontWeight: 600 }}>{(game.achievements ?? []).length} / {ACHIEVEMENTS.length}</span></span>
+          </span>
+          <span className="muted" style={{ fontSize: 12 }}>{(() => { const last = (game.achievements ?? []).slice(-1)[0]; const d = last && ACHIEVEMENTS.find((a) => a.id === last.id); return d ? `${d.icon} ${t(d.title)}` : t('Prvi dosežek te čaka'); })()} ›</span>
+        </Link>
 
         <section className="card">
           <div className="row" style={{ marginBottom: 12 }}>

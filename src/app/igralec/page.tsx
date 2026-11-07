@@ -9,7 +9,7 @@ import { cancelTransfer, offerToClub, offerTransferContract, transferValue, tran
 import { useGame } from '@/store/game';
 import { useT } from '@/i18n';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
-import { seasonLabel } from '@/engine/season';
+import { fmtDate, seasonLabel } from '@/engine/season';
 
 function Profil() {
   const game = useGame((s) => s.game)!;
@@ -56,6 +56,7 @@ function Profil() {
             <div style={{ fontSize: 13, opacity: 0.8, fontWeight: 600 }}>{p.first}</div>
             <div className="h" style={{ fontSize: 26, lineHeight: 1.05 }}>{p.last}</div>
             <div style={{ fontSize: 12, opacity: 0.85, marginTop: 4 }}>{t(POS_FULL[p.pos])} · {ageOf(p, game.seasonYear)} {t('let ·')} {p.nat}</div>
+            {p.homegrown && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 24, marginTop: 6, fontSize: 11 }}>🎓 {t('Vzgojenec kluba')} {game.clubs.find((c) => c.id === p.homegrown)?.short ?? ''}</span>}
           </div>
           <div style={{ textAlign: 'center', background: 'rgba(0,0,0,.25)', borderRadius: 16, padding: '8px 10px' }}>
             <div className="score" style={{ fontSize: 36, lineHeight: 1, color: ovrColor(p.ovr) }}>{p.ovr}</div>
@@ -185,6 +186,21 @@ function Profil() {
               </div>
             </div>
           )}
+        </section>
+      )}
+
+      {(p.story ?? []).length > 0 && (
+        <section className="card">
+          <div className="lbl" style={{ marginBottom: 8 }}>{t('Zgodba')}</div>
+          <div style={{ borderLeft: '2px solid var(--line, rgba(255,255,255,.12))', paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[...(p.story ?? [])].reverse().map((x, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: -18, top: 4, width: 10, height: 10, borderRadius: 5, background: i === 0 ? 'var(--accent)' : 'var(--muted)' }} />
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{t(x.text)}</div>
+                <div className="muted" style={{ fontSize: 11 }}>{fmtDate(x.date)}</div>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

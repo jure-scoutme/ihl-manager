@@ -44,7 +44,7 @@ export default function Kader() {
                 <Portrait player={p} size={42} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 14 }}>
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.first} {p.last}</span>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.first} {p.last}{p.homegrown === game.userClubId ? ' 🎓' : ''}</span>
                     {p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}>▲</span>}
                   </span>
                   <span className="muted" style={{ display: 'flex', gap: 6, fontSize: 12, marginTop: 2, alignItems: 'center' }}>

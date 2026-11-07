@@ -1,3 +1,4 @@
+import { addStory } from './achievements';
 import { CLUBS } from './data';
 import { infraOf, rollPersonality } from './club';
 import { emptyStats, makePlayer, newId } from './players';
@@ -24,6 +25,7 @@ export function makeYouthPlayer(state: GameState, rng: Rng, clubId: string, pos:
   const yl = infraOf(state, clubId).youth;
   const base = strength + 2 + (yl - 2) * 1.5;
   const p = makePlayer(rng, { pos, base, clubId, country: club.country, seasonYear: state.seasonYear, age, isAI: true });
+  p.homegrown = clubId;
   // mladinci imajo nižjo trenutno oceno, a večji potencial; redki so izjemni talenti
   const talent = rng.chance(0.03 + yl * 0.01) ? rng.int(16, 24) : rng.int(3, 13);
   p.potential = clamp(p.ovr + talent + (yl - 2), p.ovr + 3, 86);
@@ -36,6 +38,7 @@ export function makeYouthPlayer(state: GameState, rng: Rng, clubId: string, pos:
 
 export function ensureYouth(state: GameState) {
   if (state.youth && Object.keys(state.youth).length) {
+    for (const y of Object.values(state.youth)) if (!y.homegrown) y.homegrown = y.clubId ?? undefined;
     if (!state.youthFixtures?.length) state.youthFixtures = makeYouthSchedule(state);
     return;
   }
@@ -204,6 +207,7 @@ export function promote(state: GameState, id: string): { ok: boolean; text: stri
   const rng = new Rng(state.seed++);
   while (used.has(p.number)) p.number = rng.int(2, 98);
   state.players[id] = p;
+  addStory(state, p, `Poklican iz mladinske šole (${state.seasonYear - p.birthYear} let, ocena ${p.ovr})`);
   return { ok: true, text: `${p.first} ${p.last} je poklican v člansko ekipo (pogodba do ${p.contractUntil}, 150 €/mes).` };
 }
 
@@ -284,5 +288,6 @@ export function takeBestYouth(state: GameState, clubId: string, pos: Pos[]): Pla
   cand.youth = undefined;
   cand.wage = 150;
   state.players[cand.id] = cand;
+  addStory(state, cand, `Poklican iz mladinske šole (${state.seasonYear - cand.birthYear} let, ocena ${cand.ovr})`);
   return cand;
 }
