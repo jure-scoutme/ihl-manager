@@ -1,0 +1,192 @@
+export type Pos = 'C' | 'LW' | 'RW' | 'D' | 'G';
+
+export interface Attrs {
+  // tehnični
+  skating: number;
+  shooting: number;
+  passing: number;
+  puckHandling: number;
+  faceoffs: number;
+  blocking: number;
+  // mentalni
+  decisions: number;
+  positioning: number;
+  workRate: number;
+  leadership: number;
+  aggression: number;
+  // fizični
+  strength: number;
+  speed: number;
+  stamina: number;
+  // golman
+  reflexes: number;
+  gPositioning: number;
+  reboundControl: number;
+  puckPlay: number;
+}
+
+export interface SkaterStats {
+  gp: number;
+  g: number;
+  a: number;
+  pim: number;
+  pm: number;
+  sog: number;
+  // golman
+  sa: number;
+  ga: number;
+  w: number;
+  so: number;
+}
+
+export interface Player {
+  id: string;
+  first: string;
+  last: string;
+  nat: string;
+  clubId: string | null;
+  number: number;
+  pos: Pos;
+  shoots: 'L' | 'D';
+  birthYear: number;
+  attrs: Attrs;
+  potential: number; // 1-100
+  ovr: number; // 1-100
+  morale: number; // 0-100
+  form: number; // -2..+2 (zadnje tekme)
+  energy: number; // 0-100 svežina med tekmami
+  injuryDays: number;
+  wage: number; // €/mes
+  contractUntil: number; // leto
+  isAI: boolean;
+  stats: SkaterStats; // tekoča sezona
+  history: { season: string; clubId: string; stats: SkaterStats }[];
+}
+
+export interface Arena {
+  name: string;
+  city: string;
+  capacity: number;
+}
+
+export interface Club {
+  id: string;
+  name: string;
+  short: string;
+  city: string;
+  country: 'SLO' | 'HR' | 'SRB';
+  color: string;
+  arena: Arena;
+  reputation: number; // 1-100
+  budget: number; // 1-5
+  boardGoal: string;
+}
+
+export interface Lines {
+  f: [string, string, string][]; // 4 napadi: LW, C, RW
+  d: [string, string][]; // 3 pari
+  g: [string, string]; // začetni, rezerva
+  pp: { f: [string, string, string]; d: [string, string] }[]; // 2 enoti
+  pk: { f: [string, string]; d: [string, string] }[]; // 2 enoti
+}
+
+export type Forecheck = 'agresiven' | 'uravnotezen' | 'pasiven';
+export type Tempo = 'hiter' | 'normalen' | 'pocasen';
+
+export interface Tactics {
+  forecheck: Forecheck;
+  tempo: Tempo;
+  lineUsage: [number, number, number, number]; // deleži minutaže napadov
+}
+
+export interface Fixture {
+  id: string;
+  date: string; // YYYY-MM-DD
+  round: number;
+  home: string;
+  away: string;
+  stage: 'redni' | 'cetrtfinale' | 'polfinale' | 'finale';
+  seriesId?: string;
+  played: boolean;
+  result?: MatchResult;
+}
+
+export interface GoalEvent {
+  t: number; // sekunda
+  team: 'home' | 'away';
+  scorer: string;
+  assists: string[];
+  strength: 'EV' | 'PP' | 'SH' | 'EN';
+}
+
+export interface MatchResult {
+  hg: number;
+  ag: number;
+  ot: boolean;
+  so: boolean;
+  hShots: number;
+  aShots: number;
+  goals: GoalEvent[];
+  attendance: number;
+}
+
+export interface Series {
+  id: string;
+  stage: 'cetrtfinale' | 'polfinale' | 'finale';
+  high: string; // višje uvrščen
+  low: string;
+  winsNeeded: number;
+  hw: number;
+  lw: number;
+  winner?: string;
+}
+
+export interface NewsItem {
+  id: string;
+  date: string;
+  title: string;
+  body: string;
+  kind: 'liga' | 'garderoba' | 'uprava' | 'tekma' | 'prestopi';
+  read: boolean;
+}
+
+export interface Manager {
+  first: string;
+  last: string;
+  nat: string;
+  age: number;
+  background: 'reprezentant' | 'igralec' | 'brez';
+  style: 'napadalni' | 'uravnotezen' | 'obrambni';
+  reputation: number;
+}
+
+export interface Standing {
+  clubId: string;
+  gp: number;
+  w: number;
+  otw: number;
+  otl: number;
+  l: number;
+  gf: number;
+  ga: number;
+  pts: number;
+}
+
+export interface GameState {
+  version: number;
+  seed: number;
+  manager: Manager;
+  userClubId: string;
+  seasonYear: number; // 2026 = sezona 2026/27
+  date: string;
+  phase: 'redni' | 'koncnica' | 'konec';
+  clubs: Club[];
+  players: Record<string, Player>;
+  lines: Record<string, Lines>;
+  tactics: Record<string, Tactics>;
+  fixtures: Fixture[];
+  series: Series[];
+  news: NewsItem[];
+  champion?: string;
+  pastChampions: { season: string; clubId: string }[];
+}
