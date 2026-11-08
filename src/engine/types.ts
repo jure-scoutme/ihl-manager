@@ -68,6 +68,7 @@ export interface Player {
   listed?: boolean; // na seznamu za prodajo
   youth?: 'U20' | 'U18'; // igralec mladinske šole
   homegrown?: string;
+  real?: boolean;
   negotiations?: number;
   lastTalk?: string;
   loan?: { from: string; until: number };

@@ -1,3 +1,4 @@
+import { REAL_ROSTERS } from './realRosters';
 import { CLUBS, IMPORT_NAMES, NAMES } from './data';
 import { Rng, clamp } from './rng';
 import type { Attrs, Lines, Player, Pos, SkaterStats } from './types';
@@ -171,6 +172,29 @@ export function generateLeague(rng: Rng, seasonYear: number): Record<string, Pla
   for (const club of CLUBS) {
     const used = new Set<number>();
     const usedNames = new Set<string>();
+    const real = REAL_ROSTERS[club.id];
+    if (real) {
+      const fPos: Pos[] = ['C', 'LW', 'RW'];
+      let fi = 0;
+      for (const r of real) {
+        const age = seasonYear - r.birth;
+        const pos: Pos = r.pos === 'F' ? fPos[fi++ % 3] : r.pos;
+        // brez javnih ocen: igralci v najboljših letih blizu moči kluba, mladi nižje (makePlayer odšteje za starost)
+        const base = club.strength - 1 + (age >= 22 ? 2 : 0) + (age >= 32 ? (age - 32) * 1.2 + 3 : 0) + (r.pos === 'G' ? 5 : 0) + rng.normal(0, 3);
+        const p = makePlayer(rng, { pos, base, clubId: club.id, country: club.country, seasonYear, age, isAI: false });
+        p.first = r.first;
+        p.last = r.last;
+        p.nat = r.nat ?? club.country;
+        p.shoots = r.shoots ?? p.shoots;
+        p.real = true;
+        let num = r.num;
+        while (used.has(num)) num = num < 98 ? num + 1 : 2;
+        used.add(num);
+        p.number = num;
+        players[p.id] = p;
+      }
+      continue;
+    }
     const importCount = club.budget >= 4 ? 3 : club.budget >= 3 ? 2 : 1;
     ROSTER.forEach((r, i) => {
       const isImport = i < 9 && r.slot <= 1 && rng.chance(importCount / 6);
