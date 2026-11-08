@@ -14,7 +14,7 @@ export interface RealPlayer {
 
 export const REAL_ROSTERS: Record<string, RealPlayer[]> = {
   tri: [
-    { num: 37, first: 'Erik', last: 'Čuznar', pos: 'G', birth: 2007, shoots: 'L' },
+    { num: 37, first: 'Erik', last: 'Cuznar', pos: 'G', birth: 2007, shoots: 'L' },
     { num: 19, first: 'Urban', last: 'Hafner', pos: 'G', birth: 2004, shoots: 'L', boost: 6 },
     { num: 0, first: 'Jure', last: 'Klemenc', pos: 'G', birth: 2007, shoots: 'L' },
     { num: 43, first: 'Miha', last: 'Ahačič', pos: 'D', birth: 1989, shoots: 'L', boost: 6, captain: 'C' },
@@ -29,7 +29,7 @@ export const REAL_ROSTERS: Record<string, RealPlayer[]> = {
     { num: 13, first: 'Gaber', last: 'Zupan Škrlj', pos: 'D', birth: 2007, shoots: 'L', boost: 0 },
     { num: 18, first: 'Maj', last: 'Bertoncelj', pos: 'F', birth: 2005, boost: 3 },
     { num: 11, first: 'Juš', last: 'Dobravec', pos: 'F', birth: 2003, shoots: 'L', boost: 5 },
-    { num: 51, first: 'Maks', last: 'Gašer', pos: 'F', birth: 2009 },
+    { num: 51, first: 'Maks', last: 'Gaser', pos: 'F', birth: 2009 },
     { num: 9, first: 'Matevž', last: 'Jošt', pos: 'F', birth: 2007, shoots: 'L', boost: -1 },
     { num: 52, first: 'Matej', last: 'Kordež', pos: 'F', birth: 2009 },
     { num: 93, first: 'Luka', last: 'Kuhar', pos: 'F', birth: 2005, shoots: 'L', boost: -2 },
