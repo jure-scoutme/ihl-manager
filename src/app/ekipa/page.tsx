@@ -58,7 +58,7 @@ function Ekipa() {
       <section className="card" style={{ fontSize: 13 }}>
         <div className="row"><span className="muted">{t('Tekme')}</span><span>{row.gp} · {row.w + row.otw} {t('zmag ·')} {row.gf}:{row.ga}</span></div>
         {top && <div className="row"><span className="muted">{t('Najboljši strelec')}</span><span>{top.first} {top.last} · {top.stats.g + top.stats.a} {t('tč')}</span></div>}
-        {next && <div className="row"><span className="muted">{t('Naslednja tekma')}</span><span>{fmtDate(next.date).replace(/ \d{4}$/, '')} · {next.home === club.id ? t('doma') : '@'} {clubOf(next.home === club.id ? next.away : next.home).short}</span></div>}
+        {next && <div className="row"><span className="muted">{t('Naslednja tekma')}</span><span>{fmtDate(next.date).replace(/ \d{4}$/, '')} · {next.home === club.id ? t('doma') : '@'} {clubOf(next.home === club.id ? next.away : next.home).name}</span></div>}
         <div className="row"><span className="muted">{t('Cilj uprave')}</span><span>{t(club.boardGoal)}</span></div>
       </section>
 

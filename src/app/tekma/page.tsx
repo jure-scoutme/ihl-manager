@@ -248,7 +248,7 @@ function LastMatch() {
       {next && (
         <section className="card">
           <div className="lbl">{t('Naslednja tekma')}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 6px' }}><Crest club={clubOf(next.home)} size={32} /><span className="h" style={{ fontSize: 20 }}>{clubOf(next.home).short} – {clubOf(next.away).short}</span><Crest club={clubOf(next.away)} size={32} /></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 6px' }}><Crest club={clubOf(next.home)} size={32} /><span className="h" style={{ fontSize: 20 }}>{clubOf(next.home).name} – {clubOf(next.away).name}</span><Crest club={clubOf(next.away)} size={32} /></div>
           <div className="muted" style={{ fontSize: 12 }}>{fmtDate(next.date)} · {clubOf(next.home).arena.name}</div>
         </section>
       )}
@@ -256,9 +256,9 @@ function LastMatch() {
         <section className="card">
           <div className="lbl">{t('Zadnja tekma ·')} {fmtDate(last.date)}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', margin: '12px 0' }}>
-            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.home)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.home).short}</b></span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.home)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.home).name}</b></span>
             <span className="score" style={{ fontSize: 40 }}>{last.result.hg}:{last.result.ag}<span style={{ fontSize: 14, opacity: 0.6 }}>{last.result.so ? ' KS' : last.result.ot ? ' POD' : ''}</span></span>
-            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.away)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.away).short}</b></span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}><Crest club={clubOf(last.away)} size={44} /><b style={{ fontSize: 14 }}>{clubOf(last.away).name}</b></span>
           </div>
           <div className="muted" style={{ fontSize: 12, marginBottom: 6 }}>{t('Streli')} {last.result.hShots}:{last.result.aShots} · {last.result.attendance} {t('gledalcev')}</div>
           <Link href={`/porocilo?id=${last.id}`} className="btn sec block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '6px 0 8px' }}>{t('Celotno poročilo s tekme')}</Link>

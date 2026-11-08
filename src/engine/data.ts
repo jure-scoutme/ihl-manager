@@ -4,14 +4,14 @@ import type { Club } from './types';
 // strength = izhodiščna moč kadra za generirane igralce (dokler ni prave baze).
 export const CLUBS: (Club & { strength: number })[] = [
   { id: 'tri', name: 'HK Triglav Kranj', short: 'Triglav', city: 'Kranj', country: 'SLO', color: '#2E7DD7', arena: { name: 'Zlato polje', city: 'Kranj', capacity: 800 }, reputation: 62, budget: 4, boardGoal: 'naslov', strength: 58 },
-  { id: 'czv', name: 'SKHL Crvena zvezda', short: 'C. zvezda', city: 'Beograd', country: 'SRB', color: '#D7263D', arena: { name: 'Pionir', city: 'Beograd', capacity: 2000 }, reputation: 62, budget: 4, boardGoal: 'naslov', strength: 58 },
-  { id: 'par', name: 'HK Partizan', short: 'Partizan', city: 'Beograd', country: 'SRB', color: '#9AA3AE', arena: { name: 'Pionir', city: 'Beograd', capacity: 2000 }, reputation: 58, budget: 3, boardGoal: 'finale', strength: 56 },
-  { id: 'ips', name: 'IH Pro Stars', short: 'Pro Stars', city: 'Novi Sad', country: 'SRB', color: '#8E5BD6', arena: { name: 'SPENS', city: 'Novi Sad', capacity: 1283 }, reputation: 57, budget: 3, boardGoal: 'finale', strength: 56 },
+  { id: 'czv', name: 'SKHL Crvena Zvezda', short: 'C. Zvezda', city: 'Beograd', country: 'SRB', color: '#D7263D', arena: { name: 'Pionir', city: 'Beograd', capacity: 2000 }, reputation: 62, budget: 4, boardGoal: 'naslov', strength: 58 },
+  { id: 'par', name: 'HK Partizan Beograd', short: 'Partizan', city: 'Beograd', country: 'SRB', color: '#9AA3AE', arena: { name: 'Pionir', city: 'Beograd', capacity: 2000 }, reputation: 58, budget: 3, boardGoal: 'finale', strength: 56 },
+  { id: 'ips', name: 'IH Pro Stars Novi Sad', short: 'Pro Stars', city: 'Novi Sad', country: 'SRB', color: '#8E5BD6', arena: { name: 'SPENS', city: 'Novi Sad', capacity: 1283 }, reputation: 57, budget: 3, boardGoal: 'finale', strength: 56 },
   { id: 'sla', name: 'HK Slavija Junior', short: 'Slavija Jr.', city: 'Ljubljana', country: 'SLO', color: '#F2C14E', arena: { name: 'Zalog', city: 'Ljubljana', capacity: 1200 }, reputation: 55, budget: 2, boardGoal: 'polfinale', strength: 54.5 },
-  { id: 'med', name: 'KHL Medveščak', short: 'Medveščak', city: 'Zagreb', country: 'HR', color: '#1F4FA8', arena: { name: 'Admiral Ice Dome', city: 'Zagreb', capacity: 850 }, reputation: 54, budget: 3, boardGoal: 'polfinale', strength: 53.5 },
+  { id: 'med', name: 'KHL Medveščak Zagreb', short: 'Medveščak', city: 'Zagreb', country: 'HR', color: '#1F4FA8', arena: { name: 'Admiral Ice Dome', city: 'Zagreb', capacity: 850 }, reputation: 54, budget: 3, boardGoal: 'polfinale', strength: 53.5 },
   { id: 'zag', name: 'KHL Zagreb', short: 'Zagreb', city: 'Zagreb', country: 'HR', color: '#3A7D44', arena: { name: 'Velesajam', city: 'Zagreb', capacity: 500 }, reputation: 50, budget: 2, boardGoal: 'končnica', strength: 52.5 },
-  { id: 'mla', name: 'KHL Mladost', short: 'Mladost', city: 'Zagreb', country: 'HR', color: '#5BA4E6', arena: { name: 'Velesajam', city: 'Zagreb', capacity: 500 }, reputation: 48, budget: 2, boardGoal: 'končnica', strength: 51.5 },
-  { id: 'cel', name: 'HK Ledx Celje', short: 'Celje', city: 'Celje', country: 'SLO', color: '#E8B923', arena: { name: 'Celje Ice Hall', city: 'Celje', capacity: 1500 }, reputation: 48, budget: 2, boardGoal: 'končnica', strength: 51.5 },
+  { id: 'mla', name: 'KHL Mladost Zagreb', short: 'Mladost', city: 'Zagreb', country: 'HR', color: '#5BA4E6', arena: { name: 'Velesajam', city: 'Zagreb', capacity: 500 }, reputation: 48, budget: 2, boardGoal: 'končnica', strength: 51.5 },
+  { id: 'cel', name: 'HK LEDX Celje', short: 'Celje', city: 'Celje', country: 'SLO', color: '#E8B923', arena: { name: 'Celje Ice Hall', city: 'Celje', capacity: 1500 }, reputation: 48, budget: 2, boardGoal: 'končnica', strength: 51.5 },
 ];
 
 export const NAMES: Record<'SLO' | 'HR' | 'SRB', { first: string[]; last: string[] }> = {

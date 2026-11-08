@@ -48,8 +48,8 @@ export default function Zgodovina() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0' }}>
                     {ch && <Crest club={ch} size={36} />}
                     <div>
-                      <div className="h" style={{ fontSize: 20, color: s.champion === game.userClubId ? 'var(--accent)' : undefined }}>{t('Prvak:')} {ch?.short}</div>
-                      {s.runnerUp && <div className="muted" style={{ fontSize: 12 }}>{t('Finale')} {s.final} {t('proti')} {clubOf(s.runnerUp)?.short} {t('· redni del:')} {clubOf(s.regularWinner)?.short}</div>}
+                      <div className="h" style={{ fontSize: 20, color: s.champion === game.userClubId ? 'var(--accent)' : undefined }}>{t('Prvak:')} {ch?.name}</div>
+                      {s.runnerUp && <div className="muted" style={{ fontSize: 12 }}>{t('Finale')} {s.final} {t('proti')} {clubOf(s.runnerUp)?.name} {t('· redni del:')} {clubOf(s.regularWinner)?.name}</div>}
                     </div>
                   </div>
                   {s.topScorer && <div className="row"><span className="muted">{t('Najboljši po točkah')}</span><span>{s.topScorer.name} ({clubOf(s.topScorer.clubId)?.short}) {s.topScorer.g}+{s.topScorer.a}={s.topScorer.pts}</span></div>}
@@ -81,7 +81,7 @@ export default function Zgodovina() {
                 <tbody>
                   {clubs.map(([id, r]) => (
                     <tr key={id} style={{ color: id === game.userClubId ? 'var(--accent)' : undefined }}>
-                      <td style={{ fontWeight: 600 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{clubOf(id) && <Crest club={clubOf(id)!} size={22} />}{clubOf(id)?.short}</span></td>
+                      <td style={{ fontWeight: 600 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{clubOf(id) && <Crest club={clubOf(id)!} size={22} />}{clubOf(id)?.name}</span></td>
                       <td className="num" style={{ fontWeight: 700 }}>{r.titles}</td>
                       <td className="num">{r.seasons}</td>
                       <td className="num">{r.w}</td>
@@ -96,7 +96,7 @@ export default function Zgodovina() {
             {game.pastChampions.length > 0 && (
               <div className="card" style={{ fontSize: 13 }}>
                 <div className="lbl" style={{ marginBottom: 4 }}>{t('Prvaki IHL')}</div>
-                {[...game.pastChampions].reverse().map((c) => <div key={c.season} className="row" style={{ padding: '4px 0' }}><span>{c.season}</span><span style={{ fontWeight: 600 }}>{clubOf(c.clubId)?.short}</span></div>)}
+                {[...game.pastChampions].reverse().map((c) => <div key={c.season} className="row" style={{ padding: '4px 0' }}><span>{c.season}</span><span style={{ fontWeight: 600 }}>{clubOf(c.clubId)?.name}</span></div>)}
               </div>
             )}
           </>

@@ -79,7 +79,7 @@ function Profil() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 12, flexWrap: 'wrap' }}>
-          {club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}><Crest club={club} size={18} /> {club.short}</span>}
+          {club && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}><Crest club={club} size={18} /> {club.name}</span>}
           {!club && !p.abroad && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>{t('Prost igralec')}</span>}
           {p.abroad && <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>✈️ {p.abroad.club} · {p.abroad.league}</span>}
           <span className="pill" style={{ background: 'rgba(255,255,255,.16)', height: 26 }}>#{p.number}</span>

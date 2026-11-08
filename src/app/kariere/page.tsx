@@ -62,7 +62,7 @@ export default function Kariere() {
         {game && (
           <section className="card" style={{ borderColor: 'var(--accent)' }}>
             <div className="lbl">{t('Trenutna kariera')}</div>
-            <div style={{ fontWeight: 700, fontSize: 16, marginTop: 4 }}>{game.manager.first} {game.manager.last} · {game.clubs.find((c) => c.id === game.userClubId)?.short}</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginTop: 4 }}>{game.manager.first} {game.manager.last} · {game.clubs.find((c) => c.id === game.userClubId)?.name}</div>
             <div className="muted" style={{ fontSize: 12 }}>{fmtDate(game.date)}</div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <button className="btn sec" style={{ flex: 1, height: 40, fontSize: 13 }} onClick={async () => { await saveCurrent(); await refresh(); setMsg({ ok: true, text: 'Kariera je shranjena.' }); }}>{t('Shrani')}</button>

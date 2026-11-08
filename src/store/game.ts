@@ -9,6 +9,7 @@ import { ensureYouth } from '@/engine/youth';
 import { ensureStaff } from '@/engine/staff';
 import { ensureCareer } from '@/engine/career';
 import { ensureImports } from '@/engine/sales';
+import { CLUBS } from '@/engine/data';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
@@ -22,6 +23,11 @@ export function migrateGame(g: GameState) {
   ensureStaff(g);
   ensureCareer(g);
   ensureImports(g);
+  // uradna polna imena klubov
+  for (const c of g.clubs) {
+    const d = CLUBS.find((x) => x.id === c.id);
+    if (d) { c.name = d.name; c.short = d.short; }
+  }
   if (g.tutorialDone === undefined && g.fixtures.some((f) => f.played && (f.home === g.userClubId || f.away === g.userClubId))) g.tutorialDone = true;
 }
 export interface DayStep {

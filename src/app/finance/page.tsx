@@ -150,7 +150,7 @@ export default function Finance() {
             })}
             {nextHome && (
               <p className="muted" style={{ fontSize: 12, margin: 0 }}>
-                Naslednja domača tekma: {fmtDate(nextHome.date)} {t('proti')} {game.clubs.find((c) => c.id === nextHome.away)!.short}
+                Naslednja domača tekma: {fmtDate(nextHome.date)} {t('proti')} {game.clubs.find((c) => c.id === nextHome.away)!.name}
 .
               </p>
             )}

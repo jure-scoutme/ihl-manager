@@ -75,7 +75,7 @@ export default function Domov() {
             <div className="lbl" style={{ color: 'rgba(255,255,255,.75)' }}>{t('Konec sezone')} {seasonLabel(game.seasonYear)}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '12px 0' }}>
               <Crest club={clubOf(game.champion!)} size={56} />
-              <div><div style={{ fontSize: 13, opacity: 0.8 }}>{t('Prvak IHL')}</div><div className="h" style={{ fontSize: 28 }}>{clubOf(game.champion!).short}</div></div>
+              <div><div style={{ fontSize: 13, opacity: 0.8 }}>{t('Prvak IHL')}</div><div className="h" style={{ fontSize: 28 }}>{clubOf(game.champion!).name}</div></div>
             </div>
             <p style={{ fontSize: 13, margin: '0 0 14px', opacity: 0.85 }}>{t('Redni del ste končali na {p}. mestu. Cilj uprave: {g}.', { p: myPos, g: t(club.boardGoal) })}</p>
             {game.lastAwards && (
@@ -126,7 +126,7 @@ export default function Domov() {
                 ) : (
                   <Link key={id} href={id === club.id ? '/kader' : `/ekipa?id=${id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                     <Crest club={clubOf(id)} size={60} />
-                    <div className="h" style={{ fontSize: 16, textAlign: 'center' }}>{clubOf(id).short}</div>
+                    <div className="h" style={{ fontSize: 16, textAlign: 'center' }}>{clubOf(id).name}</div>
                     <div style={{ fontSize: 11, opacity: 0.75 }}>{st.findIndex((s) => s.clubId === id) + 1}. {t('mesto ·')} {st.find((s) => s.clubId === id)!.pts} {t('tč')}</div>
                   </Link>
                 ),
@@ -234,7 +234,7 @@ export default function Domov() {
               {st.map((s, i) => (
                 <tr key={s.clubId} style={{ background: s.clubId === club.id ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined }}>
                   <td style={{ width: 24, borderTop: i ? undefined : 0 }} className="muted">{i + 1}</td>
-                  <td style={{ fontWeight: 600, borderTop: i ? undefined : 0 }}><Link href={s.clubId === club.id ? '/kader' : `/ekipa?id=${s.clubId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Crest club={clubOf(s.clubId)} size={24} />{clubOf(s.clubId).short}</Link></td>
+                  <td style={{ fontWeight: 600, borderTop: i ? undefined : 0 }}><Link href={s.clubId === club.id ? '/kader' : `/ekipa?id=${s.clubId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Crest club={clubOf(s.clubId)} size={24} />{clubOf(s.clubId).name}</Link></td>
                   <td className="num muted" style={{ borderTop: i ? undefined : 0 }}>{s.gp}</td>
                   <td className="num muted" style={{ borderTop: i ? undefined : 0 }}>{s.gf}:{s.ga}</td>
                   <td className="num" style={{ fontWeight: 800, borderTop: i ? undefined : 0 }}>{s.pts}</td>

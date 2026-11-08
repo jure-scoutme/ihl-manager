@@ -87,9 +87,9 @@ function ReportBody({ game, f }: { game: GameState; f: Fixture }) {
       <section className="hero" style={{ background: heroBg(home.color, away.color) }}>
         <div style={{ textAlign: 'center' }}><span className="pill" style={{ background: 'rgba(255,255,255,.18)' }}>{t(stageName[f.stage])} · {fmtDate(f.date)}</span></div>
         <div className="row" style={{ margin: '12px 0 6px' }}>
-          <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={home} size={48} /><span style={{ fontSize: 20,  }}>{home.short}</span></div>
+          <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={home} size={48} /><span style={{ fontSize: 20,  }}>{home.name}</span></div>
           <div className="score" style={{ fontSize: 56, lineHeight: 1 }}>{r.hg}<span style={{ opacity: 0.5, margin: '0 6px' }}>:</span>{r.ag}</div>
-          <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={away} size={48} /><span style={{ fontSize: 20,  }}>{away.short}</span></div>
+          <div style={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} className="h"><Crest club={away} size={48} /><span style={{ fontSize: 20,  }}>{away.name}</span></div>
         </div>
         <div style={{ fontSize: 12, textAlign: 'center', opacity: 0.85 }}>
           {r.so ? t('po kazenskih strelih') + ' · ' : r.ot ? t('po podaljšku') + ' · ' : ''}

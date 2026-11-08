@@ -73,7 +73,7 @@ export default function Stab() {
         <BackLink href="/klub" label="Klub" />
         <section className="hero" style={{ background: heroBg(club.color, '#0b1220') }}>
           <div className="lbl" style={{ opacity: 0.8 }}>{t('Strokovni štab')}</div>
-          <h1 className="h title" style={{ marginTop: 4 }}>{club.short}</h1>
+          <h1 className="h title" style={{ marginTop: 4 }}>{club.name}</h1>
           <div style={{ display: 'flex', gap: 18, marginTop: 12 }}>
             <div><div className="score" style={{ fontSize: 26, color: impact >= 0 ? '#8fe3b5' : '#f5a98f' }}>{impact >= 0 ? '+' : ''}{impact.toFixed(1)} %</div><div style={{ fontSize: 11, opacity: 0.8 }}>{t('vpliv na moč ekipe')}</div></div>
             <div><div className="score" style={{ fontSize: 26 }}>{eur(ROLES.reduce((a, r) => a + (staffOf(game, club.id, r)?.wage ?? 0), 0))}</div><div style={{ fontSize: 11, opacity: 0.8 }}>{t('plače štaba / mes')}</div></div>

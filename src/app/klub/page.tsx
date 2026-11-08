@@ -136,7 +136,7 @@ export default function Klub() {
                 const w = e.w ?? ms.w - e.w0;
                 return (
                   <div key={i} className="row" style={{ fontSize: 12, padding: '3px 0' }}>
-                    <span>{c?.short} <span className="muted">· {e.from.slice(0, 4)}–{e.to ? e.to.slice(0, 4) : t('danes')}{e.reason ? ` · ${t(e.reason)}` : ''}</span></span>
+                    <span>{c?.name} <span className="muted">· {e.from.slice(0, 4)}–{e.to ? e.to.slice(0, 4) : t('danes')}{e.reason ? ` · ${t(e.reason)}` : ''}</span></span>
                     <span className="muted">{gp} {t('tekem')} · {w} {t('zmag')}{(e.titles ?? 0) > 0 ? ` · 🏆${e.titles}` : ''}</span>
                   </div>
                 );

@@ -96,7 +96,7 @@ export default function Mladinci() {
                   {st.map((s, i) => (
                     <tr key={s.clubId} style={{ background: s.clubId === club.id ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : undefined }}>
                       <td className="muted">{i + 1}</td>
-                      <td style={{ fontWeight: 600 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).short}</span></td>
+                      <td style={{ fontWeight: 600 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).name}</span></td>
                       <td className="num">{s.gp}</td><td className="num">{s.w}</td>
                       <td className="num muted">{s.gf}:{s.ga}</td>
                       <td className="num" style={{ fontWeight: 800 }}>{s.pts}</td>

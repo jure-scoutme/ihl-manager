@@ -42,7 +42,7 @@ export default function Liga() {
                 {st.map((s, i) => (
                   <tr key={s.clubId} style={{ color: s.clubId === game.userClubId ? 'var(--accent)' : undefined, borderBottom: i === 1 || i === 5 ? '2px solid var(--line2)' : undefined }}>
                     <td className="muted">{i + 1}</td>
-                    <td style={{ fontWeight: 600 }}><Link href={s.clubId === game.userClubId ? '/kader' : `/ekipa?id=${s.clubId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).short}</Link></td>
+                    <td style={{ fontWeight: 600 }}><Link href={s.clubId === game.userClubId ? '/kader' : `/ekipa?id=${s.clubId}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Crest club={clubOf(s.clubId)} size={22} />{clubOf(s.clubId).name}</Link></td>
                     <td className="num">{s.gp}</td><td className="num">{s.w}</td><td className="num">{s.otw}</td><td className="num">{s.otl}</td><td className="num">{s.l}</td>
                     <td className="num muted">{s.gf}:{s.ga}</td>
                     <td className="num" style={{ fontWeight: 700 }}>{s.pts}</td>
@@ -122,16 +122,16 @@ export default function Liga() {
               <div key={s.id} className="card">
                 <div className="lbl">{t(stageName[s.stage])} · na {s.winsNeeded} {t('zmage')}</div>
                 <div className="row" style={{ marginTop: 8, fontSize: 15 }}>
-                  <span style={{ fontWeight: s.winner === s.high ? 700 : 500 }}>{clubOf(s.high).short}</span>
+                  <span style={{ fontWeight: s.winner === s.high ? 700 : 500 }}>{clubOf(s.high).name}</span>
                   <span className="h" style={{ fontSize: 22 }}>{s.hw} : {s.lw}</span>
-                  <span style={{ fontWeight: s.winner === s.low ? 700 : 500 }}>{clubOf(s.low).short}</span>
+                  <span style={{ fontWeight: s.winner === s.low ? 700 : 500 }}>{clubOf(s.low).name}</span>
                 </div>
               </div>
             ))}
             {game.pastChampions.length > 0 && (
               <div className="card">
                 <div className="lbl">{t('Pretekli prvaki')}</div>
-                {game.pastChampions.map((c) => <div key={c.season} className="row" style={{ fontSize: 13, marginTop: 6 }}><span>{c.season}</span><span>{clubOf(c.clubId).short}</span></div>)}
+                {game.pastChampions.map((c) => <div key={c.season} className="row" style={{ fontSize: 13, marginTop: 6 }}><span>{c.season}</span><span>{clubOf(c.clubId).name}</span></div>)}
               </div>
             )}
           </div>

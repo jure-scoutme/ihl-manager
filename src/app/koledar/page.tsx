@@ -115,13 +115,13 @@ export default function Koledar() {
             {selFixtures.length === 0 && <p className="muted" style={{ fontSize: 13, margin: '0 0 8px' }}>{t('Ta dan ni tekem.')}</p>}
             {selFixtures.map((f) => (
               <div key={f.id} className="row" style={{ padding: '8px 0', borderTop: '1px solid var(--line)', fontSize: 13 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, fontWeight: f.home === me ? 700 : 500 }}><Crest club={clubOf(f.home)} size={24} />{clubOf(f.home).short}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, fontWeight: f.home === me ? 700 : 500 }}><Crest club={clubOf(f.home)} size={24} />{clubOf(f.home).name}</span>
                 {f.result ? (
                   <Link href={`/porocilo?id=${f.id}`} className="h" style={{ fontSize: 18, color: 'var(--accent)' }}>{f.result.hg}:{f.result.ag}{f.result.so ? 'k' : f.result.ot ? 'p' : ''}</Link>
                 ) : (
                   <span className="muted">–</span>
                 )}
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', fontWeight: f.away === me ? 700 : 500 }}>{clubOf(f.away).short}<Crest club={clubOf(f.away)} size={24} /></span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end', fontWeight: f.away === me ? 700 : 500 }}>{clubOf(f.away).name}<Crest club={clubOf(f.away)} size={24} /></span>
               </div>
             ))}
             {sel > game.date && game.phase !== 'konec' && (
