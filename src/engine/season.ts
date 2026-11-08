@@ -5,6 +5,7 @@ import { MatchSim } from './sim';
 import { addFreeAgents, aiSignings, book, ensureFinance, expectedAttendance, makeSponsor, matchFinances, monthlyFinances, clubWages, sponsorOffers } from './finance';
 import { archiveSeason, ensureV2, infraOf, processProjects, recordRetirement } from './club';
 import { nationalDay } from './national';
+import { REAL_ROSTERS } from './realRosters';
 import { checkBoardPromise } from './board';
 import { abroadSeason, ensureImports, salesDay, unsolicitedOffers } from './sales';
 import { giveAwards, makePrediction } from './awards';
@@ -141,6 +142,13 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
     pastChampions: [],
     finance: {},
   };
+  // kapetani pravih ekip
+  for (const [cid, list] of Object.entries(REAL_ROSTERS)) {
+    const find = (r: { first: string; last: string }) => Object.values(players).find((p) => p.clubId === cid && p.first === r.first && p.last === r.last)?.id;
+    const c = list.filter((r) => r.captain === 'C').map(find).filter(Boolean) as string[];
+    const a = list.filter((r) => r.captain === 'A').map(find).filter(Boolean) as string[];
+    if (c.length || a.length) state.captains = { ...(state.captains ?? {}), [cid]: { c: c[0], a } };
+  }
   ensureFinance(state);
   ensureV2(state);
   ensureYouth(state);

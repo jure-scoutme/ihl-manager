@@ -180,14 +180,14 @@ export function generateLeague(rng: Rng, seasonYear: number): Record<string, Pla
         const age = seasonYear - r.birth;
         const pos: Pos = r.pos === 'F' ? fPos[fi++ % 3] : r.pos;
         // brez javnih ocen: igralci v najboljših letih blizu moči kluba, mladi nižje (makePlayer odšteje za starost)
-        const base = club.strength - 1 + (age >= 22 ? 2 : 0) + (age >= 32 ? (age - 32) * 1.2 + 3 : 0) + (r.pos === 'G' ? 5 : 0) + rng.normal(0, 3);
+        const base = club.strength - 1 + (age >= 22 ? 2 : 0) + (age >= 32 ? (age - 32) * 1.2 - 4 : 0) + (r.pos === 'G' ? 5 : 0) + (r.boost ?? 0) + rng.normal(0, 2);
         const p = makePlayer(rng, { pos, base, clubId: club.id, country: club.country, seasonYear, age, isAI: false });
         p.first = r.first;
         p.last = r.last;
         p.nat = r.nat ?? club.country;
         p.shoots = r.shoots ?? p.shoots;
         p.real = true;
-        let num = r.num;
+        let num = r.num || rng.int(2, 98);
         while (used.has(num)) num = num < 98 ? num + 1 : 2;
         used.add(num);
         p.number = num;
