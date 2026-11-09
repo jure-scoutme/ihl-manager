@@ -1,4 +1,5 @@
 import { fanPosts } from './fans';
+import { attendanceBoost, userMatchIncome } from './marketing';
 import { addStory } from './achievements';
 import { staffWages } from './staff';
 import { CLUBS } from './data';
@@ -15,6 +16,8 @@ export const INCOME_LABELS: Record<string, string> = {
   subvencije: 'Občina in subvencije',
   uprava: 'Nakazila uprave',
   izzivi: 'Nagrade izzivov',
+  trgovina: 'Fanshop in dresi',
+  loze: 'VIP lože',
 };
 export const EXPENSE_LABELS: Record<string, string> = {
   place: 'Plače',
@@ -26,6 +29,7 @@ export const EXPENSE_LABELS: Record<string, string> = {
   investicije: 'Investicije',
   nakupi: 'Nakupi igralcev',
   infrastruktura: 'Vzdrževanje objektov',
+  marketing: 'Marketing',
 };
 
 const SPONSORS = ['Gorenjska banka', 'Sava Turizem', 'Petrol', 'Telemach', 'Mercator', 'Generali', 'Lidl', 'Hervis', 'Elektro Gorenjska', 'Triglav zavarovalnica', 'Agrokor', 'Podravka', 'Konzum', 'NIS', 'Telekom Srbija', 'mts'];
@@ -103,13 +107,18 @@ export function expectedAttendance(state: GameState, f: Fixture, price = ticketP
   const mk = state.infra?.[f.home]?.marketing ?? 2;
   crowd *= 1 + (mk - 2) * 0.04;
   if (f.home === state.userClubId && state.fans !== undefined) crowd *= 0.85 + state.fans / 330;
+  crowd *= attendanceBoost(state, f);
+  if (f.home === state.userClubId && state.mkt) crowd = Math.max(crowd, state.mkt.seasonSold * 0.85);
   return Math.round(clamp(crowd, 40, home.arena.capacity));
 }
 
 export function matchFinances(state: GameState, f: Fixture, attendance: number) {
   const price = ticketPrice(state, f);
-  book(state, f.home, 'vstopnice', attendance * price);
-  book(state, f.home, 'bar', Math.round(attendance * 1.6));
+  if (f.home === state.userClubId && state.mkt) userMatchIncome(state, f, attendance, price);
+  else {
+    book(state, f.home, 'vstopnice', attendance * price);
+    book(state, f.home, 'bar', Math.round(attendance * 1.6));
+  }
   const h = state.clubs.find((c) => c.id === f.home)!;
   const a = state.clubs.find((c) => c.id === f.away)!;
   const travel = h.city === a.city ? 0 : h.country === a.country ? 350 : 1100;

@@ -1,5 +1,6 @@
 import { CLUBS } from './data';
 import { ensureHistory } from './history';
+import { ensureMarketing, marketingDay, monthlyMarketing } from './marketing';
 import { matchPreview, matchReport, playerOfWeek, pushNews, roundRecap } from './news';
 import { autoLines, calcOvr, emptyStats, generateLeague, makePlayer, newId, validateLines } from './players';
 import { Rng, clamp } from './rng';
@@ -158,6 +159,7 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   ensureCareer(state);
   ensureImports(state);
   ensureHistory(state);
+  ensureMarketing(state);
   makePrediction(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
@@ -341,6 +343,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   if (hasBlocking(state)) return { blocked: true };
   for (const f of todaysFixtures(state)) if (!f.played) quickSim(state, f);
   roundRecap(state, state.date);
+  marketingDay(state);
 
   state.date = addDays(state.date, 1);
   const tomorrow = state.fixtures.find((f) => !f.played && f.date === addDays(state.date, 1) && f.stage !== 'prijateljska' && (f.home === state.userClubId || f.away === state.userClubId));
@@ -352,6 +355,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   if (state.date.endsWith('-01')) {
     contractReminders(state);
     monthlyFinances(state);
+    monthlyMarketing(state);
     monthlyBoard(state);
     if (state.date.endsWith('-06-01')) summerBudget(state);
     const bal = state.finance[state.userClubId]?.balance ?? 0;

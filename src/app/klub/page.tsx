@@ -69,6 +69,15 @@ export default function Klub() {
           </div>
         </section>
 
+        <Link href="/marketing" className="card row" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <span>
+            <span className="lbl" style={{ display: 'block' }}>{t('Marketing')}</span>
+            <span style={{ display: 'block', fontSize: 14, fontWeight: 600, marginTop: 4 }}>{t('Vstopnice, kampanje, sponzorji, dvorana')}</span>
+            <span className="muted" style={{ display: 'block', fontSize: 12, marginTop: 2 }}>{t('Navdušenje')} {Math.round(game.fans ?? 50)}{game.mkt?.offers.length ? ` · ${game.mkt.offers.length} ${t('ponudbe čakajo')}` : ''}</span>
+          </span>
+          <span style={{ fontSize: 22, opacity: 0.6 }}>›</span>
+        </Link>
+
         <Link href="/stab" className="card row" style={{ textDecoration: 'none', color: 'inherit' }}>
           <span>
             <span className="lbl" style={{ display: 'block' }}>{t('Strokovni štab')}</span>

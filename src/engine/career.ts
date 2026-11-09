@@ -2,6 +2,7 @@
 import { Rng, clamp } from './rng';
 import { planOf } from './training';
 import { fanPosts } from './fans';
+import { ensureMarketing } from './marketing';
 import type { GameState } from './types';
 
 export interface CareerEntry {
@@ -118,6 +119,8 @@ export function takeJob(s: GameState, effect: string): string {
   s.fans = 50;
   s.streak = 0;
   s.challenge = undefined;
+  s.mkt = undefined;
+  ensureMarketing(s);
   s.sponsorOffers = undefined;
   s.promises = [];
   s.pressMood = undefined;

@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useState } from 'react';
 import { BackLink, Shell, eur } from '@/components/ui';
 import { useGame } from '@/store/game';
@@ -126,6 +127,9 @@ export default function Finance() {
 
         {tab === 'vstopnice' && (
           <>
+            <Link href="/marketing?tab=vstopnice" className="card row" style={{ color: 'inherit', borderColor: 'color-mix(in srgb, var(--accent) 45%, transparent)' }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{t('Sezonske karte in akcije za tekme so v oddelku Marketing')}</span><span style={{ opacity: 0.6 }}>›</span>
+            </Link>
             <section className="card" style={{ fontSize: 13, lineHeight: 1.5 }}>
               <div className="lbl" style={{ marginBottom: 4 }}>{club.arena.name} · {club.arena.capacity} {t('mest')}</div>
               {t('Obisk je odvisen od cene, uvrstitve, nasprotnika, derbija in končnice. Previsoka cena pomeni prazno dvorano, prenizka pa izgubljen denar. Priporočena osnovna cena:')} <b>{ref} €</b>.

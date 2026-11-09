@@ -11,6 +11,7 @@ import { ensureCareer } from '@/engine/career';
 import { ensureImports } from '@/engine/sales';
 import { CLUBS } from '@/engine/data';
 import { ensureHistory } from '@/engine/history';
+import { ensureMarketing } from '@/engine/marketing';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
@@ -25,6 +26,7 @@ export function migrateGame(g: GameState) {
   ensureCareer(g);
   ensureImports(g);
   ensureHistory(g);
+  ensureMarketing(g);
   // uradna polna imena klubov
   for (const c of g.clubs) {
     const d = CLUBS.find((x) => x.id === c.id);

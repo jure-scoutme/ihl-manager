@@ -313,6 +313,7 @@ export interface GameState {
   decisions?: Decision[];
   promises?: PromiseItem[];
   fans?: number; // podpora navijačev 0-100 (tvoj klub)
+  mkt?: import('./marketing').MarketingState; // marketinški oddelek (tvoj klub)
   board?: number; // zaupanje uprave 0-100
   infra?: Record<string, InfraLevels>;
   projects?: InfraProject[];
