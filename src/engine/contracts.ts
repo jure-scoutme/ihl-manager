@@ -1,4 +1,5 @@
 // Pogodbe: podaljševanje, iztek (30. junij), prestopna okna.
+import { pushNews } from './news';
 import { addStory } from './achievements';
 import { clubWages, wageDemand } from './finance';
 import { Rng, clamp } from './rng';
@@ -120,7 +121,10 @@ export function contractReminders(s: GameState) {
   const list = expiring(s);
   if (!list.length) return;
   const names = list.map((p) => p.first + ' ' + p.last).join(', ');
-  news(s, 'garderoba', `Pogodba poteče ${list.length} igralcem`, `30. junija poteče pogodba: ${names}. Podaljšaj jih na strani igralca, sicer odidejo brez odškodnine.`);
+  pushNews(s, 'garderoba', `Pogodba poteče ${list.length} igralcem`, [
+    `30. junija poteče pogodba: ${names}.`,
+    'Podaljšaj jih na strani igralca, sicer odidejo brez odškodnine. Igralci z dobro sezono bodo zahtevali višjo plačo.',
+  ], { important: m === '06', from: 'Športni direktor', action: { label: 'Pogodbe', href: '/kader' } });
 }
 
 // novice ob odprtju/zaprtju prestopnega roka

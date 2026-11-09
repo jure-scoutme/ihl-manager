@@ -1,4 +1,6 @@
 import { CLUBS } from './data';
+import { ensureHistory } from './history';
+import { matchPreview, matchReport, playerOfWeek, pushNews, roundRecap } from './news';
 import { autoLines, calcOvr, emptyStats, generateLeague, makePlayer, newId, validateLines } from './players';
 import { Rng, clamp } from './rng';
 import { MatchSim } from './sim';
@@ -155,15 +157,15 @@ export function createGame(manager: Manager, userClubId: string, seed: number): 
   ensureStaff(state);
   ensureCareer(state);
   ensureImports(state);
+  ensureHistory(state);
   makePrediction(state);
   addNews(state, 'uprava', `Dobrodošli v ${club.short}u`, `Uprava ${club.name} vam izreka dobrodošlico. Cilj za sezono ${seasonLabel(seasonYear)}: ${club.boardGoal}. Proračun za plače je omejen, zato pametno gospodarite s kadrom.`);
   addNews(state, 'liga', `Začetek sezone ${seasonLabel(seasonYear)}`, `Liga IHL se začne ${fmtDate(fixtures[0].date)}. Nastopa 9 klubov, vsak odigra 32 tekem rednega dela. V končnico se uvrsti 6 najboljših.`);
   return state;
 }
 
-export function addNews(state: GameState, kind: NewsItem['kind'], title: string, body: string, fixtureId?: string) {
-  state.news.unshift({ id: newId('n'), date: state.date, title, body, kind, read: false, fixtureId });
-  if (state.news.length > 80) state.news.length = 80;
+export function addNews(state: GameState, kind: NewsItem['kind'], title: string, body: string | string[], fixtureId?: string) {
+  pushNews(state, kind, title, body, fixtureId ? { fixtureId } : {});
 }
 
 // --- lestvica ---
@@ -290,7 +292,16 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
     const med = infraOf(state, p.clubId!).medical;
     if (p.pos !== 'G' && rng.chance((friendly ? 0.002 : 0.004) * (1.3 - med * 0.1) * (p.energy < 50 ? 1.6 : 1))) {
       p.injuryDays = Math.max(1, Math.round(rng.int(3, 28) * (1.25 - med * 0.1)));
-      if (p.clubId === state.userClubId) addNews(state, 'garderoba', `Poškodba: ${p.first} ${p.last}`, `${p.first} ${p.last} se je poškodoval na tekmi in bo odsoten približno ${p.injuryDays} dni.`);
+      if (p.clubId === state.userClubId) {
+        const back = addDays(state.date, p.injuryDays);
+        const missed = state.fixtures.filter((x) => !x.played && x.date > state.date && x.date <= back && (x.home === p.clubId || x.away === p.clubId)).length;
+        const sev = p.injuryDays >= 21 ? 'hujšo poškodbo' : p.injuryDays >= 10 ? 'poškodbo srednje teže' : 'lažjo poškodbo';
+        pushNews(state, 'garderoba', `Poškodba: ${p.first} ${p.last}`, [
+          `${p.first} ${p.last} je na tekmi utrpel ${sev}. Zdravniška ekipa ocenjuje, da bo odsoten približno ${p.injuryDays} dni.`,
+          `Predvidena vrnitev: ${fmtDate(back)}. Predvideno število izpuščenih tekem: ${missed}.`,
+          'Pomočnik trenerja bo po potrebi popravil postave. Preveri jih pred naslednjo tekmo.',
+        ], { from: 'Zdravniška ekipa', action: { label: 'Postave', href: '/postave' } });
+      }
     }
   }
 
@@ -306,16 +317,8 @@ export function applyResult(state: GameState, f: Fixture, sim: MatchSim) {
   }
 
   if (f.home === state.userClubId || f.away === state.userClubId) {
-    const us = f.home === state.userClubId;
-    const myG = us ? result.hg : result.ag;
-    const opG = us ? result.ag : result.hg;
-    const opp = state.clubs.find((c) => c.id === (us ? f.away : f.home))!;
-    const tag = result.so ? ' po kazenskih strelih' : result.ot ? ' po podaljšku' : '';
-    if (friendly) {
-      addNews(state, 'tekma', `Prijateljska: ${myG > opG ? 'zmaga' : 'poraz'} proti ${opp.short} ${myG}:${opG}`, `Pripravljalna tekma. Obisk: ${result.attendance} gledalcev.`, f.id);
-      return;
-    }
-    addNews(state, 'tekma', `${myG > opG ? 'Zmaga' : 'Poraz'} proti ${opp.short} ${myG}:${opG}${tag}`, `Obisk: ${result.attendance} gledalcev. Streli: ${us ? result.hShots : result.aShots}:${us ? result.aShots : result.hShots}.`, f.id);
+    matchReport(state, f);
+    if (friendly) return;
     afterUserMatch(state, f);
   }
 }
@@ -337,8 +340,11 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   if (userFixtureToday(state)) return { blocked: true };
   if (hasBlocking(state)) return { blocked: true };
   for (const f of todaysFixtures(state)) if (!f.played) quickSim(state, f);
+  roundRecap(state, state.date);
 
   state.date = addDays(state.date, 1);
+  const tomorrow = state.fixtures.find((f) => !f.played && f.date === addDays(state.date, 1) && f.stage !== 'prijateljska' && (f.home === state.userClubId || f.away === state.userClubId));
+  if (tomorrow) matchPreview(state, tomorrow);
   windowNews(state);
   nationalDay(state);
   scoutDay(state);
@@ -352,6 +358,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
     if (bal < 0) addNews(state, 'uprava', 'Klub je v minusu', `Stanje na računu: ${bal.toLocaleString('sl-SI')} €. Uprava pričakuje, da zmanjšate stroške ali povečate prihodke.`);
   }
   if (new Date(state.date + 'T12:00:00Z').getUTCDay() === 1) {
+    playerOfWeek(state);
     const signed = aiSignings(state);
     if (signed.length) addNews(state, 'prestopi', 'Novi podpisi v ligi', signed.join(' '));
     const st = standings(state);
@@ -402,6 +409,7 @@ export function advanceDay(state: GameState): { blocked: boolean } {
   if (state.date.endsWith('-06-15') && state.phase === 'poletje') sponsorOffers(state);
   if (state.phase === 'redni' && state.fixtures.filter((f) => f.stage === 'redni').every((f) => f.played)) startPlayoffs(state);
   if (state.phase === 'koncnica') progressPlayoffs(state);
+  ensureHistory(state);
   checkAchievements(state);
   return { blocked: false };
 }

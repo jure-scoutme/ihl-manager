@@ -79,6 +79,7 @@ export interface Player {
   story?: { date: string; text: string }[];
   stats: SkaterStats; // tekoča sezona
   history: { season: string; clubId: string; stats: SkaterStats }[];
+  hs?: boolean; // pretekle sezone že dodane
 }
 
 export interface Arena {
@@ -176,6 +177,9 @@ export interface NewsItem {
   kind: 'liga' | 'garderoba' | 'uprava' | 'tekma' | 'prestopi' | 'mediji' | 'klub';
   read: boolean;
   fixtureId?: string;
+  important?: boolean; // zahteva odziv (ustavi nadaljevanje)
+  action?: { label: string; href: string };
+  from?: string; // pošiljatelj
 }
 
 export interface Manager {

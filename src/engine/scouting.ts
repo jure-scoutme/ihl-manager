@@ -1,9 +1,8 @@
 // Skavtiranje: atributi in potencial tujih igralcev so delno skriti, dokler jih skavt ne oceni.
 import { Rng, clamp } from './rng';
+import { pushNews } from './news';
 import type { Attrs, GameState, Player } from './types';
 
-const news = (s: GameState, title: string, body: string) =>
-  s.news.unshift({ id: `n${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, date: s.date, kind: 'klub', title, body, read: false });
 
 const lvl = (s: GameState) => s.infra?.[s.userClubId]?.scouting ?? 1;
 
@@ -88,7 +87,7 @@ export function scoutDay(s: GameState) {
     const p = s.players[t.playerId] ?? s.youth?.[t.playerId];
     if (!p) continue;
     s.scout.known[p.id] = 100;
-    news(s, `Skavtsko poročilo: ${p.first} ${p.last}`, report(s, p));
+    pushNews(s, 'klub', `Skavtsko poročilo: ${p.first} ${p.last}`, report(s, p), { from: 'Glavni skavt', action: { label: 'Profil igralca', href: `/igralec?id=${p.id}` } });
   }
   // znanje o igralcih počasi zastari ob menjavi sezone ni potrebno; počisti pokojne
   void Rng;

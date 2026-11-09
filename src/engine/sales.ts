@@ -6,6 +6,7 @@ import { Rng, clamp } from './rng';
 import { makePlayer } from './players';
 import { fanPosts } from './fans';
 import { transferValue } from './transfers';
+import { offerNews } from './news';
 import type { GameState, Player } from './types';
 
 export interface ForeignLeague {
@@ -125,9 +126,7 @@ export function salesDay(s: GameState) {
     const sellOn = c.league && rng.chance(0.35) ? 15 : undefined;
     const offer: SaleOffer = { ...c, id: `o${Date.now().toString(36)}${rng.int(0, 999)}`, fee: sellOn ? Math.round((c.fee * 0.8) / 500) * 500 : c.fee, sellOn, expires: addDays(s.date, 5) };
     l.offers.push(offer);
-    const who = offer.league ? `${offer.buyer} (${offer.league})` : offer.buyer;
-    if (sellOn) news(s, 'mediji', `Ponudba za igralca ${p.first} ${p.last}`, `${who} ponuja ${fmt(offer.fee)} € in ${sellOn} % od nadaljnje prodaje. Odloči se na strani igralca.`);
-    else news(s, 'mediji', `Ponudba za igralca ${p.first} ${p.last}`, `${who} ponuja ${fmt(offer.fee)} €. Odloči se na strani igralca.`);
+    offerNews(s, p, offer.buyer, offer.league, offer.fee, transferValue(s, p) * contractFactor(s, p), sellOn);
   }
 }
 
@@ -142,7 +141,7 @@ export function unsolicitedOffers(s: GameState) {
     const c = foreign.sort((a, b) => b.fee - a.fee)[0];
     s.sales = s.sales ?? {};
     s.sales[p.id] = { asking: null, until: addDays(s.date, 5), offers: [{ ...c, id: `o${Date.now().toString(36)}${rng.int(0, 999)}`, expires: addDays(s.date, 5) }] };
-    news(s, 'mediji', `Ponudba iz tujine za igralca ${p.first} ${p.last}`, `${c.buyer} (${c.league}) želi igralca ${p.first} ${p.last} in ponuja ${fmt(c.fee)} €. Odloči se v 5 dneh na strani igralca.`);
+    offerNews(s, p, c.buyer, c.league, c.fee, transferValue(s, p) * contractFactor(s, p));
   }
 }
 

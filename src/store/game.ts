@@ -10,6 +10,7 @@ import { ensureStaff } from '@/engine/staff';
 import { ensureCareer } from '@/engine/career';
 import { ensureImports } from '@/engine/sales';
 import { CLUBS } from '@/engine/data';
+import { ensureHistory } from '@/engine/history';
 import { hasBlocking, resolveDecision } from '@/engine/events';
 import type { GameState, Manager } from '@/engine/types';
 
@@ -23,6 +24,7 @@ export function migrateGame(g: GameState) {
   ensureStaff(g);
   ensureCareer(g);
   ensureImports(g);
+  ensureHistory(g);
   // uradna polna imena klubov
   for (const c of g.clubs) {
     const d = CLUBS.find((x) => x.id === c.id);
@@ -36,7 +38,23 @@ export interface DayStep {
   results: { home: string; away: string; hg: number; ag: number; ot: boolean; so: boolean; mine: boolean; stage: string }[];
   news: string[];
   stop: boolean;
-  stoppedFor?: 'tekma' | 'novica' | 'konec' | 'odlocitev';
+  stoppedFor?: 'tekma' | 'novica' | 'pomembno' | 'konec' | 'odlocitev';
+}
+
+// ustavljanje: takoj ob pomembni novici, sicer vsaka 2 dni, če so prispele nove novice
+let sinceStop = 0;
+let seenAtStop = new Set<string>();
+const NEWS_EVERY = 2;
+function newsStop(g: GameState, before: Set<string>): 'pomembno' | 'novica' | undefined {
+  const fresh = g.news.filter((n) => !before.has(n.id) && !n.read);
+  if (fresh.some((n) => n.important)) return 'pomembno';
+  sinceStop++;
+  if (sinceStop >= NEWS_EVERY && g.news.some((n) => !n.read && n.kind !== 'tekma' && !seenAtStop.has(n.id))) return 'novica';
+  return undefined;
+}
+function markStop(g: GameState) {
+  sinceStop = 0;
+  seenAtStop = new Set(g.news.map((n) => n.id));
 }
 
 interface Store {
@@ -44,7 +62,7 @@ interface Store {
   rev: number;
   newGame: (m: Manager, clubId: string) => void;
   update: (fn: (g: GameState) => void) => void;
-  continueGame: () => { stoppedFor: 'tekma' | 'novica' | 'konec' | 'dan' | 'odlocitev' };
+  continueGame: () => { stoppedFor: 'tekma' | 'novica' | 'pomembno' | 'konec' | 'dan' | 'odlocitev' };
   resolve: (id: string, option: number) => string;
   stepDay: () => DayStep;
   lang: Lang;
@@ -115,7 +133,7 @@ export const useGame = create<Store>()(
       continueGame: () => {
         const g = get().game;
         if (!g) return { stoppedFor: 'dan' };
-        let stoppedFor: 'tekma' | 'novica' | 'konec' | 'dan' | 'odlocitev' = 'dan';
+        let stoppedFor: 'tekma' | 'novica' | 'pomembno' | 'konec' | 'dan' | 'odlocitev' = 'dan';
         for (let i = 0; i < 14; i++) {
           if (hasBlocking(g)) {
             stoppedFor = 'odlocitev';
@@ -129,10 +147,9 @@ export const useGame = create<Store>()(
             stoppedFor = 'konec';
             break;
           }
-          const quiet = ['tekma', 'prestopi', 'mediji', 'klub'];
-          const unreadBefore = g.news.filter((n) => !n.read && !quiet.includes(n.kind)).length;
+          const before = new Set(g.news.map((n) => n.id));
           advanceDay(g);
-          const unreadAfter = g.news.filter((n) => !n.read && !quiet.includes(n.kind)).length;
+          const ns = newsStop(g, before);
           if (userFixtureToday(g)) {
             stoppedFor = 'tekma';
             break;
@@ -145,11 +162,12 @@ export const useGame = create<Store>()(
             stoppedFor = 'odlocitev';
             break;
           }
-          if (unreadAfter > unreadBefore) {
-            stoppedFor = 'novica';
+          if (ns) {
+            stoppedFor = ns;
             break;
           }
         }
+        if (stoppedFor !== 'dan') markStop(g);
         set({ game: { ...g }, rev: get().rev + 1 });
         return { stoppedFor };
       },
@@ -195,24 +213,23 @@ export const useGame = create<Store>()(
         const g = get().game;
         const empty: DayStep = { date: '', newDate: '', results: [], news: [], stop: true };
         if (!g) return empty;
-        const quiet = ['tekma', 'prestopi', 'mediji', 'klub'];
         if (hasBlocking(g)) return { ...empty, date: g.date, newDate: g.date, stoppedFor: 'odlocitev' };
         if (userFixtureToday(g)) return { ...empty, date: g.date, newDate: g.date, stoppedFor: 'tekma' };
         if (g.phase === 'konec') return { ...empty, date: g.date, newDate: g.date, stoppedFor: 'konec' };
         const day = g.date;
         const before = new Set(g.news.map((n) => n.id));
-        const unreadBefore = g.news.filter((n) => !n.read && !quiet.includes(n.kind)).length;
         advanceDay(g);
         const results = g.fixtures
           .filter((f) => f.date === day && f.result)
           .map((f) => ({ home: f.home, away: f.away, hg: f.result!.hg, ag: f.result!.ag, ot: f.result!.ot, so: f.result!.so, mine: f.home === g.userClubId || f.away === g.userClubId, stage: f.stage }));
         const news = g.news.filter((n) => !before.has(n.id)).map((n) => n.title);
-        const unreadAfter = g.news.filter((n) => !n.read && !quiet.includes(n.kind)).length;
+        const ns = newsStop(g, before);
         let stoppedFor: DayStep['stoppedFor'];
         if (userFixtureToday(g)) stoppedFor = 'tekma';
         else if ((g.phase as string) === 'konec') stoppedFor = 'konec';
         else if (hasBlocking(g)) stoppedFor = 'odlocitev';
-        else if (unreadAfter > unreadBefore) stoppedFor = 'novica';
+        else stoppedFor = ns;
+        if (stoppedFor) markStop(g);
         set({ game: { ...g }, rev: get().rev + 1 });
         return { date: day, newDate: g.date, results, news, stop: !!stoppedFor, stoppedFor };
       },

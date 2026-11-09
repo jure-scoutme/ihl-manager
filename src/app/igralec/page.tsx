@@ -10,6 +10,7 @@ import { useGame } from '@/store/game';
 import { useT } from '@/i18n';
 import { ATTR_GROUPS, ATTR_LABELS, GOALIE_GROUP, ageOf } from '@/engine/players';
 import { fmtDate, seasonLabel } from '@/engine/season';
+import { shownSeason } from '@/engine/history';
 import { assignScout, attrRange, knowledge, scouting, shownOvr, shownPotential } from '@/engine/scouting';
 import { TALKS, captainsOf, talk, talkCooldown } from '@/engine/people';
 import { buyFromAbroad, importFee, importWage } from '@/engine/sales';
@@ -55,7 +56,8 @@ function Profil() {
   const win = transferWindow(game);
   const expSoon = isMine && expiring(game).some((x) => x.id === p.id);
   const groups = p.pos === 'G' ? [GOALIE_GROUP, { label: 'Mentalni', keys: ['decisions', 'positioning', 'leadership'] as (keyof typeof p.attrs)[] }] : ATTR_GROUPS;
-  const s = p.stats;
+  const lastSeason = shownSeason(game, p);
+  const s = lastSeason?.stats ?? p.stats;
   const isG = p.pos === 'G';
   const statCells: [string, string | number][] = isG
     ? [['Tekme', s.gp], ['Zmage', s.w], ['% obramb', s.sa ? ((s.sa - s.ga) / s.sa * 100).toFixed(1) : '—'], ['GAA', s.gp ? (s.ga / s.gp).toFixed(2) : '—'], ['Ničle', s.so]]
@@ -266,6 +268,7 @@ function Profil() {
 
       {msg && <div className="card" style={{ fontSize: 13, color: msg.ok ? 'var(--good)' : 'var(--gold)' }}>{t(msg.text)}</div>}
 
+      {lastSeason && !lastSeason.current && <div className="lbl" style={{ margin: '0 4px -6px' }}>{t('Statistika')} {lastSeason.label} · {game.clubs.find((c) => c.id === lastSeason.clubId)?.short ?? lastSeason.clubId}</div>}
       <section className="card" style={{ display: 'flex', padding: '10px 6px' }}>
         {statCells.map(([l, v]) => (
           <div key={l} style={{ flex: 1, textAlign: 'center' }}>
@@ -370,9 +373,9 @@ function Profil() {
             <thead><tr><th>{t('Sezona')}</th><th>{t('Klub')}</th><th className="num">T</th>{isG ? <><th className="num">%</th><th className="num">GAA</th></> : <><th className="num">G</th><th className="num">P</th><th className="num">Tč</th></>}</tr></thead>
             <tbody>
               {[...p.history].reverse().map((h) => (
-                <tr key={h.season}>
+                <tr key={h.season + h.clubId}>
                   <td>{h.season}</td>
-                  <td>{game.clubs.find((c) => c.id === h.clubId)?.short}</td>
+                  <td>{game.clubs.find((c) => c.id === h.clubId)?.short ?? h.clubId}</td>
                   <td className="num">{h.stats.gp}</td>
                   {isG ? (
                     <><td className="num">{h.stats.sa ? (((h.stats.sa - h.stats.ga) / h.stats.sa) * 100).toFixed(1) : '—'}</td><td className="num">{h.stats.gp ? (h.stats.ga / h.stats.gp).toFixed(2) : '—'}</td></>

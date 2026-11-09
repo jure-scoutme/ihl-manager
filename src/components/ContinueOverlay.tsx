@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useGame, type DayStep } from '@/store/game';
 import { addDays, fmtDate } from '@/engine/season';
 import { useT } from '@/i18n';
 
 const STOP_TEXT: Record<string, string> = {
   tekma: 'Danes igra tvoja ekipa.',
-  novica: 'Prispela je pomembna novica.',
+  novica: 'Prispele so nove novice.',
+  pomembno: 'Prispela je pomembna novica, ki zahteva tvoj odziv.',
   odlocitev: 'Čaka te odločitev.',
   konec: 'Sezona je končana.',
 };
@@ -19,6 +21,14 @@ export function ContinueOverlay({ onClose }: { onClose: () => void }) {
   const [current, setCurrent] = useState(game.date);
   const [done, setDone] = useState<string | null>(null);
   const stopReq = useRef(false);
+  const router = useRouter();
+  const finish = () => {
+    onClose();
+    if (done === 'pomembno') {
+      const imp = useGame.getState().game?.news.find((n) => n.important && !n.read);
+      router.push(imp ? `/novice?id=${imp.id}` : '/novice');
+    } else if (done === 'novica') router.push('/novice');
+  };
 
   useEffect(() => {
     let alive = true;
@@ -42,9 +52,10 @@ export function ContinueOverlay({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (!done) return;
-    const tm = setTimeout(onClose, done === 'tekma' ? 1300 : 1800);
+    const tm = setTimeout(finish, done === 'tekma' ? 1300 : 1800);
     return () => clearTimeout(tm);
-  }, [done, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
 
   // teden okoli trenutnega dne (pon–ned)
   const dow = (new Date(current + 'T12:00:00Z').getUTCDay() + 6) % 7;
@@ -66,7 +77,7 @@ export function ContinueOverlay({ onClose }: { onClose: () => void }) {
           {!done ? (
             <button className="btn sec" style={{ height: 40 }} onClick={() => (stopReq.current = true)}>{t('Ustavi')}</button>
           ) : (
-            <button className="btn" style={{ height: 40 }} onClick={onClose}>{t('Naprej')}</button>
+            <button className="btn" style={{ height: 40 }} onClick={finish}>{t(done === 'novica' || done === 'pomembno' ? 'Odpri pošto' : 'Naprej')}</button>
           )}
         </div>
 

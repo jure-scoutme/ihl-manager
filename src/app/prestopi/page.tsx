@@ -1,4 +1,5 @@
 'use client';
+import { shownSeason, svPct } from '@/engine/history';
 import Link from 'next/link';
 import { useState } from 'react';
 import { INTEREST_STYLE, POS_LABEL, Shell, eur, ovrColor } from '@/components/ui';
@@ -75,6 +76,12 @@ export default function Prestopi() {
               <span>
                 <span style={{ display: 'block', fontWeight: 600, fontSize: 14 }}>{p.first} {p.last}{potentialKnown(game, p) && p.potential - p.ovr >= 6 && <span style={{ color: 'var(--good)', fontSize: 11 }}> {t('▲ POT')} {shownPotential(game, p)}</span>}</span>
                 <span className="muted" style={{ display: 'block', fontSize: 12 }}>{POS_LABEL[p.pos]} · {ageOf(p, game.seasonYear)} {t('let ·')} {p.nat}{p.abroad ? ` · ${p.abroad.club}` : p.isAI ? ' · AI' : ''}</span>
+                {(() => {
+                  const sh = shownSeason(game, p);
+                  if (!sh) return null;
+                  const st = sh.stats;
+                  return <span style={{ display: 'block', fontSize: 11, marginTop: 2, color: '#b9c6dc' }}>{sh.label} · {game.clubs.find((c) => c.id === sh.clubId)?.short ?? sh.clubId} · {st.gp} {t('tekem')} · {p.pos === 'G' ? `${svPct(st).toFixed(1)} %` : `${st.g}+${st.a}=${st.g + st.a}`}</span>;
+                })()}
               </span>
               <span style={{ textAlign: 'right' }}>
                 <span style={{ display: 'block', fontWeight: 700, fontSize: 13 }}>{eur(p.abroad ? importWage(game, p) : p.wage)}</span>

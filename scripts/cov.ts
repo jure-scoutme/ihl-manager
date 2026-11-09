@@ -11,7 +11,7 @@ while (state.phase !== 'konec' && guard++ < 400) {
   while ((state.decisions ?? []).some((d: any) => d.blocking)) { const d = state.decisions.find((x: any) => x.blocking); texts.add(resolveDecision(state, d.id, guard % 2)); }
   advanceDay(state);
 }
-for (const n of state.news ?? []) { texts.add(n.title); texts.add(n.body); }
+for (const n of state.news ?? []) { texts.add(n.title); for (const p of String(n.body).split(/\n\n+/)) texts.add(p); }
 for (const l of ['en', 'sr'] as const) {
   let miss = 0; const ex: string[] = [];
   for (const t of texts) { if (!t) continue; const r = translate(l, t); if (r === t) { miss++; if (ex.length < 25) ex.push(t.slice(0, 110)); } }

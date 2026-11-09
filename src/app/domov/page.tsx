@@ -24,7 +24,6 @@ export default function Domov() {
   const router = useRouter();
   const [summary, setSummary] = useState<{ changes: DevChange[]; retired: string[]; youth: string[] } | null>(null);
   const [showFans, setShowFans] = useState(false);
-  const [openNews, setOpenNews] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   if (!game) return <Shell>{null}</Shell>;
 
@@ -207,23 +206,16 @@ export default function Domov() {
           </div>
         </section>
 
-        <SectionTitle title={`${t('Pošta')}${unread ? ` · ${unread}` : ''}`} />
-        <section className="card" style={{ padding: '6px 16px' }}>
-          {game.news.slice(0, 6).map((n) => (
-            <div key={n.id} style={{ borderTop: '1px solid var(--line)' }}>
-              <button onClick={() => { setOpenNews(openNews === n.id ? null : n.id); if (!n.read) update((g) => { const x = g.news.find((y) => y.id === n.id); if (x) x.read = true; }); }} style={{ display: 'flex', gap: 12, padding: '12px 0', background: 'none', border: 0, color: 'var(--text)', width: '100%', textAlign: 'left', cursor: 'pointer', alignItems: 'flex-start' }}>
-                <span style={{ width: 36, height: 36, borderRadius: 12, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: NEWS_COLOR[n.kind], background: `color-mix(in srgb, ${NEWS_COLOR[n.kind]} 16%, transparent)` }} aria-hidden="true"><Icon name={NEWS_ICON[n.kind]} size={18} /></span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: n.read ? 500 : 700 }}>{t(n.title)}</span>
-                    {!n.read && <span className="dot" style={{ background: 'var(--accent)', marginTop: 6, flex: 'none' }} />}
-                  </span>
-                  <span className="muted" style={{ display: 'block', fontSize: 12, marginTop: 2 }}>{t(NEWS_LABEL[n.kind])} · {fmtDate(n.date)}</span>
-                  {openNews === n.id && <span style={{ display: 'block', fontSize: 13, marginTop: 8, lineHeight: 1.55, color: '#d6deec' }}>{t(n.body)}</span>}
-                </span>
-              </button>
-              {openNews === n.id && n.fixtureId && <Link href={`/porocilo?id=${n.fixtureId}`} style={{ display: 'block', margin: '-4px 0 12px 48px', fontSize: 13, fontWeight: 600, color: 'var(--accent2)' }}>{t('Poročilo s tekme →')}</Link>}
-            </div>
+        <SectionTitle title={`${t('Pošta')}${unread ? ` · ${unread}` : ''}`} href="/novice" link={t('Vse')} />
+        <section className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          {game.news.slice(0, 5).map((n, i) => (
+            <Link key={n.id} href={`/novice?id=${n.id}`} style={{ display: 'flex', gap: 12, padding: '11px 14px', borderTop: i ? '1px solid var(--line)' : 0, borderLeft: `3px solid ${n.important && !n.read ? 'var(--orange)' : n.read ? 'transparent' : 'var(--accent)'}`, alignItems: 'center' }}>
+              <span style={{ width: 34, height: 34, borderRadius: 11, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: NEWS_COLOR[n.kind], background: `color-mix(in srgb, ${NEWS_COLOR[n.kind]} 16%, transparent)` }} aria-hidden="true"><Icon name={NEWS_ICON[n.kind]} size={17} /></span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 14, fontWeight: n.read ? 500 : 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.important && <span style={{ color: 'var(--orange)' }}>! </span>}{t(n.title)}</span>
+                <span className="muted" style={{ display: 'block', fontSize: 11.5, marginTop: 2 }}>{t(NEWS_LABEL[n.kind])} · {fmtDate(n.date)}</span>
+              </span>
+            </Link>
           ))}
         </section>
 
